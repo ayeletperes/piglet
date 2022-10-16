@@ -2,7 +2,7 @@
 # Allele clusters functions
 # The functions in this scripts are for generating the allele clusters from a given reference set
 
-#' @include alleleclustergenotpe.R
+#' @include alleleclustergenotype.R
 NULL
 
 # ------------------------------------------------------------------------------
@@ -28,11 +28,10 @@ NULL
 #' @aliases      GermlineCluster
 #' @exportClass  GermlineCluster
 setClass("GermlineCluster",
-         contains = c("hclust"),
          slots=c(germlineSet = "character",
                  alleleClusterSet = "character",
                  alleleClusterTable = "data.frame",
-                 hclustAlleleCluster = "hclust",
+                 hclustAlleleCluster = "list",
                  threshold = "list"))
 
 
@@ -48,7 +47,7 @@ setClass("GermlineCluster",
 #' A \code{matrix} of the computed distances between the alleles pairs.
 #'
 #' @details
-#' The aligned IMGT IGHV allele germline set can be download from the IMGT site \link{IMGT.org} under the section genedb.
+#' The aligned IMGT IGHV allele germline set can be download from the IMGT site \href{www.IMGT.org}{www.IMGT.org} under the section genedb.
 
 
 
@@ -99,7 +98,7 @@ ighvClust <- function(germline_distance, family_threshold = 75, allele_cluster_t
    # check the parameters
    ### check the class of the distance matrix
 
-  if(!is.character(germline_set)) stop("The input germline set is not in a character class.")
+  if(!is.matrix(germline_distance)) stop("The input germline_distance is not in a matrix class.")
 
    ### check that the threshold of cluster is not above family
 
@@ -143,20 +142,20 @@ ighvClust <- function(germline_distance, family_threshold = 75, allele_cluster_t
 
 # ------------------------------------------------------------------------------
 
-#' Generates the allele clusters reference set based on the clustering from `ighvClust`. The function collapse
+#' Generates the allele clusters reference set based on the clustering from \link{ighvClust}. The function collapse
 #' similar alleles and assign them into their respective allele clusters and family clusters. See details for naming scheme
 #'
-#' @param    germline_distance     A germline set distance matrix created by `ighvDistance`.
+#' @param    germline_distance     A germline set distance matrix created by \link{ighvDistance}.
 #' @param    germline_set          A character list of the IMGT aligned IGHV allele sequences. See details for curating options.
-#' @param    alleleClusterTable    A data.frame of the alleles and their clusters created by `ighvClust`.
+#' @param    alleleClusterTable    A data.frame of the alleles and their clusters created by \link{ighvClust}.
 #'
-#' @details
+#' @details 
 #' Each allele is named by this scheme:
-#' IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster [:number:], 
-#' G1 - allele cluster [:number:], and 01 = allele numbering (given by clustering order, no connection to the expression)
+#' IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster numbering, 
+#' G1 - allele cluster numbering, and 01 = allele numbering (given by clustering order, no connection to the expression)
 #' 
 #' @return
-#' A \code{list] with the re-named germline set, and a table of the allele clusters and thresholds.
+#' A \code{list} with the re-named germline set, and a table of the allele clusters and thresholds.
 #' 
 
 generateReferenceSet <- function(germline_distance, germline_set, alleleClusterTable){
@@ -236,11 +235,11 @@ generateReferenceSet <- function(germline_distance, germline_set, alleleClusterT
       idx_remove <- !duplicated(similar[, 3])
       similar <- similar[idx_remove, 1:2]
       
-      similar2 <- dplyr::mutate(similar, idx_novel = ifelse(any(grepl("_",sort(c(row, col)))), 
-                                         grep("_",sort(c(row, col)))[1], NA) , 
-                      V1 = ifelse(is.na(idx_novel), sort(c(row, col))[1], 
-                                  sort(c(row, col))[c(1,2)[!c(1,2) %in% idx_novel]]), 
-                      V2 = ifelse(is.na(idx_novel), sort(c(row, col))[2], sort(c(row, col))[idx_novel] ))
+      similar2 <- dplyr::mutate(similar, "idx_novel" = ifelse(any(grepl("_",sort(c(!!rlang::sym("row"), !!rlang::sym("col"))))), 
+                                         grep("_",sort(c(!!rlang::sym("row"), !!rlang::sym("col"))))[1], NA) , 
+                      V1 = ifelse(is.na(!!rlang::sym("idx_novel")), sort(c(!!rlang::sym("row"), !!rlang::sym("col")))[1], 
+                                  sort(c(!!rlang::sym("row"), !!rlang::sym("col")))[c(1,2)[!c(1,2) %in% !!rlang::sym("idx_novel")]]), 
+                      V2 = ifelse(is.na(!!rlang::sym("idx_novel")), sort(c(!!rlang::sym("row"), !!rlang::sym("col")))[2], sort(c(!!rlang::sym("row"), !!rlang::sym("col")))[!!rlang::sym("idx_novel")] ))
       
       ## check connections
       if(nrow(similar2)>1){
@@ -355,15 +354,19 @@ generateReferenceSet <- function(germline_distance, germline_set, alleleClusterT
 #' One for the family cluster and the other for the allele cluster. Then the new allele cluster names are generated and the germline set sequences are renamed and duplicated alleles are removed.
 #' 
 #' The allele cluster names are by the following scheme:
-#' IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster [:number:], 
-#' G1 - allele cluster [:number:], and 01 = allele numbering (given by clustering order, no connection to the expression)
+#' IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster numbering, 
+#' G1 - allele cluster numbering, and 01 = allele numbering (given by clustering order, no connection to the expression)
 #' 
-#' To plot the allele clusters dendrogram use the \code{plot} function on the \code{GermlineCluster} object
+#' To plot the allele clusters dendrogram use the \code{plot} function on the \link{GermlineCluster} object
 #' 
 #' @return
-#' An object of type \code{GermlineCluster} that includes the allele cluster table \code{alleleClusterTable} with the new names and the default thresholds, 
+#' An object of type \link{GermlineCluster} that includes the allele cluster table \code{alleleClusterTable} with the new names and the default thresholds, 
 #' the renamed germline set \code{alleleClusterSet}, the germline set hierarchical clustering \code{hclustAlleleCluster},
 #' and the threshold parameters \code{threshold}.
+#' 
+#' @seealso 
+#' 
+#' By using the plot function on the returned object, a colorful visualization of the allele clusters dendogram and threshold is recived.
 #' 
 #' @export
 
@@ -424,17 +427,18 @@ inferAlleleClusters <- function(germline_set_file, trim_3prime_side = 318, mask_
 
 #' Plotting the dendrogram of the clusters
 #' 
-#' @param    obj                            The GermlineCluster object. See \code{inferAlleleClusters}
+#' @param    x                            The GermlineCluster object. See \link{inferAlleleClusters}
+#' @param    y                            NULL. not in use.
 #' 
 #' @return
 #' A plot of the allele clusters dendrogram 
 #' 
 
-plotAlleleCluster <- function(x){
+plotAlleleCluster <- function(x, y = NULL){
   
   ## check the class of the object
   
-  if(class(x)!="GermlineCluster") stop("Object is not of class GermlineCluster")
+  if(inherits(x,"GermlineCluster")) stop("Object is not of class GermlineCluster")
   
   alleleClusterTable <- x@alleleClusterTable
   hclustAlleleCluster <- x@hclustAlleleCluster
@@ -532,12 +536,9 @@ plotAlleleCluster <- function(x){
       draw_line <- function(x0, x1, y0, y1, col = "black", lty = 1, lwd = 1, eps = 0.5){
         circos.segments(x0 = x0 ,#- eps,
                         x1 = x1,
-                        y = y0, 
+                        y0 = y0, 
                         y1 = y1,
                         straight = T
-                        #col = col, 
-                        #lty = lty, 
-                        #lwd = lwd,
         )
       }
       
@@ -629,7 +630,11 @@ plotAlleleCluster <- function(x){
   
 }
 
-#' @rdname GermlineCluster-methods
+#' @describeIn GermlineCluster Plot the dendrogram for the allele clusters.
+#' 
+#' @param x      GermlineCluster object
+#' @param y      not in use. missing.
+#' 
 #' @aliases plot,GermlineCluster,missing
 #' @exportMethod plot
 #' @importFrom methods signature

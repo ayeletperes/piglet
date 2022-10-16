@@ -26,7 +26,7 @@
 #'
 #' \itemize{
 #'   \item  \link{inferGenotypeAllele}:      Infer the IGHV genotype using the allele based method.
-#'   \item  \link{updateThresh}:             Download the most recent version of the allele clusters threshold.
+#'   \item  \link{recentAlleleClusters}:     Download the most recent version of the allele clusters threshold.
 #'   \item  \link{assignAlleleClusters}:     Renames the v allele calls based on the new allele clusters.
 #' }
 #'
@@ -34,20 +34,22 @@
 #' @docType  package
 #' @references
 #' \enumerate{
-#'   \item
-#'  }
+#'   \item  ##
+#'}
 #'
 #' @import   methods
+#' @import   graphics
+#' @import   grDevices
 #' @import   utils
 #' @import   dendextend
 #' @import   dplyr
 #' @import   ggplot2
 #' @import   circlize
 #' @importFrom  data.table       := rbindlist data.table .N setDT CJ setorderv setkey .SD
-#' @importFrom  stats            hclust as.dendrogram as.dist binom.test p.adjust setNames weighted.mean
-#' @importFrom  alakazam         getGene
+#' @importFrom  stats            hclust as.dendrogram as.dist binom.test p.adjust setNames weighted.mean median
+#' @importFrom  alakazam         getGene getAllele
 #' @importFrom  rlang            .data
-#' @importFrom  tigger           readIgFasta
+#' @importFrom  tigger           readIgFasta findUnmutatedCalls
 #' @importFrom  Biostrings       DNAStringSet
 #' @importFrom  DECIPHER         DistanceMatrix
 #' @importFrom  RColorBrewer     brewer.pal.info brewer.pal

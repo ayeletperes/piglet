@@ -1,12 +1,28 @@
-Package: alleleclustergentoype
-Title: What the Package Does (One Line, Title Case)
+Package: alleleclustergenotype
+Title: B/TCR Allele Clusters Inference and Genotype
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"), 
+                    email="peresay@biu.ac.il"),
+            person("William", "Lees", role=c("aut"), 
+                    email="william@lees.org.uk"),
+             person("Gur", "Yaari", role=c("aut","cph"), 
+                    email="gur.yaari@biu.ac.il"))
+Description: The package provides two tools. The first is Allele Clusters, this tool is designed to reduce the ambiguity within the IGHV alleles. 
+             The ambiguity is caused by duplicated or similar alleles which are shared among different genes. 
+             The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population.
+License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
+Depends: R (>= 3.5.0)
+Imports: dplyr (>= 1.0.9), Biostrings (>= 2.64.0), DECIPHER (>= 2.24.0), 
+    alakazam (>= 1.2.0), dendextend (>= 1.9.0), data.table (>= 1.12.2), 
+    tigger (>= 1.0.0), methods (>= 3.4.4), rlang (>= 0.4.0),
+    RColorBrewer (>= 1.1.2), ggplot2 (>= 3.3.6), circlize (>= 0.4.15)
+Suggests: knitr,
+    rmarkdown, stats, graphics, grDevices
 RoxygenNote: 7.2.0
+Collate: 
+    'alleleclustergenotype.R'
+    'allele_cluster.R'
+    'allele_genotype.R'
+    'zzz.R'
