@@ -5,7 +5,7 @@
 \title{A wrapper function to infer the allele clusters. See details for cluster inference}
 \usage{
 inferAlleleClusters(
-  germline_set_file,
+  germline_set,
   trim_3prime_side = 318,
   mask_5prime_side = 0,
   family_threshold = 75,
@@ -13,7 +13,7 @@ inferAlleleClusters(
 )
 }
 \arguments{
-\item{germline_set_file}{The path to the germline set file, the file must be gapped by IMGT scheme for optimal results.}
+\item{germline_set}{Either a named vector of strings representing Ig sequence alleles, or a path to to the germline set file (must be gapped by IMGT scheme for optimal results).}
 
 \item{trim_3prime_side}{To which nucleotide position to trim the sequences. Default is 318; NULL will take the entire sequence length.}
 
@@ -40,6 +40,21 @@ IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster numbering,
 G1 - allele cluster numbering, and 01 = allele numbering (given by clustering order, no connection to the expression)
 
 To plot the allele clusters dendrogram use the \code{plot} function on the \link{GermlineCluster} object
+}
+\examples{
+\dontrun{
+# load the initial germline set
+
+data(HVGERM)
+
+germline <- HVGERM
+
+asc <- inferAlleleClusters(germline)
+
+## plotting the clusters
+
+plot(asc)
+}
 }
 \seealso{
 By using the plot function on the returned object, a colorful visualization of the allele clusters dendogram and threshold is recived.

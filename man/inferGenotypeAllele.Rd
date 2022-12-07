@@ -48,6 +48,33 @@ In naive repertoires, allele calls where more than one assignment is assigned is
 it is recommended to use the \code{find_unmutated=TRUE} option, to remove mutated sequences. For non-naive population, the allele calls in cases of multiple assinment
 are treated as belonging to all groups.
 }
+\examples{
+\dontrun{
+
+# loading TIgGER AIRR-seq b cell data
+data <- tigger::AIRRDb
+
+# getting the archive
+asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+
+# extracting the allele cluster table
+allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+
+data(HVGERM)
+
+# reforming the germline set
+asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
+
+# assigning the ASC alleles
+asc_data <- assignAlleleClusters(data, allele_cluster_table)
+
+# inferring the genotype
+asc_genotype <- inferGenotypeAllele(asc_data, 
+alleleClusterTable = allele_cluster_table, 
+germline_db = asc_germline, find_unmutated=T)
+}
+
+}
 \seealso{
 \link{inferAlleleClusters} will infer the allele clusters based on a supplied V reference set and set the default allele threshold of 1e-04.
 See \link{recentAlleleClusters} to obtain the latest version of the IGHV allele clusters and the naive population based allele threshold.

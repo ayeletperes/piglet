@@ -2,7 +2,7 @@
 
 The code in the repository is for creating an R package for the allele clusters (ACs) and the allele-based genotype.
 
-The Scripts folder will hold the function of the package. The functions will be devided into several sections.
+The Scripts folder will hold the function of the package. The functions are divided into several sections.
 
 ## Functions
 

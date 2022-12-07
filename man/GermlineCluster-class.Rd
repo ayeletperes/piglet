@@ -22,9 +22,9 @@ and the threshold parameters.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{plot}: Plot the dendrogram for the allele clusters.
-}}
+\item \code{plot(x = GermlineCluster, y = missing)}: Plot the dendrogram for the allele clusters.
 
+}}
 \section{Slots}{
 
 \describe{

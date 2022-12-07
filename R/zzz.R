@@ -5,6 +5,6 @@
 #'
 #' @return invisible()
 .onAttach <- function(libname, pkgname) {
-  packageStartupMessage(paste0("AlleleClusterGenotype version: ",packageVersion(pkgname)))
+  packageStartupMessage(paste0("PIgLET version: ",packageVersion(pkgname)))
   invisible()
 }

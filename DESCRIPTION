@@ -1,5 +1,5 @@
-Package: alleleclustergenotype
-Title: B/TCR Allele Clusters Inference and Genotype
+Package: piglet
+Title: PIgLET - Program for Ig clusters
 Version: 0.0.0.9000
 Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"), 
                     email="peresay@biu.ac.il"),
@@ -7,8 +7,8 @@ Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"),
                     email="william@lees.org.uk"),
              person("Gur", "Yaari", role=c("aut","cph"), 
                     email="gur.yaari@biu.ac.il"))
-Description: The package provides two tools. The first is Allele Clusters, this tool is designed to reduce the ambiguity within the IGHV alleles. 
-             The ambiguity is caused by duplicated or similar alleles which are shared among different genes. 
+Description: PIgLET is a suite of computational tools that improves genotype inference and downstream AIRR-seq data analysis. The main tools of PIgLET are allele similarity clusters (ASC), and allele based genotype.
+             The first tool is designed to reduce the ambiguity within the IGHV alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes. 
              The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population.
 License: CC BY 4.0
 Encoding: UTF-8
@@ -16,13 +16,16 @@ Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports: dplyr (>= 1.0.9), Biostrings (>= 2.64.0), DECIPHER (>= 2.24.0), 
     alakazam (>= 1.2.0), dendextend (>= 1.9.0), data.table (>= 1.12.2), 
-    tigger (>= 1.0.0), methods (>= 3.4.4), rlang (>= 0.4.0),
-    RColorBrewer (>= 1.1.2), ggplot2 (>= 3.3.6), circlize (>= 0.4.15)
+    tigger (>= 1.0.0), methods (>= 3.4.4), rlang (>= 0.4.0), 
+    splitstackshape (>= 1.4.8), zen4R (>= 0.7), RColorBrewer (>= 1.1.2), 
+    ggplot2 (>= 3.3.6), circlize (>= 0.4.15)
 Suggests: knitr,
     rmarkdown, stats, graphics, grDevices
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Collate: 
-    'alleleclustergenotype.R'
+    'Data.R'
+    'piglet.R'
     'allele_cluster.R'
     'allele_genotype.R'
     'zzz.R'
+VignetteBuilder: knitr

@@ -1,15 +1,15 @@
-# alleleclustergenotype package documentation and import directives
+# piglet package documentation and import directives
 
-#' The alleleclustergenotype package
+#' The Program for Ig clusters (PIgLET) package
 #'
-#' The \code{alleleclustergenotype} package provides two tools. The first is Allele Clusters,
-#' this tool is designed to reduce the ambiguity within the IGHV alleles. The ambiguity
+#' PIgLET is a suite of computational tools that improves genotype inference and downstream AIRR-seq data analysis.
+#' The pachage as two main tools. The first is Allele Clusters, this tool is designed to reduce the ambiguity within the IGHV alleles. The ambiguity
 #' is caused by duplicated or similar alleles which are shared among different genes.
 #' The second tool is an allele based genotype, that determined the presence of an allele based on
 #' a threshold derived from a naive population.
 #'
-#' @section  Allele Cluster:
-#' This section provides the functions that support the main tool of creating the allele cluster form
+#' @section  Allele Similarity Cluster:
+#' This section provides the functions that support the main tool of creating the allele similarity cluster form
 #' an IGHV germline set.
 #'
 #' \itemize{
@@ -26,11 +26,13 @@
 #'
 #' \itemize{
 #'   \item  \link{inferGenotypeAllele}:      Infer the IGHV genotype using the allele based method.
-#'   \item  \link{recentAlleleClusters}:     Download the most recent version of the allele clusters threshold.
 #'   \item  \link{assignAlleleClusters}:     Renames the v allele calls based on the new allele clusters.
+#'   \item  \link{germlineASC}:              Converts IGHV germline set to ASC germline set.
+#'   \item  \link{recentAlleleClusters}:     Download the most recent version of the allele clusters table archive from zenodo.
+#'   \item  \link{extractASCTable}:          Extracts the allele cluster table from the zenodo archive file.
 #' }
 #'
-#' @name     alleleclustergenotype
+#' @name     piglet
 #' @docType  package
 #' @references
 #' \enumerate{
@@ -53,4 +55,6 @@
 #' @importFrom  Biostrings       DNAStringSet
 #' @importFrom  DECIPHER         DistanceMatrix
 #' @importFrom  RColorBrewer     brewer.pal.info brewer.pal
+#' @importFrom  splitstackshape  cSplit
+#' @importFrom  zen4R            download_zenodo
 NULL

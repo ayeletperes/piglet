@@ -2,20 +2,37 @@
 % Please edit documentation in R/allele_genotype.R
 \name{recentAlleleClusters}
 \alias{recentAlleleClusters}
-\title{Download the most recent allele clusters reference set and thresholds based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
-At the moment onlu available for human IGHV reference set.}
+\title{Download the most recent allele similarity clusters and thresholds from the zenodo archive.
+The clusters and thresholds are based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
+At the moment only available for human IGHV reference set.}
 \usage{
-recentAlleleClusters(version = "latest")
+recentAlleleClusters(
+  doi = "10.5281/zenodo.7401239",
+  path,
+  get_file = F,
+  quite = F
+)
 }
 \arguments{
-\item{version}{The version of the allele cluster to download. Default is \code{latest}.}
+\item{doi}{The doi for the archive to download. Default is the IGHV set.}
+
+\item{path}{The output folder for saving the archive files. Default is to a temporary directory.}
+
+\item{get_file}{Logical (FALSE by default). Do you want to return the path for the file downloaded.}
+
+\item{quite}{Logical (FALSE by default). Do you want to suppress informative messages}
 }
 \value{
-An object of type \code{GermlineCluster} that includes the allele cluster table \code{alleleClusterTable} with the new names and the default thresholds,
-the renamed germline set \code{alleleClusterSet}, the germline set hierarchical clustering \code{hclustAlleleCluster},
-and the threshold parameters \code{threshold}.
+If get_file is TRUE, the function returns the path to the archive file
 }
 \description{
-Download the most recent allele clusters reference set and thresholds based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
-At the moment onlu available for human IGHV reference set.
+Download the most recent allele similarity clusters and thresholds from the zenodo archive.
+The clusters and thresholds are based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
+At the moment only available for human IGHV reference set.
+}
+\examples{
+\dontrun{
+recentAlleleClusters(doi="10.5281/zenodo.7401239")
+}
+
 }
