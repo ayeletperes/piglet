@@ -14,13 +14,27 @@ License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
-Imports: dplyr (>= 1.0.9), Biostrings (>= 2.64.0), DECIPHER (>= 2.24.0), 
-    alakazam (>= 1.2.0), dendextend (>= 1.9.0), data.table (>= 1.12.2), 
-    tigger (>= 1.0.0), methods (>= 3.4.4), rlang (>= 0.4.0), 
-    splitstackshape (>= 1.4.8), zen4R (>= 0.7), RColorBrewer (>= 1.1.2), 
-    ggplot2 (>= 3.3.6), circlize (>= 0.4.15)
-Suggests: knitr,
-    rmarkdown, stats, graphics, grDevices
+Imports: 
+  dplyr (>= 1.0.9),
+  Biostrings (>= 2.64.0),
+  DECIPHER (>= 2.24.0), 
+  alakazam (>= 1.2.0),
+  dendextend (>= 1.9.0),
+  data.table (>= 1.12.2), 
+  tigger (>= 1.0.0),
+  methods (>= 3.4.4),
+  rlang (>= 0.4.0), 
+  splitstackshape (>= 1.4.8),
+  zen4R (>= 0.7),
+  RColorBrewer (>= 1.1.2), 
+  ggplot2 (>= 3.3.6),
+  circlize (>= 0.4.15)
+Suggests: 
+  knitr,
+  rmarkdown,
+  stats,
+  graphics,
+  grDevices
 RoxygenNote: 7.2.1
 Collate: 
     'Data.R'
