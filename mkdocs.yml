@@ -1,16 +1,22 @@
-theme: readthedocs
 site_name: piglet
-docs_dir: docs
+site_url: https://piglet.readthedocs.io
+repo_url: https://bitbucket.org/yaarilab/piglet
+edit_uri: src/master/docs/
+theme:
+  name: readthedocs
+  navigation_depth: 2
+  collapse_navigation: False
+  titles_only: False
 markdown_extensions:
   - def_list
   - sane_lists
   - smarty
-  - pymdownx.arithmatex
   - toc:
+      baselevel: 1
+      toc_depth: 1-4
       permalink: True
-extra_javascript:
-  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
-pages:
+docs_dir: 'docs'
+nav:
   - 'About':
     - 'Introduction': index.md
     - 'Package Overview': topics/piglet.md
@@ -18,21 +24,21 @@ pages:
   - 'Vignettes':
     - 'PIgLET: Program for Ig clusters': vignettes/PIgLET-vignette.md
   - 'Help Topics':
-    - topics/alleleClusterNames.md
-    - topics/artificialFRW1Germline.md
-    - topics/assignAlleleClusters.md
-    - topics/dot-onAttach.md
-    - topics/extractASCTable.md
-    - topics/generateReferenceSet.md
-    - topics/germlineASC.md
-    - topics/GermlineCluster-class.md
-    - topics/hv_functionality.md
-    - topics/HVGERM.md
+  - 'Allele Similarity Cluste':
+    - topics/inferAlleleClusters.md
     - topics/ighvClust.md
     - topics/ighvDistance.md
-    - topics/inferAlleleClusters.md
-    - topics/inferGenotypeAllele.md
-    - topics/pipe.md
+    - topics/generateReferenceSet.md
     - topics/plotAlleleCluster.md
+    - topics/artificialFRW1Germline.md
+  - 'Allele based genotype':
+    - topics/inferGenotypeAllele.md
+    - topics/assignAlleleClusters.md
+    - topics/germlineASC.md
     - topics/recentAlleleClusters.md
+    - topics/extractASCTable.md
     - topics/zenodoArchive.md
+  - 'Data':
+    - topics/hv_functionality.md
+    - topics/HVGERM.md
+    
