@@ -7,3 +7,4 @@
 \.Rcheck
 .readthedocs.yaml
 ^docs$
+^mkdocs.yml

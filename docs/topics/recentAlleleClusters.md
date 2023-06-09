@@ -52,7 +52,7 @@ Examples
 recentAlleleClusters(doi="10.5281/zenodo.7401189")
 ```
 
-*Files will be downloaded to tmp directory: /tmp/RtmplVEzDA*
+*Files will be downloaded to tmp directory: /tmp/Rtmpn83kLa*
 
 
 

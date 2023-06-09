@@ -40,7 +40,7 @@ Suggests:
   stats,
   graphics,
   grDevices,
-  kfigr,
+  htmltools,
   ComplexHeatmap,
   ggmsa,
   stringi,

@@ -29,37 +29,6 @@ accompanied by an online interactive website, to allow researchers to
 further explore the approach on real data [IGHV reference
 book](https://yaarilab.github.io/IGHV_reference_book/).
 
-# Download & Installation
-
-PIgLET is available for installation from the development version.
-
-To build from the source code, first install the build dependencies:
-
-
-```r
-install.packages(c("devtools", "roxygen2", "testthat", "knitr", "rmarkdown", "plotly"))
-```
-
-To install the latest version via devtools:
-
-
-```r
-library(devtools)
-install_bitbucket("yaarilab/piglet")
-```
-
-Note, installing from bitbucket does not generate the documentation. To
-generate them, first clone the repository and then build:
-
-
-```r
-library(devtools)
-install_deps()
-document()
-build()
-install()
-```
-
 # Package Overview
 
 PIgLET is a suite of computational tools that improves genotype
@@ -182,7 +151,6 @@ germline <- germline[nchar(germline) >= 318]
 germline <- germline[!grepl("NL", names(germline))]
 ```
 
-<a name="lst-germlineset-code"></a>
 
 ```r
 germline <- HVGERM
@@ -306,7 +274,7 @@ To retrieve the archive files we can use the `recentAlleleClusters` function. Th
 zenodo_doi <- "10.5281/zenodo.7401189"
 asc_archive <-
   recentAlleleClusters(doi = zenodo_doi, get_file = TRUE)
-#> Files will be downloaded to tmp directory: /tmp/RtmplVEzDA
+#> Files will be downloaded to tmp directory: /tmp/Rtmpn83kLa
 ```
 
 To extract the ASC threshold table we can use the `extractASCTable`
@@ -469,7 +437,7 @@ genotype <- data.frame(alleles = alleles, gene = genes)
 tigger::plotGenotype(genotype = genotype)
 ```
 
-![plot of chunk PIgLET-vignette-13](figure/PIgLET-vignette-13-1.png)
+![plot of chunk PIgLET-vignette-10](figure/PIgLET-vignette-10-1.png)
 
 # Contact
 

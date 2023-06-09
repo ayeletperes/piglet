@@ -40,7 +40,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   crop = knitr::hook_pdfcrop
 )
-suppressMessages(library(kfigr))
+suppressMessages(library(htmltools))
 ```
 
 ```{r, echo=FALSE}
@@ -73,34 +73,6 @@ Immunological Societies (IUIS). The package genotype inference method is
 accompanied by an online interactive website, to allow researchers to
 further explore the approach on real data [IGHV reference
 book](https://yaarilab.github.io/IGHV_reference_book/).
-
-# Download & Installation
-
-PIgLET is available for installation from the development version.
-
-To build from the source code, first install the build dependencies:
-
-```{r, eval=FALSE}
-install.packages(c("devtools", "roxygen2", "testthat", "knitr", "rmarkdown", "plotly"))
-```
-
-To install the latest version via devtools:
-
-```{r, eval=FALSE}
-library(devtools)
-install_bitbucket("yaarilab/piglet")
-```
-
-Note, installing from bitbucket does not generate the documentation. To
-generate them, first clone the repository and then build:
-
-```{r, eval=FALSE}
-library(devtools)
-install_deps()
-document()
-build()
-install()
-```
 
 # Package Overview
 

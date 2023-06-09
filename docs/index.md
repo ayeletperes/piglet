@@ -60,7 +60,7 @@ RAbHIT is free for use under the [CC BY-SA 4.0](https://creativecommons.org/lice
 
 **Depends:** FALSE  
 **Imports:** dplyr, Biostrings, DECIPHER, alakazam, dendextend, data.table, tigger, methods, rlang, splitstackshape, zen4R, RColorBrewer, ggplot2, circlize, R6, jsonlite, magrittr  
-**Suggests:** knitr, rmarkdown, stats, graphics, grDevices, kfigr, ComplexHeatmap, ggmsa, stringi, bookdown
+**Suggests:** knitr, rmarkdown, stats, graphics, grDevices, htmltools, ComplexHeatmap, ggmsa, stringi, bookdown
 
 
 # Authors
