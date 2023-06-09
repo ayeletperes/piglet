@@ -2,8 +2,7 @@
 % Please edit documentation in R/allele_genotype.R
 \name{assignAlleleClusters}
 \alias{assignAlleleClusters}
-\title{\code{assignAlleleClusters} uses the allele clusters annotation to change the preliminary allele
-assignments to the new annotations before inferring a genotype.}
+\title{Assign allele similarity clusters}
 \usage{
 assignAlleleClusters(data, alleleClusterTable, v_call = "v_call")
 }

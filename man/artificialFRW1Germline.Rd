@@ -2,7 +2,7 @@
 % Please edit documentation in R/allele_cluster.R
 \name{artificialFRW1Germline}
 \alias{artificialFRW1Germline}
-\title{A function to artificially create an IGHV reference set with framework1 (FWR1) primers (see Details).}
+\title{FWR1 artificial dataset generator}
 \usage{
 artificialFRW1Germline(
   germline_set,

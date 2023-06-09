@@ -1,0 +1,38 @@
+theme: readthedocs
+site_name: piglet
+docs_dir: docs
+markdown_extensions:
+  - def_list
+  - sane_lists
+  - smarty
+  - pymdownx.arithmatex
+  - toc:
+      permalink: True
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+pages:
+  - 'About':
+    - 'Introduction': index.md
+    - 'Package Overview': topics/piglet.md
+    - 'Release Notes': news.md
+  - 'Vignettes':
+    - 'PIgLET: Program for Ig clusters': vignettes/PIgLET-vignette.md
+  - 'Help Topics':
+    - topics/alleleClusterNames.md
+    - topics/artificialFRW1Germline.md
+    - topics/assignAlleleClusters.md
+    - topics/dot-onAttach.md
+    - topics/extractASCTable.md
+    - topics/generateReferenceSet.md
+    - topics/germlineASC.md
+    - topics/GermlineCluster-class.md
+    - topics/hv_functionality.md
+    - topics/HVGERM.md
+    - topics/ighvClust.md
+    - topics/ighvDistance.md
+    - topics/inferAlleleClusters.md
+    - topics/inferGenotypeAllele.md
+    - topics/pipe.md
+    - topics/plotAlleleCluster.md
+    - topics/recentAlleleClusters.md
+    - topics/zenodoArchive.md

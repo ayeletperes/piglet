@@ -2,7 +2,7 @@
 % Please edit documentation in R/allele_cluster.R
 \name{alleleClusterNames}
 \alias{alleleClusterNames}
-\title{For a given cluster the function collapse similar sequences and renames the sequences based on the ASC name scheme}
+\title{Allele similarity cluster naming scheme}
 \usage{
 alleleClusterNames(cluster, allele.cluster.table, germ.dist, chain, segment)
 }

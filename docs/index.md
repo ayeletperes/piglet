@@ -54,3 +54,22 @@ For help, questions, or suggestions, please contact:
 ## Copying ##
 
 RAbHIT is free for use under the [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode)
+
+
+# Dependencies
+
+**Depends:** FALSE  
+**Imports:** dplyr, Biostrings, DECIPHER, alakazam, dendextend, data.table, tigger, methods, rlang, splitstackshape, zen4R, RColorBrewer, ggplot2, circlize, R6, jsonlite, magrittr  
+**Suggests:** knitr, rmarkdown, stats, graphics, grDevices, kfigr, ComplexHeatmap, ggmsa, stringi, bookdown
+
+
+# Authors
+
+[Ayelet Peres](mailto:peresay@biu.ac.il) (aut, cre)  
+[William Lees](mailto:william@lees.org.uk) (aut)  
+[Gur Yaari](mailto:gur.yaari@biu.ac.il) (aut, cph)
+
+
+# License
+
+CC BY 4.0

@@ -1,7 +1,7 @@
 ---
 title: "PIgLET: Program for Ig clusters"
 author: "Ayelet Peres & William D. Lees & Gur Yaari"
-date: "`Last modified r Sys.Date()`"
+date: "Last modified `r Sys.Date()`"
 output:
   bookdown::html_document2:
     base_format: rmarkdown::html_vignette
@@ -41,6 +41,12 @@ knitr::opts_chunk$set(
   crop = knitr::hook_pdfcrop
 )
 suppressMessages(library(kfigr))
+```
+
+```{r, echo=FALSE}
+htmltools::img(src = knitr::image_uri("piglet_logo.svg"), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px;border: none !important;')
 ```
 
 # Introduction
@@ -346,7 +352,7 @@ Before clustering the germline set, we will remove non functional
 alleles, alleles that do not start on the first 5' nucleotide, and those
 that are shorter than 318 bases.
 
-```{r lst-germlineset, fig.cap="", anchor="figure"}
+```{r lst-germlineset}
 germline <- HVGERM
 ## keep only functional alleles
 germline <- germline[hv_functionality$allele[hv_functionality$functional=="F"]]
@@ -356,6 +362,9 @@ germline <- germline[!grepl("^[.]", germline)]
 germline <- germline[nchar(germline) >= 318]
 ## keep only localized alleles (remove NL)
 germline <- germline[!grepl("NL", names(germline))]
+```
+
+```{r lst-germlineset-code, ref.label='lst-germlineset', anchor="block", eval=FALSE}
 ```
 
 Then we will create the ASC clusters using the `inferAlleleClusters`
@@ -409,8 +418,8 @@ character vector with the named sequence in the desire length
 (Trimmed/Masked).
 
 To demonstrate the use of the function, we can use the cleaned germline
-set from above (`r figr("lst-germlineset", TRUE, type="code")`). In this case we will mask the
-FRW1 region, this will return the sequences with the Ns instead of DNA
+set from above (<a href="#lst-germlineset-code">block 1</a>). 
+In this case we will mask the FRW1 region, this will return the sequences with the Ns instead of DNA
 nucleotide. The function output a log of the process, this output can be
 repressed using the `quite=TRUE` flag.
 
@@ -458,7 +467,7 @@ In PIgLET the Allele based genotype section is dedicated to the ASC-based genoty
 
 ## ASC-based thresholds
 
-### Introduction {# sec-genotype}
+### Introduction {#sec-genotype}
 
 Briefly, the ASC-based threshold were determined based on a population of a large naive IGH repertoire cohort. For each allele a specific threshold was determined based on the population usage, the haplotype information (if available) and based on the alleles presented in the individual. The thresholds were adjusted based on a genomic validation approach with a coupled dataset, of both repertoire and long read data. At base the default threshold for any allele is $0.0001$, this value is also what the function `inferAlleleClusters` returns for each of the alleles in the germline set. For more information on the specific threshold please review the manuscript Peres at al. [@peres2022ighv] and the [IGHV reference
 book](https://yaarilab.github.io/IGHV_reference_book/).
@@ -483,7 +492,7 @@ allele_cluster_table <- extractASCTable(archive_file = asc_archive)
 ```
 
 The table is has identical ASC clusters to the table we created above
-(`r figr("lst-asc", TRUE, type="code")`).
+(<a href="#lst-asc">block 2</a>).
 
 ```{r, echo=FALSE}
 asc_tables <- dplyr::left_join(

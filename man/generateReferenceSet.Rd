@@ -2,8 +2,7 @@
 % Please edit documentation in R/allele_cluster.R
 \name{generateReferenceSet}
 \alias{generateReferenceSet}
-\title{Generates the allele clusters reference set based on the clustering from \link{ighvClust}. The function collapse
-similar alleles and assign them into their respective allele clusters and family clusters. See details for naming scheme}
+\title{Generate allele similarity reference set}
 \usage{
 generateReferenceSet(germline_distance, germline_set, alleleClusterTable)
 }

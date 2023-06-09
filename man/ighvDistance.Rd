@@ -2,9 +2,7 @@
 % Please edit documentation in R/allele_cluster.R
 \name{ighvDistance}
 \alias{ighvDistance}
-\title{Calculates the distance between pairs of alleles based on their aligned germline sequences.
-The function assume the germline set sequence are at an even length.
-If not the function will pad the sequences with to the longest sequence length with Ns.}
+\title{Germline set alleles distance}
 \usage{
 ighvDistance(germline_set)
 }

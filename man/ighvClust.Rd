@@ -2,8 +2,7 @@
 % Please edit documentation in R/allele_cluster.R
 \name{ighvClust}
 \alias{ighvClust}
-\title{Cluster the distance matrix from \code{ighvDistance} to create the allele clusters based on two thresholds:
-75\% similarity which represents the family clustering and 95\% similarity between alleles which represents the allele clusters}
+\title{Allele similarity clustering}
 \usage{
 ighvClust(
   germline_distance,

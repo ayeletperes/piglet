@@ -45,7 +45,7 @@ Suggests:
   ggmsa,
   stringi,
   bookdown
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Collate: 
     'Data.R'
     'piglet.R'
@@ -56,4 +56,3 @@ Collate:
 LazyData: true
 BuildVignettes: true
 VignetteBuilder: knitr
-

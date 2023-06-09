@@ -2,9 +2,7 @@
 % Please edit documentation in R/allele_genotype.R
 \name{inferGenotypeAllele}
 \alias{inferGenotypeAllele}
-\title{\code{inferGenotypeAllele} infer an individual's genotype based on the allele-base method.
-The method utilize the allele specific threshold to determine the presence of an allele in the genotype.
-More specifically, the absolute frequency of each allele is calculated and checked against the threshold.}
+\title{Allele similarity cluster based genotype inference}
 \usage{
 inferGenotypeAllele(
   data,
@@ -19,7 +17,7 @@ inferGenotypeAllele(
 \arguments{
 \item{data}{data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.}
 
-\item{alleleClusterTable}{A data.frame of the allele clusters new annotations relative to the original reference set.}
+\item{alleleClusterTable}{A data.frame of the allele similarity clusters thresholds.}
 
 \item{v_call}{name of the V allele call column. Default is \code{v_call}}
 

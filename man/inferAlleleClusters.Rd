@@ -2,7 +2,7 @@
 % Please edit documentation in R/allele_cluster.R
 \name{inferAlleleClusters}
 \alias{inferAlleleClusters}
-\title{A wrapper function to infer the allele clusters. See details for cluster inference}
+\title{Allele similarity cluster}
 \usage{
 inferAlleleClusters(
   germline_set,

@@ -2,9 +2,7 @@
 % Please edit documentation in R/allele_genotype.R
 \name{recentAlleleClusters}
 \alias{recentAlleleClusters}
-\title{A wrapper function for \code{zenodoArchive}, download the most recent allele similarity clusters and thresholds from the zenodo archive.
-The clusters and thresholds are based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
-At the moment only available for human IGHV reference set.}
+\title{Retrieving allele similarity clusters Zenodo archive}
 \usage{
 recentAlleleClusters(
   doi = "10.5281/zenodo.7401189",
@@ -27,7 +25,7 @@ If get_file is TRUE, the function returns the path to the archive file
 }
 \description{
 A wrapper function for \code{zenodoArchive}, download the most recent allele similarity clusters and thresholds from the zenodo archive.
-The clusters and thresholds are based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
+The clusters and thresholds are based on \url{https://yaarilab.github.io/IGHV_reference_book/}
 At the moment only available for human IGHV reference set.
 }
 \examples{
