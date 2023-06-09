@@ -24,21 +24,21 @@ nav:
   - 'Vignettes':
     - 'PIgLET: Program for Ig clusters': vignettes/PIgLET-vignette.md
   - 'Help Topics':
-  - 'Allele Similarity Cluste':
-    - topics/inferAlleleClusters.md
-    - topics/ighvClust.md
-    - topics/ighvDistance.md
-    - topics/generateReferenceSet.md
-    - topics/plotAlleleCluster.md
-    - topics/artificialFRW1Germline.md
-  - 'Allele based genotype':
-    - topics/inferGenotypeAllele.md
-    - topics/assignAlleleClusters.md
-    - topics/germlineASC.md
-    - topics/recentAlleleClusters.md
-    - topics/extractASCTable.md
-    - topics/zenodoArchive.md
-  - 'Data':
-    - topics/hv_functionality.md
-    - topics/HVGERM.md
+      - 'Allele Similarity Cluste':
+        - topics/inferAlleleClusters.md
+        - topics/ighvClust.md
+        - topics/ighvDistance.md
+        - topics/generateReferenceSet.md
+        - topics/plotAlleleCluster.md
+        - topics/artificialFRW1Germline.md
+      - 'Allele based genotype':
+        - topics/inferGenotypeAllele.md
+        - topics/assignAlleleClusters.md
+        - topics/germlineASC.md
+        - topics/recentAlleleClusters.md
+        - topics/extractASCTable.md
+        - topics/zenodoArchive.md
+      - 'Data':
+        - topics/hv_functionality.md
+        - topics/HVGERM.md
     
