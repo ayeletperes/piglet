@@ -45,7 +45,7 @@ More specifically, the absolute frequency of each allele is calculated and check
 }
 \details{
 In naive repertoires, allele calls where more than one assignment is assigned is rare. Hence, in case the data represents the naive repertoire of a subject
-it is recommended to use the \code{find_unmutated=TRUE} option, to remove mutated sequences. For non-naive population, the allele calls in cases of multiple assinment
+it is recommended to use the \code{find_unmutated=TRUE} option, to remove mutated sequences. For non-naive population, the allele calls in cases of multiple assignment
 are treated as belonging to all groups.
 }
 \examples{
@@ -69,8 +69,8 @@ asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
 asc_data <- assignAlleleClusters(data, allele_cluster_table)
 
 # inferring the genotype
-asc_genotype <- inferGenotypeAllele(asc_data, 
-alleleClusterTable = allele_cluster_table, 
+asc_genotype <- inferGenotypeAllele(asc_data,
+alleleClusterTable = allele_cluster_table,
 germline_db = asc_germline, find_unmutated=T)
 }
 

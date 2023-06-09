@@ -2,35 +2,10 @@
 
 #### Data ####
 
-#' Example IGH human naive b-cell repertiore
-#'
-#' A \code{data.frame} of example IGH human naive b-cell repertiore data from five
-#' individuals (see references). Overall, the data set includes 6 samples.
-#' A single individual has two samples (Individual I5),
-#' one is short read sequences from  BIOMED-2 protocol primers for framework 2 region (The sample is annotated I5_FR2).
-#'
-#'
-#' @name samples_db
-#' @docType data
-#' @format A \code{data.frame} in Change-O format (\url{https://changeo.readthedocs.io/en/stable/standard.html}) containing the following columns:
-#' \itemize{
-#'   \item \code{'SUBJECT'}: subject names
-#'   \item \code{'V_CALL'}: V allele call(s) (in an IMGT format)
-#'   \item \code{'D_CALL'}: D allele call(s) (in an IMGT format, only for heavy chains)
-#'   \item \code{'J_CALL'}: J allele call(s) (in an IMGT format)
-#' }
-#'
-#'
-#' @references Gidoni, Moriah, \emph{et al}. Mosaic deletion patterns of the human antibody heavy chain
-#' gene locus shown by Bayesian haplotyping.
-#' \emph{Nature Communications}. 10.1 (2019): 628.
-#' @keywords data antibody AIRR NGS
-"samples_db"
-
 #' Human IGHV germlines
 #'
-#' A \code{character} vector of all 342 human IGHV germline gene segment alleles
-#' in IMGT Gene-db release July 2022.
+#' A \code{character} vector of all 498 human IGHV germline gene segment alleles
+#' in IMGT Gene-db release July 2022, with an additional 25 undocumented alleles from VDJbase.
 #'
 #' @name HVGERM
 #' @docType data
@@ -43,3 +18,20 @@
 #' \emph{Immunogenetics}. 67(1):61-6.
 #' @keywords data
 "HVGERM"
+
+#' Human IGHV germlines functionality description
+#'
+#' A \code{data.table} of all 498 human IGHV germline gene segment alleles
+#' in IMGT Gene-db release July 2022, with an additional 25 undocumented alleles from VDJbase.
+#' The first column is the allele name, the second column is the functionality annotation, the 
+#' third column is the nt sequence and the last column is the aa sequence.
+#'
+#' @name hv_functionality
+#' @docType data
+#'
+#' @references Xochelli \emph{et al}. (2014) Immunoglobulin heavy variable
+#' (IGHV) genes and alleles: new entities, new names and implications for
+#' research and prognostication in chronic lymphocytic leukaemia.
+#' \emph{Immunogenetics}. 67(1):61-6.
+#' @keywords data
+"hv_functionality"

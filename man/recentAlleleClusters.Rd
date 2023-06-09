@@ -2,12 +2,12 @@
 % Please edit documentation in R/allele_genotype.R
 \name{recentAlleleClusters}
 \alias{recentAlleleClusters}
-\title{Download the most recent allele similarity clusters and thresholds from the zenodo archive.
+\title{A wrapper function for \code{zenodoArchive}, download the most recent allele similarity clusters and thresholds from the zenodo archive.
 The clusters and thresholds are based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
 At the moment only available for human IGHV reference set.}
 \usage{
 recentAlleleClusters(
-  doi = "10.5281/zenodo.7401239",
+  doi = "10.5281/zenodo.7401189",
   path,
   get_file = F,
   quite = F
@@ -26,13 +26,13 @@ recentAlleleClusters(
 If get_file is TRUE, the function returns the path to the archive file
 }
 \description{
-Download the most recent allele similarity clusters and thresholds from the zenodo archive.
+A wrapper function for \code{zenodoArchive}, download the most recent allele similarity clusters and thresholds from the zenodo archive.
 The clusters and thresholds are based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
 At the moment only available for human IGHV reference set.
 }
 \examples{
 \dontrun{
-recentAlleleClusters(doi="10.5281/zenodo.7401239")
+recentAlleleClusters(doi="10.5281/zenodo.7401189")
 }
 
 }

@@ -14,10 +14,11 @@
 #'
 #' \itemize{
 #'   \item  \link{inferAlleleClusters}:      The main function of the section to create the allele clusters based on a germline set.
-#'   \item  \link{ighvDistance}:             Calculate the distance between IGHV aligned germline sequences..
+#'   \item  \link{ighvDistance}:             Calculate the distance between IGHV aligned germline sequences.
 #'   \item  \link{ighvClust}:                Hierarchical clustering of the distance matrix from `ighvDistance`.
 #'   \item  \link{generateReferenceSet}:     Generate the allele clusters reference set.
 #'   \item  \link{plotAlleleCluster}:        Plots the Hierarchical clustering.
+#'   \item  \link{artificialFRW1Germline}:   Artificially create an IGHV reference set with framework1 (FWR1) primers.
 #' }
 #'
 #' @section  Allele based genotype:
@@ -30,6 +31,7 @@
 #'   \item  \link{germlineASC}:              Converts IGHV germline set to ASC germline set.
 #'   \item  \link{recentAlleleClusters}:     Download the most recent version of the allele clusters table archive from zenodo.
 #'   \item  \link{extractASCTable}:          Extracts the allele cluster table from the zenodo archive file.
+#'   \item  \link{zenodoArchive}:            An R6 object to query the zenodo api.
 #' }
 #'
 #' @name     piglet
@@ -44,12 +46,21 @@
 #' @import   grDevices
 #' @import   utils
 #' @import   dendextend
-#' @import   dplyr
 #' @import   ggplot2
 #' @import   circlize
-#' @importFrom  data.table       := rbindlist data.table .N setDT CJ setorderv setkey .SD
+#' @import   jsonlite
+#' @importFrom  R6               R6Class
+#' @importFrom  dplyr            do n desc funs %>% distinct
+#'                               as_data_frame data_frame
+#'                               bind_cols bind_rows combine rowwise slice
+#'                               filter select arrange
+#'                               group_by ungroup
+#'                               mutate mutate_ summarize summarize_
+#'                               mutate_at summarize_at count_ count
+#'                               rename rename_ transmute transmute_ pull ungroup row_number
+#' @importFrom  data.table       := rbindlist data.table .N setDT CJ setorderv setkey .SD %chin%
 #' @importFrom  stats            hclust as.dendrogram as.dist binom.test p.adjust setNames weighted.mean median
-#' @importFrom  alakazam         getGene getAllele
+#' @importFrom  alakazam         getGene getAllele getFamily
 #' @importFrom  rlang            .data
 #' @importFrom  tigger           readIgFasta findUnmutatedCalls
 #' @importFrom  Biostrings       DNAStringSet
@@ -57,4 +68,6 @@
 #' @importFrom  RColorBrewer     brewer.pal.info brewer.pal
 #' @importFrom  splitstackshape  cSplit
 #' @importFrom  zen4R            download_zenodo
+#' @importFrom  methods          setOldClass
+#' @importFrom  splitstackshape  cSplit
 NULL

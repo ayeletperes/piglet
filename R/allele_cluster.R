@@ -8,6 +8,7 @@ NULL
 # ------------------------------------------------------------------------------
 
 #### Classes ####
+#methods::setOldClass("hclust")
 
 #' Output of inferAlleleClusters
 #'
@@ -29,18 +30,21 @@ NULL
 #' @exportClass  GermlineCluster
 setClass(
   "GermlineCluster",
-  slots = c(
+  #contains = "hclust",
+  slots = representation(
     germlineSet = "character",
     alleleClusterSet = "character",
     alleleClusterTable = "data.frame",
-    hclustAlleleCluster = "list",
-    threshold = "list"
+    threshold = "list",
+    hclustAlleleCluster = "ANY"
   )
 )
 
 
 # ------------------------------------------------------------------------------
 
+#' Germline set alleles distance
+#' 
 #' Calculates the distance between pairs of alleles based on their aligned germline sequences.
 #' The function assume the germline set sequence are at an even length.
 #' If not the function will pad the sequences with to the longest sequence length with Ns.
@@ -51,7 +55,7 @@ setClass(
 #' A \code{matrix} of the computed distances between the alleles pairs.
 #'
 #' @details
-#' The aligned IMGT IGHV allele germline set can be download from the IMGT site \href{www.IMGT.org}{www.IMGT.org} under the section genedb.
+#' The aligned IMGT IGHV allele germline set can be download from the IMGT site \url{https://www.imgt.org/} under the section genedb.
 
 
 
@@ -66,7 +70,7 @@ ighvDistance <- function(germline_set) {
     gsub("\\s", "N", format(germline_set, width = max(nchar(germline_set))))
   
   ## get the distance matrix
-  
+  germline_set = germline_set[order(names(germline_set))]
   #### change gaps from '.' to '-'
   germline_set <- gsub("[.]", "-", germline_set)
   #### create a dna string set
@@ -76,7 +80,6 @@ ighvDistance <- function(germline_set) {
     DECIPHER::DistanceMatrix(
       germline_set,
       includeTerminalGaps = FALSE,
-      penalizeGapGapMatches = FALSE,
       penalizeGapLetterMatches = TRUE,
       verbose = FALSE
     )
@@ -86,6 +89,8 @@ ighvDistance <- function(germline_set) {
 
 # ------------------------------------------------------------------------------
 
+#' Allele similarity clustering
+#' 
 #' Cluster the distance matrix from `ighvDistance` to create the allele clusters based on two thresholds:
 #' 75% similarity which represents the family clustering and 95% similarity between alleles which represents the allele clusters
 #'
@@ -122,7 +127,8 @@ ighvClust <-
       
       allele_cluster_threshold <-
         allele_cluster_threshold + family_threshold
-      family_threshold <- allele_cluster_threshold - family_threshold
+      family_threshold <-
+        allele_cluster_threshold - family_threshold
       allele_cluster_threshold <-
         allele_cluster_threshold - family_threshold
       
@@ -141,15 +147,17 @@ ighvClust <-
     
     #### cut the groups based on the threshold
     families_cut <-
-      data.frame(Family = dendextend::cutree(
-        as.dendrogram(germline_cluster, hang = -1),
-        h = family_threshold,
-        order_clusters_as_data = F
-      ))
+      data.frame(
+        "Family" = dendextend::cutree(
+          as.dendrogram(germline_cluster, hang = -1),
+          h = family_threshold,
+          order_clusters_as_data = F
+        )
+      )
     families_cut$imgt_allele <- rownames(families_cut)
     allele_cluster_cut <-
       data.frame(
-        Allele_Cluster = dendextend::cutree(
+        "Allele_Cluster" = dendextend::cutree(
           as.dendrogram(germline_cluster, hang = -1),
           h = allele_cluster_threshold,
           order_clusters_as_data = F
@@ -158,7 +166,11 @@ ighvClust <-
     allele_cluster_cut$imgt_allele <- rownames(allele_cluster_cut)
     
     ## merge the tables
-    alleleClusterTable = merge(families_cut, allele_cluster_cut, by = "imgt_allele")
+    alleleClusterTable <- dplyr::right_join(families_cut,
+                                            allele_cluster_cut,
+                                            by = "imgt_allele")
+    alleleClusterTable <-
+      alleleClusterTable[, c("imgt_allele", "Family", "Allele_Cluster")]
     
     return(
       list(
@@ -167,13 +179,208 @@ ighvClust <-
           family_threshold = family_threshold,
           allele_cluster_threshold = allele_cluster_threshold
         ),
-        hclustAlleleCluster = list(hclust = germline_cluster)
+        hclustAlleleCluster = germline_cluster
       )
     )
   }
 
 # ------------------------------------------------------------------------------
 
+#' Allele similarity cluster naming scheme
+#' 
+#' For a given cluster the function collapse similar sequences and renames the sequences based on the ASC name scheme
+#'
+#'
+#' @param    cluster               A vector with the cluster identifier - the family and allele cluster number.
+#' @param    allele.cluster.table  A data.frame with the list of all germline sequences and their clusters.
+#' @param    germ.dist             A matrix with the germline distance between the germline set sequences.
+#' @param    chain                 A character with the chain identifier: IGH/IGL/IGK/TRB/TRA... (Currently only IGH is supported)
+#' @param    segment               A character with the segment identifier: IGHV/IGHD/IGHJ.... (Currently only IGHV is supported)
+#'
+#' @return
+#'
+#' A data.frame with the clusters renamed alleles based on the ASC scheme.
+
+alleleClusterNames <-
+  function(cluster,
+           allele.cluster.table,
+           germ.dist,
+           chain,
+           segment) {
+    ## get the clusters
+    family_cluster <- cluster[[1]]
+    allele_cluster <- cluster[[2]]
+    
+    ## get the alleles
+    allele.cluster.table <-
+      allele.cluster.table[allele.cluster.table$Family == family_cluster &
+                             allele.cluster.table$Allele_Cluster == allele_cluster,]
+    
+    ### check the number of alleles. Change name and stop
+    
+    if (nrow(allele.cluster.table) == 1) {
+      allele.cluster.table$new_allele <-
+        paste0(segment, "F", family_cluster, "-G", allele_cluster, "*01")
+      allele.cluster.table$removed_duplicated <- F
+      return(allele.cluster.table)
+    }
+    
+    ## subset the distance matrix
+    germ.dist <-
+      germ.dist[allele.cluster.table$imgt_allele, allele.cluster.table$imgt_allele]
+    diag(germ.dist) = NA
+    
+    ## get similar alleles
+    distances <-
+      germ.dist[rowSums(germ.dist == 0, na.rm = T) != 0, colSums(germ.dist == 0, na.rm = T) != 0]
+    similar <- which(distances == 0, arr.ind = T)
+    
+    ## check for similar alleles. If none iterate over the alleles and re-name. Else collapse and re-name
+    if (length(similar) == 0) {
+      # number of alleles
+      n <- nrow(allele.cluster.table)
+      
+      # generate names
+      allele.cluster.table$new_allele <- sapply(1:n, function(i) {
+        paste0(segment,
+               "F",
+               family_cluster,
+               "-G",
+               allele_cluster,
+               "*",
+               ifelse(i < 10, "0", ""),
+               i)
+      })
+      allele.cluster.table$removed_duplicated <- F
+      
+      
+    } else{
+      ### get alleles and genes
+      all_alleles <- rownames(germ.dist)
+      gene <- strsplit(all_alleles[1], "[*]")[[1]][1]
+      
+      
+      ### collapse similar alleles
+      similar[, 1] <- rownames(distances[similar[, 1], ])
+      similar[, 2] <-
+        colnames(distances[, as.numeric(similar[, 2])])
+      similar <- as.data.frame(similar, stringsAsFactors = F)
+      similar$names <-
+        sapply(1:nrow(similar), function(i)
+          paste0(sort(c(
+            similar[i, 1], similar[i, 2]
+          )), collapse = ","))
+      idx_remove <- !duplicated(similar[, 3])
+      similar <- similar[idx_remove, 1:2]
+      
+      similar2 <-
+        similar %>% dplyr::rowwise() %>% dplyr::mutate(
+          "idx_novel" = ifelse(any(grepl("_", sort(
+            c(!!rlang::sym("row"), !!rlang::sym("col"))
+          ))),
+          grep("_", sort(
+            c(!!rlang::sym("row"), !!rlang::sym("col"))
+          ))[1], NA) ,
+          V1 = ifelse(is.na(!!rlang::sym("idx_novel")), sort(c(
+            !!rlang::sym("row"), !!rlang::sym("col")
+          ))[1],
+          sort(c(
+            !!rlang::sym("row"), !!rlang::sym("col")
+          ))[c(1, 2)[!c(1, 2) %in% !!rlang::sym("idx_novel")]]),
+          V2 = ifelse(is.na(!!rlang::sym("idx_novel")), sort(c(
+            !!rlang::sym("row"), !!rlang::sym("col")
+          ))[2], sort(c(
+            !!rlang::sym("row"), !!rlang::sym("col")
+          ))[!!rlang::sym("idx_novel")])
+        )
+      
+      ## check connections
+      if (nrow(similar2) > 1) {
+        ids_v1_rm <- c()
+        for (ii in 1:nrow(similar2)) {
+          vs <- similar2$V2[which(similar2$V1 == similar2$V1[ii])]
+          
+          ids_v1_rm <- c(ids_v1_rm, which(similar2$V1 %chin% vs))
+        }
+        
+        if (length(ids_v1_rm) != 0)
+          similar3 <- similar2[-ids_v1_rm,]
+        else
+          similar3 <- similar2
+      } else{
+        similar3 <- similar2
+      }
+      
+      ## remove the duplicated allele
+      allele_keep <- c()
+      allele_remove <- c()
+      for (ii in 1:nrow(similar3)) {
+        alleles_idx <- unname(unlist(similar3[ii, c("V1", "V2")]))
+        allele_not_from_the_same_gene <-
+          which(unlist(strsplit(alleles_idx, "[*]")[[1]]) != gene)
+        if (length(allele_not_from_the_same_gene) > 1) {
+          allele_remove <- c(allele_remove, alleles_idx[[2]])
+          allele_keep <- c(allele_keep, alleles_idx[[1]])
+          
+        } else{
+          if (length(allele_not_from_the_same_gene) == 1) {
+            allele_remove <-
+              c(allele_remove, alleles_idx[[allele_not_from_the_same_gene]])
+            allele_keep <-
+              c(allele_keep, alleles_idx[[which(unlist(strsplit(alleles_idx, "[*]")[[1]])  == gene)]])
+          } else{
+            allele_remove <- c(allele_remove, alleles_idx[[2]])
+            allele_keep <- c(allele_keep, alleles_idx[[1]])
+            
+          }
+        }
+      }
+      
+      remove_allele_list <- setNames(allele_keep, allele_remove)
+      keep_alleles_list <-
+        all_alleles[!data.table::`%chin%`(all_alleles, allele_remove)]
+      
+      allele.cluster.table$new_allele <- ""
+      for (i in seq_along(keep_alleles_list)) {
+        a <- keep_alleles_list[i]
+        allele.cluster.table$new_allele[allele.cluster.table$imgt_allele ==
+                                          a] <-
+          paste0(segment,
+                 "F",
+                 family_cluster,
+                 "-G",
+                 allele_cluster,
+                 "*",
+                 ifelse(i < 10, "0", ""),
+                 i)
+      }
+      
+      ### add the new names for the removed alleles
+      
+      if (length(remove_allele_list) != 0) {
+        for (i in seq_along(remove_allele_list)) {
+          a <- names(remove_allele_list)[i]
+          a_new <- remove_allele_list[i]
+          allele.cluster.table$new_allele[allele.cluster.table$imgt_allele ==
+                                            a] <-
+            allele.cluster.table$new_allele[allele.cluster.table$imgt_allele == a_new]
+          
+          
+        }
+      }
+      
+      ## flag alleles which are duplicated
+      allele.cluster.table$removed_duplicated <-
+        allele.cluster.table$imgt_allele %chin% allele_remove
+      
+    }
+    
+    return(allele.cluster.table)
+  }
+
+
+#' Generate allele similarity reference set
+#' 
 #' Generates the allele clusters reference set based on the clustering from \link{ighvClust}. The function collapse
 #' similar alleles and assign them into their respective allele clusters and family clusters. See details for naming scheme
 #'
@@ -208,7 +415,7 @@ generateReferenceSet <-
     ### check the class and names in alleleClusterTable
     if (!(is.data.frame(alleleClusterTable) &
           all(
-            names(alleleClusterTable) %in% c("imgt_allele", "Family", "Allele_Cluster")
+            names(alleleClusterTable) %chin% c("imgt_allele", "Family", "Allele_Cluster")
           )))
       stop("alleleClusterTable does not match the ouput from ighvClust.")
     
@@ -219,192 +426,6 @@ generateReferenceSet <-
     ## get the allele cluster
     clusters <-
       alleleClusterTable[!duplicated(alleleClusterTable[, c(2, 3)]), c(2, 3)]
-    
-    alleleClusterNames <-
-      function(cluster,
-               allele.cluster.table,
-               germ.dist,
-               chain,
-               segment) {
-        ## get the clusters
-        family_cluster <- cluster[[1]]
-        allele_cluster <- cluster[[2]]
-        
-        ## get the alleles
-        allele.cluster.table <-
-          allele.cluster.table[allele.cluster.table$Family == family_cluster &
-                                 allele.cluster.table$Allele_Cluster == allele_cluster, ]
-        
-        ### check the number of alleles. Change name and stop
-        
-        if (nrow(allele.cluster.table) == 1) {
-          allele.cluster.table$new_allele <-
-            paste0(segment, "F", family_cluster, "-G", allele_cluster, "*01")
-          allele.cluster.table$removed_duplicated <- F
-          return(allele.cluster.table)
-        }
-        
-        ## subset the distance matrix
-        germ.dist <-
-          germ.dist[allele.cluster.table$imgt_allele, allele.cluster.table$imgt_allele]
-        diag(germ.dist) = NA
-        
-        ## get similar alleles
-        distances <-
-          germ.dist[rowSums(germ.dist == 0, na.rm = T) != 0, colSums(germ.dist == 0, na.rm = T) != 0]
-        similar <- which(distances == 0, arr.ind = T)
-        
-        ## check for similar alleles. If none iterate over the alleles and re-name. Else collapse and re-name
-        if (length(similar) == 0) {
-          # number of alleles
-          n <- nrow(allele.cluster.table)
-          
-          # generate names
-          allele.cluster.table$new_allele <- sapply(1:n, function(i) {
-            paste0(
-              segment,
-              "F",
-              family_cluster,
-              "-G",
-              allele_cluster,
-              "*",
-              ifelse(i < 10, "0", ""),
-              i
-            )
-          })
-          allele.cluster.table$removed_duplicated <- F
-          
-          
-        } else{
-          ### get alleles and genes
-          all_alleles <- rownames(germ.dist)
-          gene <- strsplit(all_alleles[1], "[*]")[[1]][1]
-          
-          
-          ### collapse similar alleles
-          similar[, 1] <- rownames(distances[similar[, 1],])
-          similar[, 2] <-
-            colnames(distances[, as.numeric(similar[, 2])])
-          similar <- as.data.frame(similar, stringsAsFactors = F)
-          similar$names <-
-            sapply(1:nrow(similar), function(i)
-              paste0(sort(c(
-                similar[i, 1], similar[i, 2]
-              )), collapse = ","))
-          idx_remove <- !duplicated(similar[, 3])
-          similar <- similar[idx_remove, 1:2]
-          
-          similar2 <-
-            dplyr::mutate(
-              similar,
-              "idx_novel" = ifelse(any(grepl("_", sort(
-                c(!!rlang::sym("row"),!!rlang::sym("col"))
-              ))),
-              grep("_", sort(
-                c(!!rlang::sym("row"),!!rlang::sym("col"))
-              ))[1], NA) ,
-              V1 = ifelse(is.na(!!rlang::sym("idx_novel")), sort(c(
-                !!rlang::sym("row"),!!rlang::sym("col")
-              ))[1],
-              sort(c(
-                !!rlang::sym("row"),!!rlang::sym("col")
-              ))[c(1, 2)[!c(1, 2) %in% !!rlang::sym("idx_novel")]]),
-              V2 = ifelse(is.na(!!rlang::sym("idx_novel")), sort(c(
-                !!rlang::sym("row"),!!rlang::sym("col")
-              ))[2], sort(c(
-                !!rlang::sym("row"),!!rlang::sym("col")
-              ))[!!rlang::sym("idx_novel")])
-            )
-          
-          ## check connections
-          if (nrow(similar2) > 1) {
-            ids_v1_rm <- c()
-            for (ii in 1:nrow(similar2)) {
-              a <- similar2$V1[ii]
-              
-              vs <- similar2$V2[similar2$V1 == a]
-              
-              ids_v1 <- which(similar2$V1 %in% vs)
-              
-              ids_v1_rm <- c(ids_v1_rm, ids_v1)
-            }
-            
-            if (length(ids_v1_rm) != 0)
-              similar3 <- similar2[-ids_v1_rm, ]
-            else
-              similar3 <- similar2
-          } else{
-            similar3 <- similar2
-          }
-          
-          ## remove the duplicated allele
-          allele_keep <- c()
-          allele_remove <- c()
-          for (ii in 1:nrow(similar3)) {
-            alleles_idx <- unname(unlist(similar3[ii, c("V1", "V2")]))
-            allele_not_from_the_same_gene <-
-              which(unlist(strsplit(alleles_idx, "[*]")[[1]]) != gene)
-            if (length(allele_not_from_the_same_gene) > 1) {
-              allele_remove <- c(allele_remove, alleles_idx[[2]])
-              allele_keep <- c(allele_keep, alleles_idx[[1]])
-              
-            } else{
-              if (length(allele_not_from_the_same_gene) == 1) {
-                allele_remove <-
-                  c(allele_remove, alleles_idx[[allele_not_from_the_same_gene]])
-                allele_keep <-
-                  c(allele_keep, alleles_idx[[which(unlist(strsplit(alleles_idx, "[*]")[[1]])  == gene)]])
-              } else{
-                allele_remove <- c(allele_remove, alleles_idx[[2]])
-                allele_keep <- c(allele_keep, alleles_idx[[1]])
-                
-              }
-            }
-          }
-          
-          remove_allele_list <- setNames(allele_keep, allele_remove)
-          keep_alleles_list <-
-            all_alleles[which(!all_alleles %in% allele_remove)]
-          
-          allele.cluster.table$new_allele <- ""
-          for (i in seq_along(keep_alleles_list)) {
-            a <- keep_alleles_list[i]
-            allele.cluster.table$new_allele[allele.cluster.table$imgt_allele ==
-                                              a] <-
-              paste0(
-                segment,
-                "F",
-                family_cluster,
-                "-G",
-                allele_cluster,
-                "*",
-                ifelse(i < 10, "0", ""),
-                i
-              )
-          }
-          
-          ### add the new names for the removed alleles
-          
-          if (length(remove_allele_list) != 0) {
-            for (i in seq_along(remove_allele_list)) {
-              a <- names(remove_allele_list)[i]
-              a_new <- remove_allele_list[i]
-              allele.cluster.table$new_allele[allele.cluster.table$imgt_allele ==
-                                                a] <-
-                allele.cluster.table$new_allele[allele.cluster.table$imgt_allele == a_new]
-              
-              
-            }
-          }
-          
-          ## flag alleles which are duplicated
-          allele.cluster.table$removed_duplicated <-
-            allele.cluster.table$imgt_allele %in% allele_remove
-          
-        }
-        
-        return(allele.cluster.table)
-      }
     
     ## rename the alleles
     alleleClusterTable.tmp <- apply(
@@ -443,9 +464,150 @@ generateReferenceSet <-
 
 # ------------------------------------------------------------------------------
 
+frw1_primers <- setNames(
+  c(
+    'GGCCTCAGTGAAGGTCTCCTGCAAG',
+    'GTCTGGTCCTACGCTGGTGAAACCC',
+    'CTGGGGGGTCCCTGAGACTCTCCTG',
+    'CTTCGGAGACCCTGTCCCTCACCTG',
+    'CGGGGAGTCTCTGAAGATCTCCTGT',
+    'TCGCAGACCCTCTCACTCACCTGTG'
+  ),
+  c(
+    'VH1-FR1',
+    'VH2-FR1',
+    'VH3-FR1',
+    'VH4-FR1',
+    'VH5-FR1',
+    'VH6-FR1'
+  )
+)
+
+### the function gaps the sequences based on the germlines
+### input: v sequence and reference; output: gapped sequence
+
+togap <- function(vgap, vdj) {
+  ##add in vdj gaps
+  gapadd <- vdj
+  for (i in which(unlist(strsplit(vgap, "", fixed = T)) == ".")) {
+    gapadd <-
+      paste0(substr(gapadd, 1, i - 1), ".", substr(gapadd, i, nchar(gapadd)))
+  }
+  return(gapadd)
+}
+
+#' FWR1 artificial dataset generator
+#' 
+#' A function to artificially create an IGHV reference set with framework1 (FWR1) primers (see Details).
+#'
+#' @param    germline_set      A germline set distance matrix created by `ighvDistance`.
+#' @param    mask_primer       Logical (TRUE by default). If to mask with Ns the region of the primer from the germline sequence
+#' @param    trimm_primer      Logical (FALSE by default). If to trim the region of the primer from the germline sequence. If TRUE then, mask_primer is ignored.
+#' @param    quite             Logical (FALSE by default). Do you want to suppress informative messages
+#'
+#' @details
+#'
+#' The FRW1 primers used in this function were taken from the BIOMED-2 protocol. For more information on the protocol and primer design go to:
+#' van Dongen, J., Langerak, A., Brüggemann, M. et al. Design and standardization of PCR primers and protocols for detection of clonal immunoglobulin and
+#' T-cell receptor gene recombinations in suspect lymphoproliferations: Report of the BIOMED-2 Concerted Action BMH4-CT98-3936.
+#' Leukemia 17, 2257–2317 (2003). https://doi.org/10.1038/sj.leu.2403202Van Dongen, J. J. M., et al. "Design and standardization of PCR primers and protocols for detection of clonal immunoglobulin and T-cell
+#' receptor gene recombinations in suspect lymphoproliferations: report of the BIOMED-2 Concerted Action BMH4-CT98-3936."
+#' Leukemia 17.12 (2003): 2257-2317.
+#'
+#' @return
+#' A \code{list} with the input germline set allele and the trimmed/masked sequences.
+#'
+#' @export
+artificialFRW1Germline <-
+  function(germline_set,
+           mask_primer = T,
+           trimm_primer = F,
+           quite = F) {
+    counter <-
+      setNames(rep(0L, length(frw1_primers)), names(frw1_primers))
+    frw1_set <- c()
+    for (seq_name in names(germline_set)) {
+      seq <- germline_set[seq_name]
+      
+      imgt_family <-
+        getFamily(
+          seq_name,
+          first = F,
+          collapse = F,
+          strip_d = F,
+          omit_nl = F
+        )
+      
+      id_primer <-
+        grep(gsub("IGHV", "VH", imgt_family), names(frw1_primers))
+      primer <- frw1_primers[id_primer]
+      
+      if (length(primer) != 0) {
+        loc <-
+          unlist(aregexec(
+            text = gsub("[.]", "", seq),
+            pattern = primer,
+            max.distance = 4
+          ))
+        if (length(loc) != 0) {
+          counter[names(frw1_primers)[id_primer]] = counter[names(frw1_primers)[id_primer]] + 1
+          seq_n_gap <- gsub("[.]", "", seq)
+          preceding <- substr(seq_n_gap, 1, (loc[1] - 1 + nchar(primer)))
+          preceding <- gsub("[AGCT]", "N", preceding)
+          frw1_seq <-
+            substr(seq_n_gap, (loc[1] + nchar(primer)), nchar(seq_n_gap))
+          seq_paste <- paste0(preceding, frw1_seq)
+          seq_gapped <- togap(seq, seq_paste)
+          frw1_set[seq_name] <-
+            if (trimm_primer)
+              substr(
+                seq_gapped,
+                start = aregexec(
+                  text = seq_gapped,
+                  pattern = "[ATGC]",
+                  fixed = F
+                )[[1]][1],
+                nchar(seq_gapped)
+              )
+          else
+            seq_gapped
+        } else{
+          frw1_set[seq_name] <- seq
+        }
+      } else{
+        frw1_set[seq_name] <- seq
+      }
+    }
+    
+    if (!quite)
+      cat(
+        paste0(
+          sum(counter),
+          "/",
+          length(germline_set),
+          " germline sequences have passed"
+        ),
+        paste0("Counts by primers: "),
+        paste(
+          names(counter),
+          counter,
+          sep = ":",
+          collapse = ","
+        ),
+        sep = "\n"
+      )
+    
+    
+    return(frw1_set)
+  }
+
+# ------------------------------------------------------------------------------
+
+#' Allele similarity cluster
+#' 
 #' A wrapper function to infer the allele clusters. See details for cluster inference
 #'
-#' @param    germline_set                   Either a named vector of strings representing Ig sequence alleles, or a path to to the germline set file (must be gapped by IMGT scheme for optimal results).
+#' @param    germline_set                   Either a character vector of strings representing Ig sequence alleles, or a path to to the germline set file (must be gapped by IMGT scheme for optimal results).
 #' @param    trim_3prime_side               To which nucleotide position to trim the sequences. Default is 318; NULL will take the entire sequence length.
 #' @param    mask_5prime_side               Mimic short sequence libraries, gets the length of nucleotides to mask from the 5' side, the staring position. Default is 0.
 #' @param    family_threshold               The similarity threshold for the family level. Default is 75.
@@ -462,16 +624,17 @@ generateReferenceSet <-
 #'
 #' To plot the allele clusters dendrogram use the \code{plot} function on the \link{GermlineCluster} object
 #'
-#'
-#'
 #' @return
-#' An object of type \link{GermlineCluster} that includes the allele cluster table \code{alleleClusterTable} with the new names and the default thresholds,
-#' the renamed germline set \code{alleleClusterSet}, the germline set hierarchical clustering \code{hclustAlleleCluster},
-#' and the threshold parameters \code{threshold}.
+#' An object of type \link{GermlineCluster} that includes the following slots:
+#' @slot  germlineSet - A character vector with the modified germline set (3' trimming and 5' masking).
+#' @slot alleleClusterSet - A character vector of renamed input germline set to the ASC name scheme (Without 3' and 5' modifications).
+#' @slot alleleClusterTable - A data.frame of the allele similarity cluster with the new names and the default thresholds.
+#' @slot threshold - A list of the input family and allele cluster similarity thresholds.
+#' @slot hclustAlleleCluster - An hclust object of the germline set hierarchical clustering,
 #'
 #' @seealso
 #'
-#' By using the plot function on the returned object, a colorful visualization of the allele clusters dendogram and threshold is recived.
+#' By using the plot function on the returned object, a colorful visualization of the allele clusters dendrogram and threshold is received
 #'
 #' @examples
 #' \dontrun{
@@ -502,6 +665,10 @@ inferAlleleClusters <-
     if (!is.vector(germline_set, mode = "character"))
       stop("The input germline set file is not valid.")
     
+    ### create a copy of the germline set to return, the trimming and masking is only for the clustering
+    
+    germline_set_copy <- germline_set
+    
     ## check if to trim the 3'
     if (!is.null(trim_3prime_side)) {
       germline_set <- substr(germline_set, 1, trim_3prime_side)
@@ -509,7 +676,8 @@ inferAlleleClusters <-
     
     ## check if to mask the 5'
     if (mask_5prime_side != 0) {
-      trailing <- substr(germline_set, mask_5prime_side + 1, stop = 1000000L)
+      trailing <-
+        substr(germline_set, mask_5prime_side + 1, stop = 1000000L)
       preceding <- paste0(rep("N", mask_5prime_side), collapse = "")
       
       ## paste the mask
@@ -531,7 +699,8 @@ inferAlleleClusters <-
       
       allele_cluster_threshold <-
         allele_cluster_threshold + family_threshold
-      family_threshold <- allele_cluster_threshold - family_threshold
+      family_threshold <-
+        allele_cluster_threshold - family_threshold
       allele_cluster_threshold <-
         allele_cluster_threshold - family_threshold
       
@@ -543,25 +712,31 @@ inferAlleleClusters <-
     cluster_results <-
       ighvClust(
         germline_distance,
-        family_threshold = 75,
-        allele_cluster_threshold = 95
+        family_threshold = family_threshold,
+        allele_cluster_threshold = allele_cluster_threshold
       )
     
     cluster_renamed <-
-      generateReferenceSet(germline_distance,
-                           germline_set,
-                           cluster_results$alleleClusterTable)
+      generateReferenceSet(
+        germline_distance = germline_distance,
+        germline_set = germline_set_copy,
+        alleleClusterTable = cluster_results$alleleClusterTable
+      )
+    
+    alleleClusterSet = cluster_renamed$alleleClusterSet
+    alleleClusterTable = cluster_renamed$alleleClusterTable
+    hclustAlleleCluster = cluster_results$hclustAlleleCluster
     
     results <- new(
       "GermlineCluster",
       germlineSet = germline_set,
-      alleleClusterSet = cluster_renamed$alleleClusterSet,
-      alleleClusterTable = cluster_renamed$alleleClusterTable,
+      alleleClusterSet = alleleClusterSet,
+      alleleClusterTable = alleleClusterTable,
       threshold = list(
         family_threshold = family_threshold,
         allele_cluster_threshold = allele_cluster_threshold
       ),
-      hclustAlleleCluster = cluster_results$hclustAlleleCluster
+      hclustAlleleCluster = hclustAlleleCluster
     )
     
     return(results)
@@ -585,13 +760,13 @@ plotAlleleCluster <- function(x, y = NULL) {
     stop("Object is not of class GermlineCluster")
   
   alleleClusterTable <- x@alleleClusterTable
-  hclustAlleleCluster <- x@hclustAlleleCluster$hclust
+  hclustAlleleCluster <- x@hclustAlleleCluster
   
   fam_cut = 1 - x@threshold$family_threshold / 100
   group_cut = 1 - x@threshold$allele_cluster_threshold / 100
   
   ## get the colors
-  qual_col_pals = RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category %in% c('qual', 'div'), ]
+  qual_col_pals = RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category %chin% c('qual', 'div'),]
   col_vector = unlist(mapply(
     RColorBrewer::brewer.pal,
     qual_col_pals$maxcolors,
@@ -609,7 +784,7 @@ plotAlleleCluster <- function(x, y = NULL) {
   
   ## prepare the data
   db_sub <-
-    alleleClusterTable[!alleleClusterTable$removed_duplicated, ]
+    alleleClusterTable[!alleleClusterTable$removed_duplicated,]
   chain <- substr(alleleClusterTable$imgt_allele[1], 1, 3)
   segment <- paste0(chain, "V")
   imgt_allele <-
@@ -695,8 +870,8 @@ plotAlleleCluster <- function(x, y = NULL) {
           rep(nr - i, nc),
           1:nc,
           rep(nr - i + 1, nc),
-          border = col_mat[i,],
-          col = col_mat[i,]
+          border = col_mat[i, ],
+          col = col_mat[i, ]
         )
         
         ## add lines for S2 and S3.
@@ -745,7 +920,7 @@ plotAlleleCluster <- function(x, y = NULL) {
           }
         
         #if(i!=3){
-        tt <- mat_list[i, ]
+        tt <- mat_list[i,]
         col_arrow <- c()
         zero_idx_start <- c()
         zero_idx_end <- c()
@@ -785,12 +960,12 @@ plotAlleleCluster <- function(x, y = NULL) {
         #circos.points(1:nc, 0, colnames(useT.mat)[i])
         
         if (i == 1) {
-          gs <- m2[i,]
+          gs <- m2[i, ]
           gs <- gs[gs != 0]
           labs = unique(paste0("G", gs))
           groups_labs <-
             sapply(unique(gs), function(x)
-              which(m2[i, ] == x))
+              which(m2[i,] == x))
           y_pos = mean(c(rep(nr - i, nc), rep(nr - i + 1, nc)))#-ifelse(i==1, 0, 0.5)
           #adj = c(ifelse(i==1, 0, 0), 0.5)
           facing = ifelse(i == 1, "clockwise", "inside")
@@ -846,7 +1021,7 @@ plotAlleleCluster <- function(x, y = NULL) {
     track.height = 0.65,
     panel.fun = function(x, y) {
       dend = dend_list
-      circos.dendrogram3(
+      circos.dendrogram.piglet(
         dend %>% dendextend::color_branches(dend, k = max_fam, col = fam_col),
         max_height = max_height,
         fam_cut = fam_cut,
@@ -876,7 +1051,7 @@ setMethod("plot",
 
 
 ### adapted from the circlize package.
-circos.dendrogram3 <-
+circos.dendrogram.piglet <-
   function (dend,
             facing = c("outside", "inside"),
             max_height = NULL,

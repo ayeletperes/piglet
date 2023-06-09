@@ -20,5 +20,5 @@ The function assume the germline set sequence are at an even length.
 If not the function will pad the sequences with to the longest sequence length with Ns.
 }
 \details{
-The aligned IMGT IGHV allele germline set can be download from the IMGT site \href{www.IMGT.org}{www.IMGT.org} under the section genedb.
+The aligned IMGT IGHV allele germline set can be download from the IMGT site \url{https://www.imgt.org/} under the section genedb.
 }

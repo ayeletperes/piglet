@@ -9,9 +9,238 @@ NULL
 ## TODO: decide if a class is needed
 
 # ------------------------------------------------------------------------------
+#' zenodoArchive
+#' @docType class
+#' @return Object of \code{\link{R6Class}} for modelling an zenodoArchive for ASC cluster files
+#' @format \code{\link{R6Class}} object.
+#'
+#' @examples
+#' \dontrun{
+#'   zenodo_archive <- zenodoArchive$new(
+#'      doi = "10.5281/zenodo.7401189"
+#'   )
+#'
+#'   # view available version ins the archive
+#'   archive_versions <- zenodo_archive$get_versions()
+#'
+#'   # Getting the available files in the latest zenodo archive version
+#'   files <- zenodo_archive$get_version_files()
+#'
+#'   # downloading the first file from the latest archive version
+#'   zenodo_archive$download_zenodo_files()
+#' }
+#' @export
+zenodoArchive <- R6::R6Class(
+  "zenodoArchive",
+  list(
+    #' @field doi zenodoArchive doi, NULL is not supplied
+    doi = NULL,
+    #' @field all_versions zenodoArchive if to return all versions, `true` when not specified
+    all_versions = "true",
+    #' @field sort zenodoArchive how to sort the records, `mostrecent` when not specified
+    sort = "mostrecent",
+    #' @field page zenodoArchive which page to pull in query, `1` when not specified
+    page = 1,
+    #' @field size zenodoArchive how many records per page,  `20` when not specified
+    size = 20,
+    #' @field zenodoVersions zenodoArchive doi available version, a storing variable.
+    zenodoVersions = NULL,
+    #' @field zenodoQuery zenodoArchive doi version query, a storing variable.
+    zenodoQuery = NULL,
+    #' @field download_file zenodoArchive doi downloads files, a storing variable.
+    download_file = NULL,
+    #' @field download_url zenodoArchive doi downloads urls, a storing variable.
+    download_url = NULL,
+    
+    
+    #' @description initializes the zenodoArchive
+    #' @param doi A zenodo doi. To retrieve all records supply a concept doi (a generic doi common to all versions).
+    #' @param page Which page to query. Default is 1
+    #' @param size How many records per page. Default is 20
+    #' @param all_versions If to return all concept doi versions. If `true` returns all, if `false` returns the latest. Default is `ture`
+    #' @param sort Which sorting to apply on the records. Default is `mostrecent`. Possible sortings "bestmatch", "mostrecent", "-mostrecent" (ascending), "version", "-version" (ascending).
+    initialize = function(doi,
+                          page = 1,
+                          size = 20,
+                          all_versions = "true",
+                          #c("true","false"),
+                          sort = "mostrecent") {
+      # c("bestmatch","mostrecent","-mostrecent","version","-version")
+      stopifnot(is.character(doi), length(doi) == 1)
+      stopifnot(is.character(all_versions),
+                length(all_versions) == 1,
+                any(all_versions %in% c("true", "false")))
+      stopifnot(is.character(sort),
+                length(sort) == 1,
+                any(
+                  sort %in% c(
+                    "bestmatch",
+                    "mostrecent",
+                    "-mostrecent",
+                    "version",
+                    "-version"
+                  )
+                ))
+      stopifnot(is.numeric(page), length(page) == 1)
+      stopifnot(is.numeric(size), length(size) == 1)
+      self$doi <- doi
+      self$all_versions <- all_versions
+      self$sort <- sort
+      self$size <- size
+      self$page <- page
+      self$zenodoVersions <- NULL
+      self$zenodoQuery <- NULL
+      self$download_file <- NULL
+      self$download_url <- NULL
+    },
+    #' @description cleans the doi record for query
+    #' @param doi  The zenodo archive doi
+    #' @return the clean doi
+    clean_doi = function(doi = self$doi) {
+      gsub("10.5281/zenodo.", "", doi, fixed = T)
+    },
+    #' @description Query the zenodo archive according to the initial parameters.
+    #' @param ...   Excepts the self created by `initialize`
+    #' @return a list with the query values.
+    zenodo_query = function(...) {
+      url <-
+        sprintf(
+          'https://zenodo.org/api/records/?q=conceptrecid:%s&all_versions=%s&sort=%s&page=%s&size=%s',
+          self$clean_doi(),
+          self$all_versions,
+          self$sort,
+          self$page,
+          self$size
+        )
+      version_query <- jsonlite::read_json(url)
+      
+      if (length(version_query$hits$hits) == 0) {
+        # try querying the doi. If succeeded doi supplied is not conceptrecid, if fails then doi is incorect
+        url <-
+          sprintf(
+            'https://zenodo.org/api/records/?q=%s&all_versions=%s&sort=%s&page=%s&size=%s',
+            self$clean_doi(),
+            self$all_versions,
+            self$sort,
+            self$page,
+            self$size
+          )
+        
+        version_query <- jsonlite::read_json(url)
+        
+        stopifnot("doi supplied does not match any zenodo record" = length(version_query$hits$hits) !=
+                    0)
+        
+        message(
+          sprintf(
+            "doi supplied is not an 'all versions doi'\nfor viewing all of the archive records change the doi to:%s",
+            version_query$hits$hits[[1]]$conceptdoi
+          )
+        )
+      }
+      self$zenodoQuery <- version_query
+      self$zenodoQuery
+    },
+    #' @description Extract all concept doi available versions.
+    #' @param ...   Excepts the self created by `initialize`
+    #' @return a data.frame of the available versions.
+    get_versions = function(...) {
+      req <-
+        if (is.null(self$zenodoQuery))
+          self$zenodo_query()
+      else
+        self$zenodoQuery
+      self$zenodoVersions <-
+        do.call(rbind,
+                sapply(req$hits$hits, function(x)
+                  data.frame(
+                    doi = x$metadata$doi,
+                    version = x$metadata$version,
+                    date = x$metadata$publication_date
+                  ), simplify = F))
+      self$zenodoVersions
+    },
+    #' @description get the chosen doi archive version available files
+    #' @param version which archive version files to get. Default to latest. To see all available version use `get_versions`
+    #' @return a list of the available files in the archive version.
+    get_version_files = function(version = "latest") {
+      versions <-
+        if (is.null(self$zenodoVersions))
+          self$get_versions()
+      else
+        self$zenodoVersions
+      
+      doi_version <-
+        if (version == "latest")
+          versions$doi[rev(order(versions$date))][1]
+      else
+        versions$doi[self$zenodoVersions$version == version]
+      
+      query <-
+        jsonlite::fromJSON(paste0(
+          "https://zenodo.org/api/records/",
+          self$clean_doi(doi_version)
+        ))
+      self$download_url <- query$files$links$download
+      self$download_file <- basename(query$files$filename)
+      self$download_file
+    },
+    #' @description get the chosen doi archive version available files
+    #' @param file If supplied, downloads the specific file from the archive.
+    #' @param path The output folder for saving the archive files. Default is to a temporary directory.
+    #' @param version which archive version files to get. Default to latest. To see all available version use `get_versions`
+    #' @param get_file_path Logical (FALSE by default). Do you want to return the path for the file downloaded.
+    #' @param all_files Logical (FALSE by default). Do you want to download all files in the archive.
+    #' @return If `get_file_path` is TRUE, the function returns the path to the archive file
+    #' @param quite     Logical (FALSE by default). Do you want to suppress informative messages
+    download_zenodo_files = function(file = NULL,
+                                     path = tempdir(),
+                                     version = "latest",
+                                     all_files = F,
+                                     get_file_path = F,
+                                     quite = F) {
+      if (is.null(self$download_url)) {
+        invisible(self$get_version_files(version))
+        url <- self$download_url
+      } else{
+        self$download_url
+      }
+      if (!is.null(file)) {
+        if (is.na(match(file, self$download_file))) {
+          message(paste0("Input file is not found in chosen version "))
+          if (!is.null(self$download_file))
+            message(paste0(
+              "The available file are: ",
+              paste0(self$download_file, collapse = ",")
+            ))
+          stop()
+        }
+        
+        url <- grep(file, url, fixed = T, value = T)
+      } else{
+        file <- self$download_file
+      }
+      if (all_files) {
+        lapply(1:length(file), function(i)
+          download.file(url = url[1], file.path(path, file[i])), quite = quite)
+        
+        if (get_file_path)
+          file.path(path, file)
+      } else{
+        download.file(url[1],  file.path(path, file[1]), quite = quite)
+        if (get_file_path)
+          file.path(path, file[1])
+      }
+      
+      
+    }
+  )
+)
 
-#' Download the most recent allele similarity clusters and thresholds from the zenodo archive.
-#' The clusters and thresholds are based on \href{https://yaarilab.github.io/IGHV_reference_book}{https://yaarilab.github.io/IGHV_reference_book}
+#' Retrieving allele similarity clusters Zenodo archive
+#' 
+#' A wrapper function for `zenodoArchive`, download the most recent allele similarity clusters and thresholds from the zenodo archive.
+#' The clusters and thresholds are based on \url{https://yaarilab.github.io/IGHV_reference_book/}
 #' At the moment only available for human IGHV reference set.
 #'
 #' @param doi       The doi for the archive to download. Default is the IGHV set.
@@ -25,12 +254,12 @@ NULL
 #'
 #' @examples
 #' \dontrun{
-#' recentAlleleClusters(doi="10.5281/zenodo.7401239")
+#' recentAlleleClusters(doi="10.5281/zenodo.7401189")
 #' }
 #'
 #' @export
 recentAlleleClusters <-
-  function(doi = "10.5281/zenodo.7401239",
+  function(doi = "10.5281/zenodo.7401189",
            path,
            get_file = F,
            quite = F) {
@@ -39,16 +268,15 @@ recentAlleleClusters <-
       if (!quite)
         message(paste0("Files will be downloaded to tmp directory: ", path))
     }
+    
+    zenodo_archive <- zenodoArchive$new(doi = doi)
     output <-
-      capture.output(download_zenodo(doi, path = path, quiet = F))
-    if (length(output) != 1) {
-      file <-
-        gsub("'", "", grep("zip", strsplit(output[[3]], " ")[[1]], value = T))
-      if (!quite)
-        message(paste0("Dowloaded files to: ", path, "/", file))
-    }
+      zenodo_archive$download_zenodo_files(path = path,
+                                           quite = quite,
+                                           get_file_path = get_file)
+    
     if (get_file)
-      return(file.path(path, file))
+      return(output)
   }
 
 #' Extracts the allele cluster table from the archive file.
@@ -125,6 +353,18 @@ extractASCTable <- function(archive_file = NULL) {
 #'
 #' @export
 germlineASC <- function(allele_cluster_table, germline) {
+  
+  if (any(grepl("/", allele_cluster_table$imgt_allele))) {
+    allele_cluster_table <-
+      splitstackshape::cSplit(
+        allele_cluster_table,
+        splitCols = "imgt_allele",
+        sep = "/",
+        direction = "long",
+        type.convert = F
+      )
+  }
+  
   germline_asc <- germline[allele_cluster_table$imgt_allele]
   
   asc_alleles <-
@@ -141,6 +381,8 @@ germlineASC <- function(allele_cluster_table, germline) {
 
 # ------------------------------------------------------------------------------
 
+#' Assign allele similarity clusters
+#' 
 #' \code{assignAlleleClusters} uses the allele clusters annotation to change the preliminary allele
 #' assignments to the new annotations before inferring a genotype.
 #'
@@ -167,10 +409,23 @@ germlineASC <- function(allele_cluster_table, germline) {
 #' @export
 assignAlleleClusters <-
   function(data, alleleClusterTable, v_call = "v_call") {
+    
+    if (any(grepl("/", alleleClusterTable$imgt_allele))) {
+      alleleClusterTable <-
+        splitstackshape::cSplit(
+          alleleClusterTable,
+          splitCols = "imgt_allele",
+          sep = "/",
+          direction = "long",
+          type.convert = F
+        )
+    }
+    
     # set the dictionary
     germline_set <-
       setNames(alleleClusterTable$new_allele,
                alleleClusterTable$imgt_allele)
+    
     # switch the assignments
     data[[v_call]] <- sapply(data[[v_call]], function(x) {
       calls <- unlist(strsplit(x, ","))
@@ -184,12 +439,14 @@ assignAlleleClusters <-
 
 # ------------------------------------------------------------------------------
 
+#' Allele similarity cluster based genotype inference
+#' 
 #' \code{inferGenotypeAllele} infer an individual's genotype based on the allele-base method.
 #' The method utilize the allele specific threshold to determine the presence of an allele in the genotype.
 #' More specifically, the absolute frequency of each allele is calculated and checked against the threshold.
 #'
 #' @param data                  data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
-#' @param alleleClusterTable    A data.frame of the allele clusters new annotations relative to the original reference set.
+#' @param alleleClusterTable    A data.frame of the allele similarity clusters thresholds.
 #' @param v_call                name of the V allele call column. Default is `v_call`
 #' @param single_assignment     if TRUE, the method only considers sequence with single assignment for the genotype inference.
 #' @param germline_db           named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
@@ -206,7 +463,7 @@ assignAlleleClusters <-
 #' @details
 #'
 #' In naive repertoires, allele calls where more than one assignment is assigned is rare. Hence, in case the data represents the naive repertoire of a subject
-#' it is recommended to use the `find_unmutated=TRUE` option, to remove mutated sequences. For non-naive population, the allele calls in cases of multiple assinment
+#' it is recommended to use the `find_unmutated=TRUE` option, to remove mutated sequences. For non-naive population, the allele calls in cases of multiple assignment
 #' are treated as belonging to all groups.
 #'
 #' @seealso
@@ -235,8 +492,8 @@ assignAlleleClusters <-
 #' asc_data <- assignAlleleClusters(data, allele_cluster_table)
 #'
 #' # inferring the genotype
-#' asc_genotype <- inferGenotypeAllele(asc_data, 
-#' alleleClusterTable = allele_cluster_table, 
+#' asc_genotype <- inferGenotypeAllele(asc_data,
+#' alleleClusterTable = allele_cluster_table,
 #' germline_db = asc_germline, find_unmutated=T)
 #' }
 #'
@@ -251,6 +508,7 @@ inferGenotypeAllele <-
            find_unmutated = FALSE,
            seq = "sequence_alignment") {
     . = NULL
+    
     
     allele_calls = alakazam::getAllele(data[[v_call]], first = FALSE,
                                        strip_d = FALSE)
@@ -363,10 +621,10 @@ inferGenotypeAllele <-
         
         # Build ratio dependent allele count distribution of multi assigned reads
         seqs_expl_single <-
-          seqs_expl[grep(',', rownames(seqs_expl), invert = T), ]
+          seqs_expl[grep(',', rownames(seqs_expl), invert = T),]
         
         seqs_expl_multi <-
-          seqs_expl[grep(',', rownames(seqs_expl), invert = F), ]
+          seqs_expl[grep(',', rownames(seqs_expl), invert = F),]
         if (is.null(nrow(seqs_expl_multi))) {
           seqs_expl_multi <- t(as.data.frame(seqs_expl_multi))
           rownames(seqs_expl_multi) <-
@@ -381,7 +639,7 @@ inferGenotypeAllele <-
             nrow(seqs_expl_single) != nrow(seqs_expl)) {
           if (nrow(seqs_expl_multi) > 1) {
             seqs_expl_multi <-
-              seqs_expl_multi[order(nchar(row.names(seqs_expl_multi))), ]
+              seqs_expl_multi[order(nchar(row.names(seqs_expl_multi))),]
           }
           sapply(1:nrow(seqs_expl_multi), function(x) {
             genes <- unlist(strsplit(row.names(seqs_expl_multi)[x], ','))
@@ -410,10 +668,11 @@ inferGenotypeAllele <-
           }
         seqs_expl <- round(seqs_expl)
         if (sum(rowSums(seqs_expl) == 0) != 0) {
-          seqs_expl <- seqs_expl[rowSums(seqs_expl) != 0,]
+          seqs_expl <- seqs_expl[rowSums(seqs_expl) != 0, ]
         }
         
-        allele_tot <- sort(apply(seqs_expl, 2, sum), decreasing = TRUE)
+        allele_tot <-
+          sort(apply(seqs_expl, 2, sum), decreasing = TRUE)
         
         gene_table <-
           data.table::data.table(
@@ -436,6 +695,16 @@ inferGenotypeAllele <-
     ## add original allele and cut off
     geno_V_fraction[, "v_call" := paste0(get("gene"), "*", get("v_allele"))]
     
+    if (any(duplicated(alleleClusterTable$new_allele))) {
+      alleleClusterTable <- setDT(alleleClusterTable)
+      
+      alleleClusterTable <-
+        alleleClusterTable[, .("imgt_allele" = paste0(sort(unique(mget(
+          c("imgt_allele")
+        ))), collapse = "/")), by = mget(names(alleleClusterTable)[names(alleleClusterTable) !=
+                                                                     "imgt_allele"])]
+    }
+    
     alleles_clusters <-
       setNames(alleleClusterTable$imgt_allele,
                alleleClusterTable$new_allele)
@@ -444,7 +713,8 @@ inferGenotypeAllele <-
     
     na_id <- which(is.na(geno_V_fraction$v_call_or))
     if (length(na_id) != 0)
-      geno_V_fraction$v_call_or[na_id] <- sapply(na_id, function(i) {
+      geno_V_fraction$v_call_or[na_id] <-
+      sapply(na_id, function(i) {
         new_allele <- geno_V_fraction$v_call[i]
         closest <- strsplit(geno_V_fraction$v_call[i], "_")[[1]][1]
         or_allele <- alleles_clusters[closest]
@@ -452,7 +722,7 @@ inferGenotypeAllele <-
       })
     
     allele_cluster_threshold <-
-      setNames(alleleClusterTable$thresh, alleleClusterTable$new_allele)
+      setNames(as.numeric(alleleClusterTable$thresh), alleleClusterTable$new_allele)
     geno_V_fraction <-
       geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
     na_id <- which(is.na(geno_V_fraction$absolute_thresh))
@@ -470,7 +740,7 @@ inferGenotypeAllele <-
     
     
     sortBy <- c('gene', 'absolute_fraction')
-    sortType <- c(1,-1)
+    sortType <- c(1, -1)
     data.table::setorderv(geno_V_fraction, sortBy, sortType)
     genoV <-
       geno_V_fraction[, .(

@@ -1,3 +1,9 @@
-^alleleclustergenotype\.Rproj$
+^piglet\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^data-raw$
+\.git
+\.Rhistory
+\.Rcheck
+.readthedocs.yaml
+^docs$
