@@ -35,3 +35,19 @@
 #' \emph{Immunogenetics}. 67(1):61-6.
 #' @keywords data
 "hv_functionality"
+
+
+#' Allele similarity cluster table
+#'
+#' A \code{data.table} of the allele similarity cluster table based on the 
+#' \code{HVGERM} and \code{hv_functionality} germlie reference set. This is not the latest
+#' version of the allele similarity cluster table. For the latest version please refer either to the
+#' zenodo doi or you can use the \code{recentAlleleClusters}
+#'
+#' @name allele_cluster_table
+#' @docType data
+#'
+#' @references Peres, et al (2022) <doi:10.1101/2022.12.26.521922>
+#' @keywords asc table
+"allele_cluster_table"
+

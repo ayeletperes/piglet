@@ -52,11 +52,13 @@ are treated as belonging to all groups.
 # loading TIgGER AIRR-seq b cell data
 data <- tigger::AIRRDb
 
-# getting the archive
-asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+# preferably obtain the latest ASC cluster table
+# asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 
-# extracting the allele cluster table
-allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+# allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+
+# example allele similarity cluster table
+data(allele_cluster_table)
 
 data(HVGERM)
 
@@ -67,9 +69,10 @@ asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
 asc_data <- assignAlleleClusters(data, allele_cluster_table)
 
 # inferring the genotype
-asc_genotype <- inferGenotypeAllele(asc_data,
+asc_genotype <- inferGenotypeAllele(
+data = asc_data,
 alleleClusterTable = allele_cluster_table,
-germline_db = asc_germline, find_unmutated=T)
+germline_db = asc_germline, find_unmutated=TRUE)
 
 
 }

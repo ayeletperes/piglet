@@ -23,9 +23,13 @@ assignments to the new annotations before inferring a genotype.
 \examples{
 
 
-asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+# preferably obtain the latest ASC cluster table
+# asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 
-allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+# allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+
+# example allele similarity cluster table
+data(allele_cluster_table)
 
 # loading TIgGER AIRR-seq b cell data
 data <- tigger::AIRRDb

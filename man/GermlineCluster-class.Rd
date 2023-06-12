@@ -5,7 +5,8 @@
 \alias{GermlineCluster-class}
 \alias{GermlineCluster}
 \alias{plot,GermlineCluster,missing-method}
-\alias{plot,GermlineCluster,missing}
+\alias{plot,GermlineCluster,missing,}
+\alias{numeric}
 \title{Output of inferAlleleClusters}
 \usage{
 \S4method{plot}{GermlineCluster,missing}(x, y = NULL, cex = 1, seed = 9999)
@@ -14,6 +15,10 @@
 \item{x}{GermlineCluster object}
 
 \item{y}{not in use. missing.}
+
+\item{cex}{Controls the size of the allele label. Default is 1.}
+
+\item{seed}{Set a seed number for drawing the dendrogram. Default 9999.}
 }
 \description{
 \code{GermlineCluster} contains output from \link{inferAlleleClusters} function.

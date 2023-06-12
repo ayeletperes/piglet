@@ -27,10 +27,11 @@ For downloading the latest archive file with the updated allele cluster table, u
 }
 \examples{
 
-asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+\donttest{
+asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 
 allele_cluster_table <- extractASCTable(archive_file = asc_archive)
-
+}
 
 
 }

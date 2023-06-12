@@ -15,7 +15,7 @@ NULL
 #' @format \code{\link{R6Class}} object.
 #'
 #' @examples
-#'
+#' \donttest{
 #'   zenodo_archive <- zenodoArchive$new(
 #'      doi = "10.5281/zenodo.7401189"
 #'   )
@@ -28,7 +28,7 @@ NULL
 #'
 #'   # downloading the first file from the latest archive version
 #'   zenodo_archive$download_zenodo_files()
-#'
+#' }
 #' @export
 zenodoArchive <- R6::R6Class(
   "zenodoArchive",
@@ -203,7 +203,7 @@ zenodoArchive <- R6::R6Class(
         invisible(self$get_version_files(version))
         url <- self$download_url
       } else{
-        self$download_url
+        url <- self$download_url
       }
       if (!is.null(file)) {
         if (is.na(match(file, self$download_file))) {
@@ -254,8 +254,9 @@ zenodoArchive <- R6::R6Class(
 #'
 #' @examples
 #' 
+#' \donttest{
 #' recentAlleleClusters(doi="10.5281/zenodo.7401189")
-#' 
+#' }
 #'
 #' @export
 recentAlleleClusters <-
@@ -300,10 +301,11 @@ recentAlleleClusters <-
 #' 
 #' @examples
 #' 
-#' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+#' \donttest{
+#' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 #'
 #' allele_cluster_table <- extractASCTable(archive_file = asc_archive)
-#'
+#' }
 #' 
 #'
 #' @export
@@ -341,11 +343,15 @@ extractASCTable <- function(archive_file = NULL) {
 #'
 #' @examples
 #' 
-#' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+#' # preferably obtain the latest ASC cluster table
+#' # asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 #'
-#' allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+#' # allele_cluster_table <- extractASCTable(archive_file = asc_archive)
 #'
 #' data(HVGERM)
+#'
+#' # example allele similarity cluster table
+#' data(allele_cluster_table)
 #'
 #' asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
 #'
@@ -396,9 +402,13 @@ germlineASC <- function(allele_cluster_table, germline) {
 #'@examples
 #'
 #'
-#' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+#' # preferably obtain the latest ASC cluster table
+#' # asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 #'
-#' allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+#' # allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+#'
+#' # example allele similarity cluster table
+#' data(allele_cluster_table)
 #'
 #' # loading TIgGER AIRR-seq b cell data
 #' data <- tigger::AIRRDb
@@ -477,11 +487,13 @@ assignAlleleClusters <-
 #' # loading TIgGER AIRR-seq b cell data
 #' data <- tigger::AIRRDb
 #'
-#' # getting the archive
-#' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+#' # preferably obtain the latest ASC cluster table
+#' # asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 #'
-#' # extracting the allele cluster table
-#' allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+#' # allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+#'
+#' # example allele similarity cluster table
+#' data(allele_cluster_table)
 #'
 #' data(HVGERM)
 #'
@@ -492,9 +504,10 @@ assignAlleleClusters <-
 #' asc_data <- assignAlleleClusters(data, allele_cluster_table)
 #'
 #' # inferring the genotype
-#' asc_genotype <- inferGenotypeAllele(asc_data,
+#' asc_genotype <- inferGenotypeAllele(
+#' data = asc_data,
 #' alleleClusterTable = allele_cluster_table,
-#' germline_db = asc_germline, find_unmutated=T)
+#' germline_db = asc_germline, find_unmutated=TRUE)
 #' 
 #'
 #' @export
@@ -699,9 +712,9 @@ inferGenotypeAllele <-
       alleleClusterTable <- setDT(alleleClusterTable)
       
       alleleClusterTable <-
-        alleleClusterTable[, .("imgt_allele" = paste0(sort(unique(mget(
+        alleleClusterTable[, .("imgt_allele" = paste0(sort(unlist(unique(mget(
           c("imgt_allele")
-        ))), collapse = "/")), by = mget(names(alleleClusterTable)[names(alleleClusterTable) !=
+        )))), collapse = "/")), by = mget(names(alleleClusterTable)[names(alleleClusterTable) !=
                                                                      "imgt_allele"])]
     }
     

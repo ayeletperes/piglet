@@ -19,11 +19,15 @@ Converts IGHV germline set to ASC germline set.
 }
 \examples{
 
-asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+# preferably obtain the latest ASC cluster table
+# asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 
-allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+# allele_cluster_table <- extractASCTable(archive_file = asc_archive)
 
 data(HVGERM)
+
+# example allele similarity cluster table
+data(allele_cluster_table)
 
 asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
 

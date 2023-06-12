@@ -639,7 +639,7 @@ artificialFRW1Germline <-
 #' @examples
 #' 
 #' # load the initial germline set
-#'
+#' \donttest{
 #' data(HVGERM)
 #'
 #' germline <- HVGERM
@@ -649,7 +649,7 @@ artificialFRW1Germline <-
 #' ## plotting the clusters
 #'
 #' plot(asc)
-#' 
+#' }
 #' @export
 
 inferAlleleClusters <-
@@ -1048,13 +1048,15 @@ plotAlleleCluster <- function(x, y = NULL, cex = 1, seed = 9999) {
 #'
 #' @param x      GermlineCluster object
 #' @param y      not in use. missing.
+#' @param cex    Controls the size of the allele label. Default is 1.
+#' @param seed   Set a seed number for drawing the dendrogram. Default 9999.
 #'
-#' @aliases plot,GermlineCluster,missing
+#' @aliases plot,GermlineCluster,missing, numeric
 #' @exportMethod plot
 #' @importFrom methods signature
 #'
 setMethod("plot",
-          methods::signature(x = "GermlineCluster", y = "missing"),
+          methods::signature(x = "GermlineCluster", y = "missing"), #, cex = "numeric", seed = "numeric"
           plotAlleleCluster)
 
 
@@ -1068,9 +1070,10 @@ circos.dendrogram.piglet <-
             track.index = get.current.track.index(),
             lty_line = 1,
             fam_cut = 0.25,
-            group_cut = 0.05)
+            group_cut = 0.05,
+            seed = 123456)
   {
-    set.seed(123456)
+    set.seed(seed)
     os = get.current.sector.index()
     ot = get.current.track.index()
     set.current.cell(sector.index, track.index)
