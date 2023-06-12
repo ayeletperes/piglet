@@ -7,8 +7,8 @@
 recentAlleleClusters(
   doi = "10.5281/zenodo.7401189",
   path,
-  get_file = F,
-  quite = F
+  get_file = FALSE,
+  quite = FALSE
 )
 }
 \arguments{
@@ -29,8 +29,8 @@ The clusters and thresholds are based on \url{https://yaarilab.github.io/IGHV_re
 At the moment only available for human IGHV reference set.
 }
 \examples{
-\dontrun{
+
 recentAlleleClusters(doi="10.5281/zenodo.7401189")
-}
+
 
 }

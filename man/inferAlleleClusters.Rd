@@ -64,7 +64,7 @@ To plot the allele clusters dendrogram use the \code{plot} function on the \link
 }}
 
 \examples{
-\dontrun{
+
 # load the initial germline set
 
 data(HVGERM)
@@ -76,7 +76,7 @@ asc <- inferAlleleClusters(germline)
 ## plotting the clusters
 
 plot(asc)
-}
+
 }
 \seealso{
 By using the plot function on the returned object, a colorful visualization of the allele clusters dendrogram and threshold is received

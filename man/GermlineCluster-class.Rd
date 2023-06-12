@@ -8,7 +8,7 @@
 \alias{plot,GermlineCluster,missing}
 \title{Output of inferAlleleClusters}
 \usage{
-\S4method{plot}{GermlineCluster,missing}(x, y = NULL)
+\S4method{plot}{GermlineCluster,missing}(x, y = NULL, cex = 1, seed = 9999)
 }
 \arguments{
 \item{x}{GermlineCluster object}

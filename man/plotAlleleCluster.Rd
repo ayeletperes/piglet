@@ -4,12 +4,16 @@
 \alias{plotAlleleCluster}
 \title{Plotting the dendrogram of the clusters}
 \usage{
-plotAlleleCluster(x, y = NULL)
+plotAlleleCluster(x, y = NULL, cex = 1, seed = 9999)
 }
 \arguments{
 \item{x}{The GermlineCluster object. See \link{inferAlleleClusters}}
 
 \item{y}{NULL. not in use.}
+
+\item{cex}{Controls the size of the allele label. Default is 1.}
+
+\item{seed}{Set a seed number for drawing the dendrogram. Default 9999.}
 }
 \value{
 A plot of the allele clusters dendrogram

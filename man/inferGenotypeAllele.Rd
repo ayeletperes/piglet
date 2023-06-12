@@ -47,7 +47,7 @@ it is recommended to use the \code{find_unmutated=TRUE} option, to remove mutate
 are treated as belonging to all groups.
 }
 \examples{
-\dontrun{
+
 
 # loading TIgGER AIRR-seq b cell data
 data <- tigger::AIRRDb
@@ -70,7 +70,7 @@ asc_data <- assignAlleleClusters(data, allele_cluster_table)
 asc_genotype <- inferGenotypeAllele(asc_data,
 alleleClusterTable = allele_cluster_table,
 germline_db = asc_germline, find_unmutated=T)
-}
+
 
 }
 \seealso{

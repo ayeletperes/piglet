@@ -6,9 +6,9 @@
 \usage{
 artificialFRW1Germline(
   germline_set,
-  mask_primer = T,
-  trimm_primer = F,
-  quite = F
+  mask_primer = TRUE,
+  trimm_primer = FALSE,
+  quite = FALSE
 )
 }
 \arguments{

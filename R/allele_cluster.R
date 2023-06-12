@@ -520,9 +520,9 @@ togap <- function(vgap, vdj) {
 #' @export
 artificialFRW1Germline <-
   function(germline_set,
-           mask_primer = T,
-           trimm_primer = F,
-           quite = F) {
+           mask_primer = TRUE,
+           trimm_primer = FALSE,
+           quite = FALSE) {
     counter <-
       setNames(rep(0L, length(frw1_primers)), names(frw1_primers))
     frw1_set <- c()
@@ -637,7 +637,7 @@ artificialFRW1Germline <-
 #' By using the plot function on the returned object, a colorful visualization of the allele clusters dendrogram and threshold is received
 #'
 #' @examples
-#' \dontrun{
+#' 
 #' # load the initial germline set
 #'
 #' data(HVGERM)
@@ -649,7 +649,7 @@ artificialFRW1Germline <-
 #' ## plotting the clusters
 #'
 #' plot(asc)
-#' }
+#' 
 #' @export
 
 inferAlleleClusters <-
@@ -748,12 +748,13 @@ inferAlleleClusters <-
 #'
 #' @param    x                            The GermlineCluster object. See \link{inferAlleleClusters}
 #' @param    y                            NULL. not in use.
-#'
+#' @param    cex                          Controls the size of the allele label. Default is 1.
+#' @param    seed                         Set a seed number for drawing the dendrogram. Default 9999.
 #' @return
 #' A plot of the allele clusters dendrogram
 #'
 
-plotAlleleCluster <- function(x, y = NULL) {
+plotAlleleCluster <- function(x, y = NULL, cex = 1, seed = 9999) {
   ## check the class of the object
   
   if (!inherits(x, "GermlineCluster"))
@@ -847,7 +848,7 @@ plotAlleleCluster <- function(x, y = NULL) {
           adj = c(0, 0.5),
           facing = "clockwise",
           niceFacing = F,
-          cex = 1
+          cex = cex
         )
       }
     }
@@ -997,7 +998,7 @@ plotAlleleCluster <- function(x, y = NULL) {
   )
   
   max_height = attr(dend_list, "height") #changed for 1 dendrogram setting
-  set.seed(19765)
+  set.seed(seed)
   
   fam_col <-
     c(
@@ -1009,7 +1010,14 @@ plotAlleleCluster <- function(x, y = NULL) {
       "darkorange3",
       "deeppink4",
       "deepskyblue4",
-      "darkslategrey"
+      "darkslategrey",
+      "green",
+      "red",
+      "blue",
+      "purple",
+      "orange",
+      "pink",
+      "gray"
     )
   
   max_fam <- length(unique(group.df$fam))

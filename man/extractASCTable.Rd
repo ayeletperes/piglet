@@ -26,11 +26,11 @@ Extracts the allele cluster table from the archive file.
 For downloading the latest archive file with the updated allele cluster table, use the function \code{recentAlleleClusters}.
 }
 \examples{
-\dontrun{
+
 asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
 
 allele_cluster_table <- extractASCTable(archive_file = asc_archive)
 
-}
+
 
 }

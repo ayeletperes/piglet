@@ -18,7 +18,7 @@ Returns the IGHV germline set with the ASC allele names.
 Converts IGHV germline set to ASC germline set.
 }
 \examples{
-\dontrun{
+
 asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
 
 allele_cluster_table <- extractASCTable(archive_file = asc_archive)
@@ -27,6 +27,6 @@ data(HVGERM)
 
 asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
 
-}
+
 
 }

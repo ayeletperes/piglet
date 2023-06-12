@@ -16,7 +16,7 @@ zenodoArchive
 zenodoArchive
 }
 \examples{
-\dontrun{
+
   zenodo_archive <- zenodoArchive$new(
      doi = "10.5281/zenodo.7401189"
   )
@@ -29,7 +29,7 @@ zenodoArchive
 
   # downloading the first file from the latest archive version
   zenodo_archive$download_zenodo_files()
-}
+
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

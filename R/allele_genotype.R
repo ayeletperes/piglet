@@ -15,7 +15,7 @@ NULL
 #' @format \code{\link{R6Class}} object.
 #'
 #' @examples
-#' \dontrun{
+#'
 #'   zenodo_archive <- zenodoArchive$new(
 #'      doi = "10.5281/zenodo.7401189"
 #'   )
@@ -28,7 +28,7 @@ NULL
 #'
 #'   # downloading the first file from the latest archive version
 #'   zenodo_archive$download_zenodo_files()
-#' }
+#'
 #' @export
 zenodoArchive <- R6::R6Class(
   "zenodoArchive",
@@ -253,16 +253,16 @@ zenodoArchive <- R6::R6Class(
 #' If get_file is TRUE, the function returns the path to the archive file
 #'
 #' @examples
-#' \dontrun{
+#' 
 #' recentAlleleClusters(doi="10.5281/zenodo.7401189")
-#' }
+#' 
 #'
 #' @export
 recentAlleleClusters <-
   function(doi = "10.5281/zenodo.7401189",
            path,
-           get_file = F,
-           quite = F) {
+           get_file = FALSE,
+           quite = FALSE) {
     if (missing(path)) {
       path <- tempdir()
       if (!quite)
@@ -297,14 +297,14 @@ recentAlleleClusters <-
 #' `imgt_allele` - the original IUIS/IMGT allele name
 #' `thresh` - the allele threshold for ASC-based genotype inference
 #' `amplicon_length` - is the original length of the reference set.
-#'
+#' 
 #' @examples
-#' \dontrun{
+#' 
 #' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
 #'
 #' allele_cluster_table <- extractASCTable(archive_file = asc_archive)
 #'
-#' }
+#' 
 #'
 #' @export
 
@@ -340,7 +340,7 @@ extractASCTable <- function(archive_file = NULL) {
 #' Returns the IGHV germline set with the ASC allele names.
 #'
 #' @examples
-#' \dontrun{
+#' 
 #' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
 #'
 #' allele_cluster_table <- extractASCTable(archive_file = asc_archive)
@@ -349,7 +349,7 @@ extractASCTable <- function(archive_file = NULL) {
 #'
 #' asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
 #'
-#' }
+#' 
 #'
 #' @export
 germlineASC <- function(allele_cluster_table, germline) {
@@ -394,7 +394,7 @@ germlineASC <- function(allele_cluster_table, germline) {
 #' A modified input \code{data.frame} with the new assigned
 #'
 #'@examples
-#' \dontrun{
+#'
 #'
 #' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
 #'
@@ -404,7 +404,7 @@ germlineASC <- function(allele_cluster_table, germline) {
 #' data <- tigger::AIRRDb
 #'
 #' asc_data <- assignAlleleClusters(data, allele_cluster_table)
-#' }
+#'
 #'
 #' @export
 assignAlleleClusters <-
@@ -472,7 +472,7 @@ assignAlleleClusters <-
 #' See \link{recentAlleleClusters} to obtain the latest version of the IGHV allele clusters and the naive population based allele threshold.
 #'
 #'@examples
-#' \dontrun{
+#'
 #'
 #' # loading TIgGER AIRR-seq b cell data
 #' data <- tigger::AIRRDb
@@ -495,7 +495,7 @@ assignAlleleClusters <-
 #' asc_genotype <- inferGenotypeAllele(asc_data,
 #' alleleClusterTable = allele_cluster_table,
 #' germline_db = asc_germline, find_unmutated=T)
-#' }
+#' 
 #'
 #' @export
 # Parts are adapted from tigger::inferGenotype
