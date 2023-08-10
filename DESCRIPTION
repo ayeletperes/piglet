@@ -19,7 +19,7 @@ Depends: R (>= 3.5.0)
 Imports: 
     dplyr (>= 1.0.9),
     Biostrings (>= 2.62.0),
-    DECIPHER (>= 2.24.0),
+    DECIPHER (>= 2.22.0),
     alakazam (>= 1.2.0),
     dendextend (>= 1.9.0),
     data.table (>= 1.12.2),
