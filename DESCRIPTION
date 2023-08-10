@@ -18,7 +18,7 @@ Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports: 
     dplyr (>= 1.0.9),
-    Biostrings (>= 2.64.0),
+    Biostrings (>= 2.62.0),
     DECIPHER (>= 2.24.0),
     alakazam (>= 1.2.0),
     dendextend (>= 1.9.0),
@@ -33,7 +33,9 @@ Imports:
     circlize (>= 0.4.15),
     R6 (>= 2.5.1),
     jsonlite (>= 1.8.3),
-    magrittr
+    magrittr,
+    ggmsa,
+    ComplexHeatmap
 Suggests: 
   knitr,
   rmarkdown,
@@ -41,8 +43,6 @@ Suggests:
   graphics,
   grDevices,
   htmltools,
-  ComplexHeatmap,
-  ggmsa,
   stringi,
   bookdown
 RoxygenNote: 7.2.3

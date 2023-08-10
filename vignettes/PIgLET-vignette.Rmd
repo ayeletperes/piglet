@@ -420,8 +420,15 @@ colors <- data.frame(
     "#ffffff"
   )
 )
-ggmsa::ggmsa(dna_seq, custom_color = colors, show.legend = T) +
-  ggmsa::facet_msa(field = 80)
+
+if (requireNamespace("ggmsa", quietly = TRUE)) {
+  ggmsa::ggmsa(dna_seq, custom_color = colors, show.legend = T) +
+    ggmsa::facet_msa(field = 80)
+ } else {
+    
+ }
+
+
 ```
 
 We can use the artificial germline set to infer the ASC clusters in the

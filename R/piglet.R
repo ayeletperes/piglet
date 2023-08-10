@@ -49,6 +49,8 @@
 #' @import   ggplot2
 #' @import   circlize
 #' @import   jsonlite
+#' @import   ComplexHeatmap
+#' @importFrom  ggmsa            ggmsa facet_msa
 #' @importFrom  R6               R6Class
 #' @importFrom  dplyr            do n desc funs %>% distinct
 #'                               as_data_frame data_frame
