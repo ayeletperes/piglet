@@ -69,7 +69,7 @@ To plot the allele clusters dendrogram use the \code{plot} function on the \link
 \donttest{
 data(HVGERM)
 
-germline <- HVGERM
+germline <- HVGERM[!grepl("^[.]", HVGERM)]
 
 asc <- inferAlleleClusters(germline)
 

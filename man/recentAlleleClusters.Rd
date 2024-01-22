@@ -8,7 +8,7 @@ recentAlleleClusters(
   doi = "10.5281/zenodo.7401189",
   path,
   get_file = FALSE,
-  quite = FALSE
+  quiet = FALSE
 )
 }
 \arguments{
@@ -18,7 +18,7 @@ recentAlleleClusters(
 
 \item{get_file}{Logical (FALSE by default). Do you want to return the path for the file downloaded.}
 
-\item{quite}{Logical (FALSE by default). Do you want to suppress informative messages}
+\item{quiet}{Logical (FALSE by default). Do you want to suppress informative messages}
 }
 \value{
 If get_file is TRUE, the function returns the path to the archive file

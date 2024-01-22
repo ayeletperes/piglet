@@ -41,6 +41,7 @@
 #'   \item  ##
 #'}
 #'
+#' @useDynLib piglet, .registration = TRUE
 #' @import   methods
 #' @import   graphics
 #' @import   grDevices
@@ -50,7 +51,12 @@
 #' @import   circlize
 #' @import   jsonlite
 #' @import   ComplexHeatmap
+#' @import   shiny
+#' @import   DT
+#' @import   msaR
+#' @importFrom  Rcpp             sourceCpp evalCpp
 #' @importFrom  ggmsa            ggmsa facet_msa
+#' @importFrom  msa              msa
 #' @importFrom  R6               R6Class
 #' @importFrom  dplyr            do n desc funs %>% distinct
 #'                               as_data_frame data_frame

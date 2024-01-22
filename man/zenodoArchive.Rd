@@ -189,7 +189,7 @@ get the chosen doi archive version available files
   version = "latest",
   all_files = F,
   get_file_path = F,
-  quite = F
+  quiet = F
 )}\if{html}{\out{</div>}}
 }
 
@@ -206,7 +206,7 @@ get the chosen doi archive version available files
 
 \item{\code{get_file_path}}{Logical (FALSE by default). Do you want to return the path for the file downloaded.}
 
-\item{\code{quite}}{Logical (FALSE by default). Do you want to suppress informative messages}
+\item{\code{quiet}}{Logical (FALSE by default). Do you want to suppress informative messages}
 }
 \if{html}{\out{</div>}}
 }

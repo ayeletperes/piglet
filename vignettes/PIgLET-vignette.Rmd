@@ -393,7 +393,7 @@ To demonstrate the use of the function, we can use the cleaned germline
 set from above (<a href="#lst-germlineset-code">block 1</a>). 
 In this case we will mask the FRW1 region, this will return the sequences with the Ns instead of DNA
 nucleotide. The function output a log of the process, this output can be
-repressed using the `quite=TRUE` flag.
+repressed using the `quiet=TRUE` flag.
 
 ```{r frw1}
 germline_frw1 <- artificialFRW1Germline(germline, mask_primer = T)
