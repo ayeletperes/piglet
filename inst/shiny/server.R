@@ -1,14 +1,12 @@
 # Contents of app_server.R
-asc_theme <- function(
-    axis.text.y = 20,
-    strip.text = 40,
-    axis.text.x.bottom = 18,
-    axis.text.x.top = 18,
-    legend.text = 20,
-    legend.title = 20,
-    axis.title.y = 20,
-    axis.title.x = 20
-) {
+asc_theme <- function(axis.text.y = 20,
+                      strip.text = 40,
+                      axis.text.x.bottom = 18,
+                      axis.text.x.top = 18,
+                      legend.text = 20,
+                      legend.title = 20,
+                      axis.title.y = 20,
+                      axis.title.x = 20) {
   ggplot2::theme_minimal() +
     theme(
       legend.background = element_blank(),
@@ -116,7 +114,7 @@ asc_thresholds <- function(germline_set) {
   return(tab)
 }
 
-server <-function(input, output, session) {
+server <- function(input, output, session) {
   germline_set <- reactiveVal(NULL)
   inferred_asc <- reactiveVal(NULL)
   
@@ -195,7 +193,7 @@ server <-function(input, output, session) {
   })
   
   ## MSA plot ----------------------------------------------
-  output$msa <- renderMsaR({
+  observe({
     if (!is.null(germline_set())) {
       raw_sequences <- isolate(germline_set())
       
@@ -213,11 +211,51 @@ server <-function(input, output, session) {
         }))
       padded_sequences <-
         Biostrings::AAStringSet(gsub("[.]", "-", padded_sequences))
-      msaR(
-        padded_sequences,
-        overviewbox = FALSE,
-        menu = FALSE,
-        seqlogo = TRUE
+      
+      output$msa <- renderMsaR({
+        msaR(padded_sequences,
+             menu = FALSE,
+             seqlogo = TRUE)
+      })
+      
+      output$download_msa_pdf <- downloadHandler(
+        filename = function() {
+          paste("msa_germline_set_", Sys.Date(), ".pdf", sep = "")
+        },
+        content = function(file) {
+          msa::msaPrettyPrint(msa::msa(padded_sequences) 
+                              , file = 'myreport.pdf'
+                              , output="pdf"
+                              , showNames="left"
+                              , showLogo="top"
+                              , consensusColor="BlueRed"
+                              , logoColors="accessible area"
+                              , askForOverwrite=FALSE)
+          file.rename('myreport.pdf', file)
+        },
+        contentType = 'application/pdf'
+      )
+      
+      output$download_msa_png <- downloadHandler(
+        filename = function() {
+          paste("msa_germline_set_", Sys.Date(), ".png", sep = "")
+        },
+        content = function(file) {
+          p <- ggmsa(Biostrings::DNAStringSet(germline_set()), 
+                char_width = 0.5, seq_name = T, custom_color = data.frame(
+            names = c("A", "T", "C", "G", "N", "-"),
+            color = c(
+              "#ff6d6d",
+              "#769dcc",
+              "#f2be3c",
+              "#74ce98",
+              "#b8b8b8",
+              "#ffffff"
+            )
+          )) + geom_seqlogo() + geom_msaBar()
+          ggsave(file, plot = p, device = "png")
+        },
+        contentType = 'application/pdf'
       )
     }
   })
@@ -286,34 +324,35 @@ server <-function(input, output, session) {
       )
       
       #f1 <- approxfun(tab$gene_clust - tab$clust_alleles, tab$thresh, rule=2)
-      rec_thresh_val <- tab$thresh[which.min(tab$gene_clust + tab$iuis_asc)] #round(f1(0))
-      intercept_vlines <- c(rec_thresh_val, 
-                            input$allele_cluster_threshold, 
+      rec_thresh_val <-
+        tab$thresh[which.min(tab$gene_clust + tab$iuis_asc)] #round(f1(0))
+      intercept_vlines <- c(rec_thresh_val,
+                            input$allele_cluster_threshold,
                             input$family_threshold)
       
       data_vline <- data.frame(
         line =  c(
-          paste0("recommended\nasc\nthreshold (",rec_thresh_val,")"),
+          paste0("recommended\nasc\nthreshold (", rec_thresh_val, ")"),
           "selected\nasc\nthreshold",
           "selected\nfamily\nthreshold"
         ),
         value  = intercept_vlines,
-        color = c(
-          "firebrick",
-          "darkgreen",
-          "deeppink4"
-        )
+        color = c("firebrick",
+                  "darkgreen",
+                  "deeppink4")
       )
       
       output$asc_threshold <- renderPlot({
         ggplot(tab, aes(thresh)) +
-          geom_rect(aes(
-            xmin = rec_thresh_val-2,
-            xmax = rec_thresh_val+2,
-            ymin = -Inf,
-            ymax = Inf
-          ) ,
-          fill = "gray90") +
+          geom_rect(
+            aes(
+              xmin = rec_thresh_val - 2,
+              xmax = rec_thresh_val + 2,
+              ymin = -Inf,
+              ymax = Inf
+            ) ,
+            fill = "gray90"
+          ) +
           geom_line(aes(y = iuis_asc), color = "#018571") +
           geom_point(aes(y = iuis_asc)) +
           geom_line(aes(y = gene_clust), color = "#a6611a") +
@@ -322,16 +361,15 @@ server <-function(input, output, session) {
           geom_point(aes(y = gene_clust + iuis_asc)) +
           scale_y_continuous(
             name = "Num. clusters sharing IUIS \n genes over num. clusters",
-            sec.axis = sec_axis( ~ . * 1, name = "Num. genes spanning more than \n one cluster over the num. genes")
+            sec.axis = sec_axis(~ . * 1, name = "Num. genes spanning more than \n one cluster over the num. genes")
           ) +
-          geom_vline(data = data_vline, 
-                     mapping = aes(xintercept = value, colour = line),
-                     linetype = "dashed"
+          geom_vline(
+            data = data_vline,
+            mapping = aes(xintercept = value, colour = line),
+            linetype = "dashed"
           ) +
-          scale_color_manual(
-            name = "",
-            values = setNames(alpha(data_vline$color, alpha = 1), data_vline$line)
-          ) +
+          scale_color_manual(name = "",
+                             values = setNames(alpha(data_vline$color, alpha = 1), data_vline$line)) +
           geom_hline(
             yintercept = tab$iuis_asc[tab$thresh  %in% intercept_vlines],
             color = "#5ab4ac",
@@ -343,11 +381,13 @@ server <-function(input, output, session) {
             linetype = "dashed"
           ) +
           labs(x = "Similarity threshold") +
-          asc_theme(axis.text.y = 16, 
-                    axis.title.y = 16, 
-                    axis.text.x.bottom = 16,
-                    axis.title.x = 16, 
-                    legend.text = 14) +
+          asc_theme(
+            axis.text.y = 16,
+            axis.title.y = 16,
+            axis.text.x.bottom = 16,
+            axis.title.x = 16,
+            legend.text = 14
+          ) +
           theme(
             axis.text.y.right = element_text(color = "#018571"),
             axis.text.y.left = element_text(color = "#a6611a"),
@@ -370,13 +410,11 @@ server <-function(input, output, session) {
         mask_5prime_side = input$mask_5prime_side
       )
       inferred_asc(inferred_asc_result)
-      output$asc_table <- DT::renderDataTable(
-        inferred_asc()@alleleClusterTable
-      )
+      output$asc_table <- DT::renderDataTable(inferred_asc()@alleleClusterTable)
       
       output$asc_plot <- renderPlot({
         plot(inferred_asc())
-      }, )
+      },)
       
     }
   })
@@ -396,7 +434,8 @@ server <-function(input, output, session) {
       paste("germline_set_", Sys.Date(), ".fasta", sep = "")
     },
     content = function(file) {
-      writeLines(germlineASC(inferred_asc()@alleleClusterTable, germline_set()), file)
+      writeLines(germlineASC(inferred_asc()@alleleClusterTable, germline_set()),
+                 file)
     }
   )
   

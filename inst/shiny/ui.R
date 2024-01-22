@@ -50,7 +50,13 @@ ui <- fluidPage(navbarPage(
                width = 9,
                tabsetPanel(
                  tabPanel("Germline Set",
-                          msaROutput("msa")),
+                          msaROutput("msa"),
+                          fluidRow(column(width = 4,
+                                          downloadButton("download_msa_pdf", "Download MSA pdf")),
+                                   column(
+                                     width = 4,
+                                     downloadButton("download_msa_png", "Download MSA png")
+                                   ))),
                  tabPanel("3' Trimming selection",
                           plotOutput("trim3")),
                  tabPanel("ASC threshold selection",
