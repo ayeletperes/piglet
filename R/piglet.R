@@ -1,4 +1,5 @@
 # piglet package documentation and import directives
+"_PACKAGE"
 
 #' The Program for Ig clusters (PIgLET) package
 #'
@@ -35,7 +36,6 @@
 #' }
 #'
 #' @name     piglet
-#' @docType  package
 #' @references
 #' \enumerate{
 #'   \item  ##
@@ -51,9 +51,6 @@
 #' @import   circlize
 #' @import   jsonlite
 #' @import   ComplexHeatmap
-#' @import   shiny
-#' @import   DT
-#' @import   msaR
 #' @importFrom  Rcpp             sourceCpp evalCpp
 #' @importFrom  ggmsa            ggmsa facet_msa
 #' @importFrom  msa              msa
@@ -77,5 +74,4 @@
 #' @importFrom  splitstackshape  cSplit
 #' @importFrom  zen4R            download_zenodo
 #' @importFrom  methods          setOldClass
-#' @importFrom  splitstackshape  cSplit
 NULL

@@ -109,14 +109,14 @@ alignSeqs <- function(germline_set){
 
 # ------------------------------------------------------------------------------
 # beta cluster app
-run_piglet_app <- function() {
-  shinyAppDir(
-    system.file("shiny", package = "piglet"),
-    options = list(
-      width = "100%", height = 600
-    )
-  )
-}
+# run_piglet_app <- function() {
+#   shinyAppDir(
+#     system.file("shiny", package = "piglet"),
+#     options = list(
+#       width = "100%", height = 600
+#     )
+#   )
+# }
 
 # ------------------------------------------------------------------------------
 

@@ -181,8 +181,8 @@ zenodoArchive <- R6::R6Class(
           "https://zenodo.org/api/records/",
           self$clean_doi(doi_version)
         ))
-      self$download_url <- query$files$links$download
-      self$download_file <- basename(query$files$filename)
+      self$download_url <- query$files$links$self
+      self$download_file <- basename(query$files$key)
       self$download_file
     },
     #' @description get the chosen doi archive version available files

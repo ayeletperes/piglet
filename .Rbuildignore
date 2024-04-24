@@ -4,7 +4,14 @@
 ^data-raw$
 \.git
 \.Rhistory
-\.Rcheck
+.gitignore
 .readthedocs.yaml
 ^docs$
+^doc$
 ^mkdocs.yml
+^inst$
+^\.Rcheck
+^.Rcheck
+^man$
+^Meta$
+^vignettes$
