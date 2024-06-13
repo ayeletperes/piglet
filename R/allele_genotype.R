@@ -738,6 +738,12 @@ inferGenotypeAllele <-
       setNames(as.numeric(alleleClusterTable$thresh), alleleClusterTable$new_allele)
     geno_V_fraction <-
       geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
+    
+    z_score <- function(Nai, N, Tai) (Nai/N - Tai) / sqrt((Nai/(N^2))*(1-Nai/N))
+    
+    geno_V_fraction <-
+      geno_V_fraction[, "genotype_confidence" := z_score(Nai=get("count"),N=n_row_sub,Tai=get("absolute_thresh"))]
+    
     na_id <- which(is.na(geno_V_fraction$absolute_thresh))
     if (length(na_id) != 0)
       geno_V_fraction$absolute_thresh[na_id] <-
@@ -765,6 +771,9 @@ inferGenotypeAllele <-
         ), 7), collapse = ","),
         "absolute_threshold" = paste0(formatC(get(
           "absolute_thresh"
+        ), format = "f"), collapse = ","),
+        "genotype_confidence" = paste0(formatC(get(
+          "genotype_confidence"
         ), format = "f"), collapse = ","),
         "genotyped_alleles" = paste0(get("v_allele")[get("absolute_fraction") >=
                                                        get("absolute_thresh")], collapse = ","),

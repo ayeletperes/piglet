@@ -1,6 +1,6 @@
 Package: piglet
 Title: Program for Inferring Ig Allele Similarity Clusters and Genotypes
-Version: 1.0.4
+Version: 1.0.5
 Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"), 
                     email="peresay@biu.ac.il"),
             person("William", "Lees", role=c("aut"), 
@@ -11,7 +11,7 @@ Description: Improves genotype inference and downstream AIRR-seq data analysis. 
              The main tools are allele similarity clusters (ASC), and allele based genotype. The first tool is designed to reduce the ambiguity within the IGHV alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes. 
              The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population.
              Citation:
-             Peres, et al (2022) <doi:10.1101/2022.12.26.521922>.
+             Peres, et al (2023) <doi:10.1093/nar/gkad603>.
 License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -35,9 +35,9 @@ Imports:
     R6 (>= 2.5.1),
     jsonlite (>= 1.8.3),
     Rcpp (>= 0.11.0), 
+    msa(>= 1.32.0),
     magrittr,
     ggmsa,
-    msa,
     ComplexHeatmap
 Suggests: 
   knitr,

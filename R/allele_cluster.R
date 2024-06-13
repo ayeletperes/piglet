@@ -101,7 +101,7 @@ alignSeqs <- function(germline_set){
   if (!is.vector(germline_set, mode = "character"))
     germline_set <- tigger::readIgFasta(germline_set)
   
-  aligned_set <- msa(germline_set, type = "dna")
+  aligned_set <- msa::msa(germline_set, type = "dna")
   xn <- as.character(unmasked(aligned_set))
   setNames(unname(xn), names(xn))
 }
@@ -276,7 +276,6 @@ ighvClust <-
 #'
 #' A data.frame with the clusters renamed alleles based on the ASC scheme.
 #' @export
-
 alleleClusterNames <- function(cluster,
                                allele.cluster.table,
                                germ.dist,

@@ -68,10 +68,17 @@
 #' @importFrom  alakazam         getGene getAllele getFamily
 #' @importFrom  rlang            .data
 #' @importFrom  tigger           readIgFasta findUnmutatedCalls
-#' @importFrom  Biostrings       DNAStringSet
+#' @importFrom  Biostrings       DNAStringSet unmasked
 #' @importFrom  DECIPHER         DistanceMatrix
 #' @importFrom  RColorBrewer     brewer.pal.info brewer.pal
 #' @importFrom  splitstackshape  cSplit
 #' @importFrom  zen4R            download_zenodo
 #' @importFrom  methods          setOldClass
 NULL
+
+# Package loading actions
+.onAttach <- function(libname, pkgname) {
+  msg <- citation(pkgname)
+  msg <-paste(c(format(msg,"citation")),collapse="\n\n")
+  packageStartupMessage(msg)
+}

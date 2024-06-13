@@ -1,3 +1,10 @@
+Version 1.0.5:  April 24, 2024
+-------------------------------------------------------------------------------
+
++ New Feature! We added a confidence level to genotype inference `genotype_confidence`.
+
+The confidence is calculated as the Z score of the allele count, repertoire depth, and the allele absolute threshold.
+
 Version 1.0.4:  April 24, 2024
 -------------------------------------------------------------------------------
 

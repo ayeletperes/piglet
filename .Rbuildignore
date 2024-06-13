@@ -7,11 +7,8 @@
 .gitignore
 .readthedocs.yaml
 ^docs$
-^doc$
 ^mkdocs.yml
-^inst$
+^shiny_project$
 ^\.Rcheck
 ^.Rcheck
-^man$
-^Meta$
-^vignettes$
+

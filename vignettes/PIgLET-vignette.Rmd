@@ -457,7 +457,7 @@ The ASC-based threshold, found in the manuscript and the IGHV reference book are
 
 To retrieve the archive files we can use the `recentAlleleClusters` function. The function can get a path value for locally saving the archive files with the `path` flag, if non is supplied then the function save the files in a temporary directory. The flag `get_file=TRUE`, will return the downloaded file full path.
 
-```{r}
+```{r, eval=FALSE}
 zenodo_doi <- "10.5281/zenodo.7401189"
 asc_archive <-
   recentAlleleClusters(doi = zenodo_doi, get_file = TRUE)
@@ -466,8 +466,12 @@ asc_archive <-
 To extract the ASC threshold table we can use the `extractASCTable`
 function
 
-```{r}
+```{r, eval=FALSE}
 allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+```
+
+```{r, echo=FALSE}
+allele_cluster_table <- read.delim('asc_alleles_table.tsv',sep='\t')
 ```
 
 The table is has identical ASC clusters to the table we created above
@@ -487,7 +491,6 @@ asc_tables <- dplyr::left_join(
   by = "new_allele",
   suffix = c(".piglet", ".zenodo")
 )
-head(asc_tables)
 ```
 
 We can now extract the threshold from the Zenodo archive table and fill
