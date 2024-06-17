@@ -751,7 +751,7 @@ inferGenotypeAllele <-
     geno_V_fraction <-
       geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
     
-    z_score <- function(Nai, N, Tai) (Nai/N - Tai) / sqrt((Nai/(N^2))*(1-Nai/N))
+    z_score <- function(Nai, N, Tai) (Nai - Tai*N) / sqrt(Tai*N*(1-Tai))
     
     geno_V_fraction <-
       geno_V_fraction[, "genotype_confidence" := z_score(Nai=get("count"),N=n_row_sub,Tai=get("absolute_thresh"))]
