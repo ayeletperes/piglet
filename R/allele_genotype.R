@@ -455,13 +455,15 @@ assignAlleleClusters <-
 #' The method utilize the allele specific threshold to determine the presence of an allele in the genotype.
 #' More specifically, the absolute frequency of each allele is calculated and checked against the threshold.
 #'
-#' @param data                  data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
-#' @param alleleClusterTable    A data.frame of the allele similarity clusters thresholds.
-#' @param v_call                name of the V allele call column. Default is `v_call`
-#' @param single_assignment     if TRUE, the method only considers sequence with single assignment for the genotype inference.
-#' @param germline_db           named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
-#' @param find_unmutated        if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
-#' @param seq                   name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
+#' @param data                     data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
+#' @param alleleClusterTable       A data.frame of the allele similarity clusters thresholds.
+#' @param v_call                   name of the V allele call column. Default is `v_call`
+#' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
+#' @param germline_db              named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
+#' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
+#' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
+#' @param confidence_level         The confidence level on which to filter the inferred genotype alleles. Default is NULL, meaning filtering only based on allele threshold.
+#' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `alleleClusterTable`. Default is 1e-04.
 #'
 #' @return
 #' A a data.frame with the inferred V genotype. The table contains the following columns:
@@ -519,7 +521,9 @@ inferGenotypeAllele <-
            single_assignment = FALSE,
            germline_db = NA,
            find_unmutated = FALSE,
-           seq = "sequence_alignment") {
+           seq = "sequence_alignment",
+           confidence_level = NULL,
+           default_allele_threshold = 1e-04) {
     . = NULL
     
     
@@ -530,9 +534,17 @@ inferGenotypeAllele <-
     unique_calls <- unique(unlist(strsplit(allele_calls, ",")))
     match <- unique_calls %in% alleleClusterTable$new_allele
     if (!all(match)) {
-      stop(
-        "The are allele calls that are not in the alleleClusterTable. Please check the allele call column."
-      )
+      
+      for(allele in unique_calls[!match]) {
+        warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
+        
+        alleleClusterTable <- rbind(alleleClusterTable, 
+                                    data.frame(new_allele = allele,
+                                               func_group = strsplit(allele,'[*]')[[1]][1], 
+                                               imgt_allele = allele,
+                                               thresh = default_allele_threshold))
+      }
+      
     }
     
     ## check unmutated
@@ -757,6 +769,11 @@ inferGenotypeAllele <-
     
     geno_V_fraction[, "above_thresh" := get("absolute_fraction") >= get("absolute_thresh")]
     
+    if(!is.null(confidence_level)) {
+      geno_V_fraction <- geno_V_fraction[, "above_confidence" := get("genotype_confidence") >= confidence_level]
+    }else{
+      geno_V_fraction <- geno_V_fraction[, "above_confidence" := TRUE]
+    }
     
     sortBy <- c('gene', 'absolute_fraction')
     sortType <- c(1, -1)
@@ -775,10 +792,10 @@ inferGenotypeAllele <-
         "genotype_confidence" = paste0(formatC(get(
           "genotype_confidence"
         ), format = "f"), collapse = ","),
-        "genotyped_alleles" = paste0(get("v_allele")[get("absolute_fraction") >=
-                                                       get("absolute_thresh")], collapse = ","),
-        "genotyped_imgt_alleles" = paste0(get("v_call_or")[get("absolute_fraction") >=
-                                                             get("absolute_thresh")], collapse = ",")
+        "genotyped_alleles" = paste0(get("v_allele")[get("above_thresh") &
+                                                       get("above_confidence")], collapse = ","),
+        "genotyped_imgt_alleles" = paste0(get("v_call_or")[get("above_thresh") &
+                                                             get("above_confidence")], collapse = ",")
       ), by = mget(c("gene"))]
     
     

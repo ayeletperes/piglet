@@ -11,7 +11,9 @@ inferGenotypeAllele(
   single_assignment = FALSE,
   germline_db = NA,
   find_unmutated = FALSE,
-  seq = "sequence_alignment"
+  seq = "sequence_alignment",
+  confidence_level = NULL,
+  default_allele_threshold = 1e-04
 )
 }
 \arguments{
@@ -28,6 +30,10 @@ inferGenotypeAllele(
 \item{find_unmutated}{if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.}
 
 \item{seq}{name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.}
+
+\item{confidence_level}{The confidence level on which to filter the inferred genotype alleles. Default is NULL, meaning filtering only based on allele threshold.}
+
+\item{default_allele_threshold}{The default allele threshold for the genotype inference, in case the allele threshold is not in the \code{alleleClusterTable}. Default is 1e-04.}
 }
 \value{
 A a data.frame with the inferred V genotype. The table contains the following columns:\tabular{llllllll}{
