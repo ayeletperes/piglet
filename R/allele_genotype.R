@@ -905,7 +905,13 @@ inferGenotypeAlleleTest <-
     
     
     alleles_calls = alakazam::getAllele(data[[v_call]], first = FALSE,
-                                       strip_d = FALSE)
+                                        strip_d = FALSE)
+    # check that the needed columns are in alleleClusterTable
+    if (!all(c("new_allele", "imgt_allele", "thresh") %in% colnames(alleleClusterTable))) {
+      stop("alleleClusterTable must contain columns 'new_allele', 'imgt_allele', and 'thresh'")
+    }else{
+      alleleClusterTable <- alleleClusterTable[, c("new_allele", "imgt_allele", "thresh")]
+    }
     
     ## check that the allele calls are in the supplied alleleClusterTable
     unique_calls <- unique(unlist(strsplit(alleles_calls, ",")))
@@ -916,8 +922,7 @@ inferGenotypeAlleleTest <-
         warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
         
         alleleClusterTable <- rbind(alleleClusterTable, 
-                                    data.frame(new_allele = allele,
-                                               func_group = strsplit(allele,'[*]')[[1]][1], 
+                                    data.frame(new_allele = allele, 
                                                imgt_allele = allele,
                                                thresh = default_allele_threshold))
       }
@@ -953,7 +958,9 @@ inferGenotypeAlleleTest <-
     
     
     alleles_count <- c()
+    pb <- alakazam::progressBar(length(reference_alleles))
     for(i in 1:length(reference_alleles)) {
+      pb$tick()
       allele = reference_alleles[i]
       ## grep the indices of the allele calls
       allele_indices <- grep(gsub("\\*", "\\\\*", allele), alleles_calls)
@@ -968,38 +975,42 @@ inferGenotypeAlleleTest <-
       
       # count multiple assignments
       multiple_assignments_indices <- grep(",", allele_calls)
-      if(is.null(likelihood_col)) {
-        likelihoods <- data[[likelihood_col]][allele_indices]
-        likelihoods <- likelihoods[multiple_assignments_indices]
-        multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
-          multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
-          # get the allele loc
-          allele_loc <- which(multiple_assignments == allele)
-          # normalize the likelihood
-          likelihood <- as.numeric(unlist(strsplit(likelihoods[idx], ",")))
-          likelihood <- likelihood/sum(likelihood)
-          # get the count
-          return(likelihood[allele_loc])
-        }))
-        allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
+      if(length(multiple_assignments_indices)!=0){
+        if(!is.null(likelihood_col)) {
+          likelihoods <- data[[likelihood_col]][allele_indices]
+          likelihoods <- likelihoods[multiple_assignments_indices]
+          multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
+            multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
+            # get the allele loc
+            allele_loc <- which(multiple_assignments == allele)
+            # normalize the likelihood
+            likelihood <- as.numeric(unlist(strsplit(likelihoods[idx], ",")))
+            likelihood <- likelihood/sum(likelihood)
+            # get the count
+            return(likelihood[allele_loc])
+          }))
+          allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
+        }else{
+          multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
+            multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
+            # get the allele loc
+            allele_loc <- which(multiple_assignments == allele)
+            # get the count
+            return(1/length(multiple_assignments))
+          }))
+          allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
+        }
       }else{
-        multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
-          multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
-          # get the allele loc
-          allele_loc <- which(multiple_assignments == allele)
-          # get the count
-          return(1/length(multiple_assignments))
-        }))
-        allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
+        allele_count <- single_assignments
       }
       alleles_count <- c(alleles_count, allele_count)
     }
     
     genotype <- data.table::data.table(gene = alakazam::getGene(reference_alleles, first = F, collapse = T, strip_d = F),
-                                     allele = reference_alleles, 
-                                     imgt_allele = alleleClusterTable$imgt_allele, 
-                                     count = alleles_count,
-                                     frequency_threshold = alleleClusterTable$thresh
+                                       allele = reference_alleles, 
+                                       imgt_allele = alleleClusterTable$imgt_allele, 
+                                       count = alleles_count,
+                                       frequency_threshold = alleleClusterTable$thresh
     )
     
     z_score <- function(Ni, N, Pi) (Ni - Pi*N) / sqrt(Pi*N*(1-Pi))
