@@ -708,7 +708,7 @@ inferGenotypeAllele <-
           )
         gene_table <- gene_table[get("count") != 0]
         
-        geno_V_fraction <- bind_rows(geno_V_fraction, gene_table)
+        geno_V_fraction <- dplyr::bind_rows(geno_V_fraction, gene_table)
       }
       ############
       geno_V_fraction <-
@@ -821,4 +821,194 @@ inferGenotypeAllele <-
     # rownames(geno) <- NULL
     
     return(genoV)
+  }
+
+# ------------------------------------------------------------------------------
+
+#' Allele similarity cluster based genotype inference Testing function
+#' 
+#' \code{inferGenotypeAlleleTest} infer an individual's genotype based on the allele-base method.
+#' The method utilize the allele specific threshold to determine the presence of an allele in the genotype.
+#' More specifically, the absolute frequency of each allele is calculated and checked against the threshold.
+#'
+#' @param data                     data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
+#' @param alleleClusterTable       A data.frame of the allele similarity clusters thresholds.
+#' @param v_call                   name of the V allele call column. Default is `v_call`
+#' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
+#' @param germline_db              named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
+#' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
+#' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
+#' @param confidence_level         The confidence level on which to filter the inferred genotype alleles. Default is NULL, meaning filtering only based on allele threshold.
+#' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `alleleClusterTable`. Default is 1e-04.
+#' @param likelihood_col           name of the likelihood column. If not provided, the cases of multiple assignment calls will be divided equally between the alleles. Default Null.
+#'
+#' @return
+#' A a data.frame with the inferred V genotype. The table contains the following columns:
+#' 	|gene            | alleles             | imgt_alleles          | counts              | absolute_fraction     | absolute_threshold               | genotyped_alleles    | genotype_imgt_alleles|
+#'  |----------------|---------------------|-----------------------|---------------------|-----------------------|----------------------------------|----------------------|----------------------|
+#'  | allele cluster | the present alleles | the imgt nomenclature | the number of reads | the absolute fraction | the population driven allele     | the alleles which    | the imgt nomenclature|
+#'  |                | in the repertoire   | of the alleles        | for each alleles    | of the alleles        | thresholds for genotype presence | entered the genotype | of the alleles 		  |
+#'
+#' @details
+#'
+#' In naive repertoires, allele calls where more than one assignment is assigned is rare. Hence, in case the data represents the naive repertoire of a subject
+#' it is recommended to use the `find_unmutated=TRUE` option, to remove mutated sequences. For non-naive population, the allele calls in cases of multiple assignment
+#' are treated as belonging to all groups.
+#'
+#' @seealso
+#'
+#' \link{inferAlleleClusters} will infer the allele clusters based on a supplied V reference set and set the default allele threshold of 1e-04.
+#' See \link{recentAlleleClusters} to obtain the latest version of the IGHV allele clusters and the naive population based allele threshold.
+#'
+#'@examples
+#'
+#'
+#' # loading TIgGER AIRR-seq b cell data
+#' data <- tigger::AIRRDb
+#'
+#' # preferably obtain the latest ASC cluster table
+#' # asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
+#'
+#' # allele_cluster_table <- extractASCTable(archive_file = asc_archive)
+#'
+#' # example allele similarity cluster table
+#' data(allele_cluster_table)
+#'
+#' data(HVGERM)
+#'
+#' # reforming the germline set
+#' asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
+#'
+#' # assigning the ASC alleles
+#' asc_data <- assignAlleleClusters(data, allele_cluster_table)
+#'
+#' # inferring the genotype
+#' asc_genotype <- inferGenotypeAlleleTest(
+#' data = asc_data,
+#' alleleClusterTable = allele_cluster_table,
+#' germline_db = asc_germline, find_unmutated=TRUE)
+#' 
+#'
+#' @export
+inferGenotypeAlleleTest <-
+  function(data,
+           alleleClusterTable,
+           v_call = "v_call",
+           single_assignment = FALSE,
+           germline_db = NA,
+           find_unmutated = FALSE,
+           seq = "sequence_alignment",
+           confidence_level = NULL,
+           default_allele_threshold = 1e-04,
+           likelihood_col = NULL) {
+    . = NULL
+    
+    
+    alleles_calls = alakazam::getAllele(data[[v_call]], first = FALSE,
+                                       strip_d = FALSE)
+    
+    ## check that the allele calls are in the supplied alleleClusterTable
+    unique_calls <- unique(unlist(strsplit(alleles_calls, ",")))
+    match <- unique_calls %in% alleleClusterTable$new_allele
+    if (!all(match)) {
+      
+      for(allele in unique_calls[!match]) {
+        warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
+        
+        alleleClusterTable <- rbind(alleleClusterTable, 
+                                    data.frame(new_allele = allele,
+                                               func_group = strsplit(allele,'[*]')[[1]][1], 
+                                               imgt_allele = allele,
+                                               thresh = default_allele_threshold))
+      }
+      
+    }
+    
+    ## check un mutated
+    if (find_unmutated) {
+      if (is.na(germline_db[1])) {
+        stop("germline_db needed if find_unmutated is TRUE")
+      }
+      alleles_calls <-
+        tigger::findUnmutatedCalls(alleles_calls, as.character(data[[seq]]),
+                                   germline_db)
+      if (length(alleles_calls) == 0) {
+        stop("No unmutated sequences found! Set 'find_unmutated' to 'FALSE'.")
+      }
+    }
+    
+    ## we will iterate trough the allele in the alleleClusterTable, and for each allele extract it's frequency.
+    ## the base allele frequency will be 1 over the number of unique alleles in the alleleClusterTable.
+    if (any(duplicated(alleleClusterTable$new_allele))) {
+      alleleClusterTable <- setDT(alleleClusterTable)
+      
+      alleleClusterTable <-
+        alleleClusterTable[, .(
+          "imgt_allele" = paste0(sort(unlist(unique(mget(c("imgt_allele"))))), collapse = "/"),
+          "thresh" = min(get("thresh"))), by = c("new_allele")]
+    }
+    
+    reference_alleles <- alleleClusterTable$new_allele
+    base_freq <- 1 / length(reference_alleles)
+    
+    
+    alleles_count <- c()
+    for(i in 1:length(reference_alleles)) {
+      allele = reference_alleles[i]
+      ## grep the indices of the allele calls
+      allele_indices <- grep(gsub("\\*", "\\\\*", allele), alleles_calls)
+      allele_calls <- alleles_calls[allele_indices]
+      ## for every call the allele is in a single assignment, we will count it as 1.
+      ## for multiple assignments, we will divide the count by the number of assignments or if likelihood col is provided by the normalized likelihood.
+      
+      # count single assignments
+      single_assignments <- sum(!grepl(",", allele_calls))
+      
+      multiple_assignments_wheight <- (single_assignments+1) / length(reference_alleles)
+      
+      # count multiple assignments
+      multiple_assignments_indices <- grep(",", allele_calls)
+      if(is.null(likelihood_col)) {
+        likelihoods <- data[[likelihood_col]][allele_indices]
+        likelihoods <- likelihoods[multiple_assignments_indices]
+        multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
+          multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
+          # get the allele loc
+          allele_loc <- which(multiple_assignments == allele)
+          # normalize the likelihood
+          likelihood <- as.numeric(unlist(strsplit(likelihoods[idx], ",")))
+          likelihood <- likelihood/sum(likelihood)
+          # get the count
+          return(likelihood[allele_loc])
+        }))
+        allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
+      }else{
+        multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
+          multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
+          # get the allele loc
+          allele_loc <- which(multiple_assignments == allele)
+          # get the count
+          return(1/length(multiple_assignments))
+        }))
+        allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
+      }
+      alleles_count <- c(alleles_count, allele_count)
+    }
+    
+    genotype <- data.table::data.table(gene = alakazam::getGene(reference_alleles, first = F, collapse = T, strip_d = F),
+                                     allele = reference_alleles, 
+                                     imgt_allele = alleleClusterTable$imgt_allele, 
+                                     count = alleles_count,
+                                     frequency_threshold = alleleClusterTable$thresh
+    )
+    
+    z_score <- function(Ni, N, Pi) (Ni - Pi*N) / sqrt(Pi*N*(1-Pi))
+    
+    genotype <-
+      genotype[, "z_score" := z_score(Ni=get("count"),N=sum(alleles_count),Pi=get("frequency_threshold"))]
+    
+    genotype <-
+      genotype[, "count" := round(get("count"), 5)]
+    
+    return(genotype)
   }
