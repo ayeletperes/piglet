@@ -10,8 +10,7 @@ Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"),
 Description: Improves genotype inference and downstream AIRR-seq data analysis. Inference of allele similarity clusters, an alternative naming scheme and genotype inference for IGH repertoires. 
              The main tools are allele similarity clusters (ASC), and allele based genotype. The first tool is designed to reduce the ambiguity within the IGHV alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes. 
              The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population.
-             Citation:
-             Peres, et al (2023) <doi:10.1093/nar/gkad603>.
+Citation: Peres, et al (2023) <doi:10.1093/nar/gkad603>.
 License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -27,7 +26,6 @@ Imports:
     tigger (>= 1.0.0),
     methods (>= 3.4.4),
     rlang (>= 0.4.0),
-    splitstackshape (>= 1.4.8),
     zen4R (>= 0.7),
     RColorBrewer (>= 1.1.2),
     ggplot2 (>= 3.3.6),
@@ -48,15 +46,16 @@ Suggests:
   htmltools,
   stringi,
   bookdown
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Collate: 
     'Data.R'
     'RcppExports.R'
     'piglet.R'
     'allele_cluster.R'
+    'utils.R'
     'allele_genotype.R'
+    'piglet-package.R'
     'utils-pipe.R'
-    'zzz.R'
 LazyData: true
 BuildVignettes: true
 VignetteBuilder: knitr

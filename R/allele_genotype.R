@@ -3,6 +3,7 @@
 # The functions in this scripts are for generating the allele clusters from a given reference set
 
 #' @include piglet.R
+#' @include utils.R
 NULL
 
 
@@ -311,6 +312,8 @@ recentAlleleClusters <-
 #' @export
 
 extractASCTable <- function(archive_file = NULL) {
+  . <- NULL
+  
   if (!is.null(archive_file)) {
     master <- as.character(unzip(archive_file, list = TRUE)$Name)
     allele_cluster_table <-
@@ -320,14 +323,8 @@ extractASCTable <- function(archive_file = NULL) {
       ))
   }
   
-  allele_cluster_table <-
-    cSplit(
-      allele_cluster_table,
-      direction = "long",
-      splitCols = "imgt_allele",
-      sep = "/",
-      type.convert = F
-    )
+  setDT(allele_cluster_table)
+  allele_cluster_table <- allele_cluster_table[, .("imgt_allele" = unlist(strsplit(get("imgt_allele"),"/"))), by = setdiff(names(allele_cluster_table), "imgt_allele")]
   
   return(allele_cluster_table)
 }
@@ -359,16 +356,11 @@ extractASCTable <- function(archive_file = NULL) {
 #'
 #' @export
 germlineASC <- function(allele_cluster_table, germline) {
+  . <- NULL
   
+  setDT(allele_cluster_table)
   if (any(grepl("/", allele_cluster_table$imgt_allele))) {
-    allele_cluster_table <-
-      splitstackshape::cSplit(
-        allele_cluster_table,
-        splitCols = "imgt_allele",
-        sep = "/",
-        direction = "long",
-        type.convert = F
-      )
+    allele_cluster_table <- allele_cluster_table[, .("imgt_allele" = unlist(strsplit(get("imgt_allele"),"/"))), by = setdiff(names(allele_cluster_table), "imgt_allele")]
   }
   
   germline_asc <- germline[allele_cluster_table$imgt_allele]
@@ -419,16 +411,11 @@ germlineASC <- function(allele_cluster_table, germline) {
 #' @export
 assignAlleleClusters <-
   function(data, alleleClusterTable, v_call = "v_call") {
+    . <- NULL
     
+    setDT(alleleClusterTable)
     if (any(grepl("/", alleleClusterTable$imgt_allele))) {
-      alleleClusterTable <-
-        splitstackshape::cSplit(
-          alleleClusterTable,
-          splitCols = "imgt_allele",
-          sep = "/",
-          direction = "long",
-          type.convert = F
-        )
+      alleleClusterTable <- alleleClusterTable[, .("imgt_allele" = unlist(strsplit(get("imgt_allele"),"/"))), by = setdiff(names(alleleClusterTable), "imgt_allele")]
     }
     
     # set the dictionary
@@ -449,28 +436,31 @@ assignAlleleClusters <-
 
 # ------------------------------------------------------------------------------
 
-#' Allele similarity cluster based genotype inference
+#' Allele based genotype inference
 #' 
 #' \code{inferGenotypeAllele} infer an individual's genotype based on the allele-base method.
 #' The method utilize the allele specific threshold to determine the presence of an allele in the genotype.
-#' More specifically, the absolute frequency of each allele is calculated and checked against the threshold.
+#' More specifically, based on the allele frequency, repertoire depth, and the specific allele threshold, a confidence level (Z score) is calculated 
+#' for the presence of the allele in the genotype. The user can select the confidence level for the genotype inference.
 #'
-#' @param data                     data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
-#' @param alleleClusterTable       A data.frame of the allele similarity clusters thresholds.
-#' @param v_call                   name of the V allele call column. Default is `v_call`
+#' @param data                     data.frame in AIRR format, containing allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
+#' @param allele_threshold_table   A data.frame of the alleles and their thresholds. Default is XXX. 
+#' @param call                     name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is `v_call`
+#' @param translate_to_asc         For V allele calls, collapse identical allele for the genotype inference. Default is FALSE.
 #' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
 #' @param germline_db              named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
 #' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
 #' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
-#' @param confidence_level         The confidence level on which to filter the inferred genotype alleles. Default is NULL, meaning filtering only based on allele threshold.
-#' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `alleleClusterTable`. Default is 1e-04.
+#' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `allele_threshold_table`. Default is 1e-04.
 #'
 #' @return
 #' A a data.frame with the inferred V genotype. The table contains the following columns:
-#' 	|gene            | alleles             | imgt_alleles          | counts              | absolute_fraction     | absolute_threshold               | genotyped_alleles    | genotype_imgt_alleles|
-#'  |----------------|---------------------|-----------------------|---------------------|-----------------------|----------------------------------|----------------------|----------------------|
-#'  | allele cluster | the present alleles | the imgt nomenclature | the number of reads | the absolute fraction | the population driven allele     | the alleles which    | the imgt nomenclature|
-#'  |                | in the repertoire   | of the alleles        | for each alleles    | of the alleles        | thresholds for genotype presence | entered the genotype | of the alleles 		  |
+#' 
+#' - allele: The alleles in the `allele_threshold_table`.
+#' - counts: The number of reads for each alleles.
+#' - threshold: The population driven allele thresholds for genotype presence.
+#' - z_score: The confidence level for the presence of the allele in the genotype.
+#' - asc_allele: If `translate_to_asc` is true, the asc allele value from allele_threshold_table.
 #'
 #' @details
 #'
@@ -489,63 +479,59 @@ assignAlleleClusters <-
 #' # loading TIgGER AIRR-seq b cell data
 #' data <- tigger::AIRRDb
 #'
-#' # preferably obtain the latest ASC cluster table
-#' # asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
-#'
-#' # allele_cluster_table <- extractASCTable(archive_file = asc_archive)
-#'
-#' # example allele similarity cluster table
-#' data(allele_cluster_table)
+#' # allele threshold table
+#' data(allele_threshold_table)
 #'
 #' data(HVGERM)
 #'
-#' # reforming the germline set
-#' asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
-#'
-#' # assigning the ASC alleles
-#' asc_data <- assignAlleleClusters(data, allele_cluster_table)
-#'
 #' # inferring the genotype
-#' asc_genotype <- inferGenotypeAllele(
-#' data = asc_data,
-#' alleleClusterTable = allele_cluster_table,
-#' germline_db = asc_germline, find_unmutated=TRUE)
+#' genotype <- inferGenotypeAllele(
+#' data = data,
+#' allele_threshold_table = allele_threshold_table,
+#' germline_db = HVGERM, find_unmutated=TRUE)
 #' 
 #'
 #' @export
 # Parts are adapted from tigger::inferGenotype
 inferGenotypeAllele <-
   function(data,
-           alleleClusterTable,
-           v_call = "v_call",
+           allele_threshold_table=NULL,
+           call = "v_call",
            single_assignment = FALSE,
+           translate_to_asc = FALSE,
            germline_db = NA,
            find_unmutated = FALSE,
            seq = "sequence_alignment",
-           confidence_level = NULL,
            default_allele_threshold = 1e-04) {
     . = NULL
+    .. = NULL
     
-    
-    allele_calls = alakazam::getAllele(data[[v_call]], first = FALSE,
-                                       strip_d = FALSE)
-    
-    ## check that the allele calls are in the supplied alleleClusterTable
-    unique_calls <- unique(unlist(strsplit(allele_calls, ",")))
-    match <- unique_calls %in% alleleClusterTable$new_allele
-    if (!all(match)) {
-      
-      for(allele in unique_calls[!match]) {
-        warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
-        
-        alleleClusterTable <- rbind(alleleClusterTable, 
-                                    data.frame(new_allele = allele,
-                                               func_group = strsplit(allele,'[*]')[[1]][1], 
-                                               imgt_allele = allele,
-                                               thresh = default_allele_threshold))
-      }
-      
+    allele_calls <- clean_allele_calls(data[[call]])
+    unique_calls <- unique(unlist(allele_calls))
+    allele_calls <- sapply(allele_calls, function(x) paste0(x, collapse = ","))
+    segment <- unique(substr(unique_calls,4,4))
+    ## check that the allele calls are in the supplied allele_threshold_table
+    if(is.null(allele_threshold_table)){
+      ## load the default allele threshold table
+      data(allele_threshold_table, envir = environment())
+      allele_threshold_table <- allele_threshold_table[get("tag") %in% segment]
     }
+    
+    match <- unique_calls %in% allele_threshold_table$allele
+    if (!all(match)) {
+      for(allele in unique_calls[!match]) {
+        warning(paste0("The allele call ", allele, " is not in the allele threshold table. Using the default threshold: ", default_allele_threshold))
+        allele_threshold_table <- rbind(allele_threshold_table, 
+                                    data.frame(
+                                      "tag" = substr(allele,4,4),
+                                      "allele" = allele,
+                                      "asc_allele" = "",
+                                      "threshold" = default_allele_threshold
+                                      ))
+      }
+    }
+    
+    base_count <- 1/length(unique(allele_threshold_table$allele))
     
     ## check unmutated
     if (find_unmutated) {
@@ -560,274 +546,49 @@ inferGenotypeAllele <-
       }
     }
     
-    geno_V <- data.table::data.table(v_call = allele_calls)
+    genotype_dt <- data.table::data.table("allele" = allele_calls)
     
-    geno_V <-
-      geno_V[, "gene" := alakazam::getGene(
-        get("v_call"),
-        first = F,
-        collapse = T,
-        strip_d = F
-      )]
-    
-    # removing multiple gene assignments
-    geno_V <- geno_V[!grepl(",", get("gene"))]
-    
-    # clean the allele class
-    geno_V[, "v_allele" :=
-             gsub(
-               "(IG[HKL][VDJADEGMC]|TR[ABDG])[A-Z0-9\\(\\)]+[-/\\w]*[*]",
-               "",
-               get("v_call"),
-               perl = T
-             )]
-    
-    ## get single assignments
-    if (single_assignment) {
-      geno_V <- geno_V[!(grepl(",", get("v_allele")))]
-      geno_V <- geno_V[!is.na(get("v_allele"))]
-      geno_V[, "n_row_sub" := .N]
-      geno_V[, "frac" := 1]
-      geno_V_fraction <-
-        geno_V[, .("absolute_fraction" = round(sum(get("frac")) / unique(get("n_row_sub")), 8),
-                   "count" = sum(get("frac"))), by = list(get("gene"), get("v_allele"))]
-    } else{
-      ### distribute the multiple assignments for non naive sequences
-      geno_V <- geno_V[!is.na(get("v_allele"))]
-      geno_V[, "n_row_sub" := .N]
-      geno_V[, "frac" := 1]
-      geno_V <-
-        geno_V[, .("count" = sum(get("frac"))), by = mget(c("gene", "v_allele", "n_row_sub"))]
-      
-      n_row_sub <- unique(geno_V$n_row_sub)
-      
-      geno_V_fraction <- c()
-      #### code from TIgGER inferGentoype
-      for (g in unique(geno_V$gene)) {
-        ac <- geno_V[get("gene") == g, get("v_allele")]
-        t_ac <-
-          setNames(geno_V[get("gene") == g, get("count")], geno_V[get("gene") == g, get("v_allele")]) # table of allele calls
-        potentials <-
-          unique(unlist(strsplit(names(t_ac), ","))) # potential alleles
-        
-        regexpotentials <-
-          paste(gsub("\\*", "\\\\*", potentials), "$", sep = "")
-        regexpotentials <-
-          paste(regexpotentials, gsub("\\$", ",", regexpotentials), sep =
-                  "|")
-        tmat <-
-          sapply(regexpotentials, function(x)
-            grepl(x, names(t_ac), fixed = FALSE))
-        
-        if (length(potentials) == 1 | length(t_ac) == 1) {
-          seqs_expl <-
-            t(as.data.frame(apply(t(as.matrix(tmat)), 2, function(x)
-              x *
-                t_ac)))
-          rownames(seqs_expl) <- names(t_ac)[1]
-        } else{
-          seqs_expl <- as.data.frame(apply(tmat, 2, function(x)
-            x *
-              t_ac))
-        }
-        #       seqs_expl = as.data.frame(apply(tmat, 2, function(x) x*t_ac))
-        colnames(seqs_expl) <- potentials
-        # Add low (fake) counts
-        sapply(colnames(seqs_expl), function(x) {
-          if (sum(rownames(seqs_expl) %in% paste(x)) == 0) {
-            seqs_expl <<- rbind(seqs_expl, rep(0, ncol(seqs_expl)))
-            
-            rownames(seqs_expl)[nrow(seqs_expl)] <<- paste(x)
-            seqs_expl[rownames(seqs_expl) %in% paste(x), paste(x)] <<-
-              0.01
-            
-          }
-        })
-        
-        # Build ratio dependent allele count distribution of multi assigned reads
-        seqs_expl_single <-
-          seqs_expl[grep(',', rownames(seqs_expl), invert = T),]
-        
-        seqs_expl_multi <-
-          seqs_expl[grep(',', rownames(seqs_expl), invert = F),]
-        if (is.null(nrow(seqs_expl_multi))) {
-          seqs_expl_multi <- t(as.data.frame(seqs_expl_multi))
-          rownames(seqs_expl_multi) <-
-            grep(',',
-                 rownames(seqs_expl),
-                 invert = F,
-                 value = T)
-        }
-        
-        if (!is.null(nrow(seqs_expl_single))  &&
-            nrow(seqs_expl_single) != 0 &&
-            nrow(seqs_expl_single) != nrow(seqs_expl)) {
-          if (nrow(seqs_expl_multi) > 1) {
-            seqs_expl_multi <-
-              seqs_expl_multi[order(nchar(row.names(seqs_expl_multi))),]
-          }
-          sapply(1:nrow(seqs_expl_multi), function(x) {
-            genes <- unlist(strsplit(row.names(seqs_expl_multi)[x], ','))
-            
-            counts <-
-              seqs_expl_single[rownames(seqs_expl_single) %in% genes, genes]
-            counts <- colSums(counts)
-            counts_to_distribute <- seqs_expl_multi[x, genes]
-            
-            new_counts <-
-              counts + ((counts_to_distribute * counts) / sum(counts))
-            for (i in 1:length(new_counts)) {
-              gene_tmp <- names(new_counts)[i]
-              seqs_expl_single[rownames(seqs_expl_single) %in% gene_tmp, gene_tmp] <<-
-                new_counts[i]
-            }
-          })
-        }
-        
-        seqs_expl <-
-          if (is.null(nrow(seqs_expl_single)) ||
-              nrow(seqs_expl_single) == 0) {
-            seqs_expl
-          } else{
-            seqs_expl_single
-          }
-        seqs_expl <- round(seqs_expl)
-        if (sum(rowSums(seqs_expl) == 0) != 0) {
-          seqs_expl <- seqs_expl[rowSums(seqs_expl) != 0, ]
-        }
-        
-        allele_tot <-
-          sort(apply(seqs_expl, 2, sum), decreasing = TRUE)
-        
-        gene_table <-
-          data.table::data.table(
-            "gene" = g,
-            "v_allele" = names(allele_tot),
-            "count" = allele_tot,
-            "n_row_sub" = n_row_sub
-          )
-        gene_table <- gene_table[get("count") != 0]
-        
-        geno_V_fraction <- dplyr::bind_rows(geno_V_fraction, gene_table)
-      }
-      ############
-      geno_V_fraction <-
-        geno_V_fraction[, .("absolute_fraction" = round(get("count") / unique(get("n_row_sub")), 8),
-                            "count" = get("count")), by = mget(c("gene", "v_allele"))]
-      
+    if(single_assignment){
+      genotype_dt <- genotype_dt[!grepl(",",get("allele")),]    
     }
     
-    ## add original allele and cut off
-    geno_V_fraction[, "v_call" := paste0(get("gene"), "*", get("v_allele"))]
-    
-    if (any(duplicated(alleleClusterTable$new_allele))) {
-      alleleClusterTable <- setDT(alleleClusterTable)
-      
-      alleleClusterTable <-
-        alleleClusterTable[, .("imgt_allele" = paste0(sort(unlist(unique(mget(
-          c("imgt_allele")
-        )))), collapse = "/")), by = mget(names(alleleClusterTable)[names(alleleClusterTable) !=
-                                                                     "imgt_allele"])]
+    genotype_dt[,"multiple":=1/(stringi::stri_count_fixed(get("allele"), ",")+1)]
+    genotype_dt[,"nrow":=1:.N]
+    genotype_dt <- genotype_dt[, .("allele" = unlist(strsplit(get("allele"), ","))), by = mget(c("multiple", "nrow"))]
+    genotype_dt[,"single_assignments":=sum(get("multiple")==1), by = .(get("allele"))]
+    genotype_dt[,"multiple_assignments_wheight":=ifelse(get("single_assignments") == 0, 
+                                                        base_count, 
+                                                        get("single_assignments") / length(unique(allele_threshold_table$allele))), 
+                by = mget(c("allele", "nrow"))]
+    genotype_dt[get("multiple")==1, "multiple_assignments_wheight":=1]
+    genotype_dt[,"fraction":=get("multiple")*get("multiple_assignments_wheight")]
+    genotype_dt <- genotype_dt[,.("count" = sum(get("fraction"))), by = mget(c("allele"))]
+    genotype_dt <- merge(allele_threshold_table, genotype_dt, by = c("allele"), all.x = T, all.y=F)
+    ## if translate_to_asc, then collapse similar alleles by asc.
+    final_columns <- c("allele", "count", "threshold", "z_score")
+    if(translate_to_asc){
+      genotype_dt <- genotype_dt[,.(
+        "allele" = paste0(get("allele"),collapse = "/"),
+        "count" = sum(get("count"), na.rm = T),
+        "threshold" = min(get("threshold"))
+      ), by =.(get("asc_allele"))]
+      final_columns <- c("asc_allele", "count", "threshold", "z_score")
     }
+    ## add base counts
+    genotype_dt[is.na(get("count")), "count" := base_count]
+    genotype_dt[, "depth" := sum(get("count"))]
     
-    alleles_clusters <-
-      setNames(alleleClusterTable$imgt_allele,
-               alleleClusterTable$new_allele)
-    geno_V_fraction[, "v_call_or" := alleles_clusters[get("v_call")]]
-    
-    
-    na_id <- which(is.na(geno_V_fraction$v_call_or))
-    if (length(na_id) != 0)
-      geno_V_fraction$v_call_or[na_id] <-
-      sapply(na_id, function(i) {
-        new_allele <- geno_V_fraction$v_call[i]
-        closest <- strsplit(geno_V_fraction$v_call[i], "_")[[1]][1]
-        or_allele <- alleles_clusters[closest]
-        paste0(or_allele, gsub(closest, "", new_allele, fixed = T))
-      })
-    
-    allele_cluster_threshold <-
-      setNames(as.numeric(alleleClusterTable$thresh), alleleClusterTable$new_allele)
-    geno_V_fraction <-
-      geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
-    
-    z_score <- function(Nai, N, Tai) (Nai - Tai*N) / sqrt(Tai*N*(1-Tai))
-    
-    geno_V_fraction <-
-      geno_V_fraction[, "genotype_confidence" := z_score(Nai=get("count"),N=n_row_sub,Tai=get("absolute_thresh"))]
-    
-    na_id <- which(is.na(geno_V_fraction$absolute_thresh))
-    if (length(na_id) != 0)
-      geno_V_fraction$absolute_thresh[na_id] <-
-      sapply(na_id, function(i) {
-        new_allele <- geno_V_fraction$v_call[i]
-        closest <- strsplit(geno_V_fraction$v_call[i], "_")[[1]][1]
-        allele_cluster_threshold[closest]
-      })
-    
-    ## check if allele is above thresh.
-    
-    geno_V_fraction[, "above_thresh" := get("absolute_fraction") >= get("absolute_thresh")]
-    
-    if(!is.null(confidence_level)) {
-      geno_V_fraction <- geno_V_fraction[, "above_confidence" := get("genotype_confidence") >= confidence_level]
-    }else{
-      geno_V_fraction <- geno_V_fraction[, "above_confidence" := TRUE]
-    }
-    
-    sortBy <- c('gene', 'absolute_fraction')
-    sortType <- c(1, -1)
-    data.table::setorderv(geno_V_fraction, sortBy, sortType)
-    genoV <-
-      geno_V_fraction[, .(
-        "alleles" = paste0(get("v_allele"), collapse = ","),
-        "imgt_alleles" = paste0(get("v_call_or"), collapse = ","),
-        "counts" = paste0(get("count"), collapse = ","),
-        "absolute_fraction" = paste0(round(get(
-          "absolute_fraction"
-        ), 7), collapse = ","),
-        "absolute_threshold" = paste0(formatC(get(
-          "absolute_thresh"
-        ), format = "f"), collapse = ","),
-        "genotype_confidence" = paste0(formatC(get(
-          "genotype_confidence"
-        ), format = "f"), collapse = ","),
-        "genotyped_alleles" = paste0(get("v_allele")[get("above_thresh") &
-                                                       get("above_confidence")], collapse = ","),
-        "genotyped_imgt_alleles" = paste0(get("v_call_or")[get("above_thresh") &
-                                                             get("above_confidence")], collapse = ",")
-      ), by = mget(c("gene"))]
-    
-    
-    # geno <- as.data.frame(genotype, stringsAsFactors = FALSE)
-    # if (find_unmutated == TRUE) {
-    #   seqs <- genotypeFasta(geno, germline_db)
-    #   dist_mat <- seqs %>% sapply(function(x) sapply((getMutatedPositions(seqs,
-    #                                                                       x)), length)) %>% as.matrix
-    #   rownames(dist_mat) <- colnames(dist_mat)
-    #   for (i in 1:nrow(dist_mat)) {
-    #     dist_mat[i, i] = NA
-    #   }
-    #   same <- which(dist_mat == 0, arr.ind = TRUE)
-    #   if (nrow(same) > 0) {
-    #     for (r in 1:nrow(same)) {
-    #       inds <- as.vector(same[r, ])
-    #       geno[getGene(rownames(dist_mat)[inds][1]), ]$note <- paste(rownames(dist_mat)[inds],
-    #                                                                  collapse = " and ") %>% paste("Cannot distinguish",
-    #                                                                                                .)
-    #     }
-    #   }
-    # }
-    # rownames(geno) <- NULL
-    
-    return(genoV)
-  }
+    ## get the z_score
+    genotype_dt[, "z_score" := z_score(get("count"), get("depth"), get("threshold"))]
+    genotype_dt <- genotype_dt[, .SD, .SDcols = final_columns]
+    return(genotype_dt)
+}
 
 # ------------------------------------------------------------------------------
 
 #' Allele similarity cluster based genotype inference Testing function
 #' 
-#' \code{inferGenotypeAlleleTest} infer an individual's genotype based on the allele-base method.
+#' \code{inferGenotypeAllele_asc} infer an individual's genotype based on the allele-base method.
 #' The method utilize the allele specific threshold to determine the presence of an allele in the genotype.
 #' More specifically, the absolute frequency of each allele is calculated and checked against the threshold.
 #'
@@ -840,7 +601,6 @@ inferGenotypeAllele <-
 #' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
 #' @param confidence_level         The confidence level on which to filter the inferred genotype alleles. Default is NULL, meaning filtering only based on allele threshold.
 #' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `alleleClusterTable`. Default is 1e-04.
-#' @param likelihood_col           name of the likelihood column. If not provided, the cases of multiple assignment calls will be divided equally between the alleles. Default Null.
 #'
 #' @return
 #' A a data.frame with the inferred V genotype. The table contains the following columns:
@@ -883,143 +643,314 @@ inferGenotypeAllele <-
 #' asc_data <- assignAlleleClusters(data, allele_cluster_table)
 #'
 #' # inferring the genotype
-#' asc_genotype <- inferGenotypeAlleleTest(
+#' asc_genotype <- inferGenotypeAllele_asc(
 #' data = asc_data,
 #' alleleClusterTable = allele_cluster_table,
 #' germline_db = asc_germline, find_unmutated=TRUE)
 #' 
-#'
 #' @export
-inferGenotypeAlleleTest <-
-  function(data,
-           alleleClusterTable,
-           v_call = "v_call",
-           single_assignment = FALSE,
-           germline_db = NA,
-           find_unmutated = FALSE,
-           seq = "sequence_alignment",
-           confidence_level = NULL,
-           default_allele_threshold = 1e-04,
-           likelihood_col = NULL) {
-    . = NULL
+inferGenotypeAllele_asc <- function(data,
+         alleleClusterTable,
+         v_call = "v_call",
+         single_assignment = FALSE,
+         germline_db = NA,
+         find_unmutated = FALSE,
+         seq = "sequence_alignment",
+         confidence_level = NULL,
+         default_allele_threshold = 1e-04) {
+  . = NULL
+  
+  allele_calls = clean_allele_calls(data[[v_call]])
+  
+  ## check that the allele calls are in the supplied alleleClusterTable
+  unique_calls <- unique(unlist(allele_calls))
+  match <- unique_calls %in% alleleClusterTable$new_allele
+  if (!all(match)) {
     
-    
-    alleles_calls = alakazam::getAllele(data[[v_call]], first = FALSE,
-                                        strip_d = FALSE)
-    # check that the needed columns are in alleleClusterTable
-    if (!all(c("new_allele", "imgt_allele", "thresh") %in% colnames(alleleClusterTable))) {
-      stop("alleleClusterTable must contain columns 'new_allele', 'imgt_allele', and 'thresh'")
-    }else{
-      alleleClusterTable <- alleleClusterTable[, c("new_allele", "imgt_allele", "thresh")]
+    for(allele in unique_calls[!match]) {
+      warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
+      
+      alleleClusterTable <- rbind(alleleClusterTable, 
+                                  data.frame(new_allele = allele,
+                                             func_group = strsplit(allele,'[*]')[[1]][1], 
+                                             imgt_allele = allele,
+                                             thresh = default_allele_threshold))
     }
     
-    ## check that the allele calls are in the supplied alleleClusterTable
-    unique_calls <- unique(unlist(strsplit(alleles_calls, ",")))
-    match <- unique_calls %in% alleleClusterTable$new_allele
-    if (!all(match)) {
-      
-      for(allele in unique_calls[!match]) {
-        warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
-        
-        alleleClusterTable <- rbind(alleleClusterTable, 
-                                    data.frame(new_allele = allele, 
-                                               imgt_allele = allele,
-                                               thresh = default_allele_threshold))
-      }
-      
-    }
-    
-    ## check un mutated
-    if (find_unmutated) {
-      if (is.na(germline_db[1])) {
-        stop("germline_db needed if find_unmutated is TRUE")
-      }
-      alleles_calls <-
-        tigger::findUnmutatedCalls(alleles_calls, as.character(data[[seq]]),
-                                   germline_db)
-      if (length(alleles_calls) == 0) {
-        stop("No unmutated sequences found! Set 'find_unmutated' to 'FALSE'.")
-      }
-    }
-    
-    ## we will iterate trough the allele in the alleleClusterTable, and for each allele extract it's frequency.
-    ## the base allele frequency will be 1 over the number of unique alleles in the alleleClusterTable.
-    if (any(duplicated(alleleClusterTable$new_allele))) {
-      alleleClusterTable <- setDT(alleleClusterTable)
-      
-      alleleClusterTable <-
-        alleleClusterTable[, .(
-          "imgt_allele" = paste0(sort(unlist(unique(mget(c("imgt_allele"))))), collapse = "/"),
-          "thresh" = min(get("thresh"))), by = c("new_allele")]
-    }
-    
-    reference_alleles <- alleleClusterTable$new_allele
-    base_freq <- 1 / length(reference_alleles)
-    
-    
-    alleles_count <- c()
-    pb <- alakazam::progressBar(length(reference_alleles))
-    for(i in 1:length(reference_alleles)) {
-      pb$tick()
-      allele = reference_alleles[i]
-      ## grep the indices of the allele calls
-      allele_indices <- grep(gsub("\\*", "\\\\*", allele), alleles_calls)
-      allele_calls <- alleles_calls[allele_indices]
-      ## for every call the allele is in a single assignment, we will count it as 1.
-      ## for multiple assignments, we will divide the count by the number of assignments or if likelihood col is provided by the normalized likelihood.
-      
-      # count single assignments
-      single_assignments <- sum(!grepl(",", allele_calls))
-      
-      multiple_assignments_wheight <- (single_assignments+1) / length(reference_alleles)
-      
-      # count multiple assignments
-      multiple_assignments_indices <- grep(",", allele_calls)
-      if(length(multiple_assignments_indices)!=0){
-        if(!is.null(likelihood_col)) {
-          likelihoods <- data[[likelihood_col]][allele_indices]
-          likelihoods <- likelihoods[multiple_assignments_indices]
-          multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
-            multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
-            # get the allele loc
-            allele_loc <- which(multiple_assignments == allele)
-            # normalize the likelihood
-            likelihood <- as.numeric(unlist(strsplit(likelihoods[idx], ",")))
-            likelihood <- likelihood/sum(likelihood)
-            # get the count
-            return(likelihood[allele_loc])
-          }))
-          allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
-        }else{
-          multiple_assignments <- sum(sapply(multiple_assignments_indices, function(idx){
-            multiple_assignments <- unlist(strsplit(allele_calls[idx], ","))
-            # get the allele loc
-            allele_loc <- which(multiple_assignments == allele)
-            # get the count
-            return(1/length(multiple_assignments))
-          }))
-          allele_count <- multiple_assignments*multiple_assignments_wheight+single_assignments
-        }
-      }else{
-        allele_count <- single_assignments
-      }
-      alleles_count <- c(alleles_count, allele_count)
-    }
-    
-    genotype <- data.table::data.table(gene = alakazam::getGene(reference_alleles, first = F, collapse = T, strip_d = F),
-                                       allele = reference_alleles, 
-                                       imgt_allele = alleleClusterTable$imgt_allele, 
-                                       count = alleles_count,
-                                       frequency_threshold = alleleClusterTable$thresh
-    )
-    
-    z_score <- function(Ni, N, Pi) (Ni - Pi*N) / sqrt(Pi*N*(1-Pi))
-    
-    genotype <-
-      genotype[, "z_score" := z_score(Ni=get("count"),N=sum(alleles_count),Pi=get("frequency_threshold"))]
-    
-    genotype <-
-      genotype[, "count" := round(get("count"), 5)]
-    
-    return(genotype)
   }
+  
+  ## check unmutated
+  if (find_unmutated) {
+    if (is.na(germline_db[1])) {
+      stop("germline_db needed if find_unmutated is TRUE")
+    }
+    allele_calls <-
+      tigger::findUnmutatedCalls(allele_calls, as.character(data[[seq]]),
+                                 germline_db)
+    if (length(allele_calls) == 0) {
+      stop("No unmutated sequences found! Set 'find_unmutated' to 'FALSE'.")
+    }
+  }
+  
+  geno_V <- data.table::data.table(v_call = allele_calls)
+  
+  geno_V <-
+    geno_V[, "gene" := alakazam::getGene(
+      get("v_call"),
+      first = F,
+      collapse = T,
+      strip_d = F
+    )]
+  
+  # removing multiple gene assignments
+  geno_V <- geno_V[!grepl(",", get("gene"))]
+  
+  # clean the allele class
+  geno_V[, "v_allele" :=
+           gsub(
+             "(IG[HKL][VDJADEGMC]|TR[ABDG])[A-Z0-9\\(\\)]+[-/\\w]*[*]",
+             "",
+             get("v_call"),
+             perl = T
+           )]
+  
+  ## get single assignments
+  if (single_assignment) {
+    geno_V <- geno_V[!(grepl(",", get("v_allele")))]
+    geno_V <- geno_V[!is.na(get("v_allele"))]
+    geno_V[, "n_row_sub" := .N]
+    geno_V[, "frac" := 1]
+    geno_V_fraction <-
+      geno_V[, .("absolute_fraction" = round(sum(get("frac")) / unique(get("n_row_sub")), 8),
+                 "count" = sum(get("frac"))), by = list(get("gene"), get("v_allele"))]
+  } else{
+    ### distribute the multiple assignments for non naive sequences
+    geno_V <- geno_V[!is.na(get("v_allele"))]
+    geno_V[, "n_row_sub" := .N]
+    geno_V[, "frac" := 1]
+    geno_V <-
+      geno_V[, .("count" = sum(get("frac"))), by = mget(c("gene", "v_allele", "n_row_sub"))]
+    
+    n_row_sub <- unique(geno_V$n_row_sub)
+    
+    geno_V_fraction <- c()
+    #### code from TIgGER inferGentoype
+    for (g in unique(geno_V$gene)) {
+      ac <- geno_V[get("gene") == g, get("v_allele")]
+      t_ac <-
+        setNames(geno_V[get("gene") == g, get("count")], geno_V[get("gene") == g, get("v_allele")]) # table of allele calls
+      potentials <-
+        unique(unlist(strsplit(names(t_ac), ","))) # potential alleles
+      
+      regexpotentials <-
+        paste(gsub("\\*", "\\\\*", potentials), "$", sep = "")
+      regexpotentials <-
+        paste(regexpotentials, gsub("\\$", ",", regexpotentials), sep =
+                "|")
+      tmat <-
+        sapply(regexpotentials, function(x)
+          grepl(x, names(t_ac), fixed = FALSE))
+      
+      if (length(potentials) == 1 | length(t_ac) == 1) {
+        seqs_expl <-
+          t(as.data.frame(apply(t(as.matrix(tmat)), 2, function(x)
+            x *
+              t_ac)))
+        rownames(seqs_expl) <- names(t_ac)[1]
+      } else{
+        seqs_expl <- as.data.frame(apply(tmat, 2, function(x)
+          x *
+            t_ac))
+      }
+      #       seqs_expl = as.data.frame(apply(tmat, 2, function(x) x*t_ac))
+      colnames(seqs_expl) <- potentials
+      # Add low (fake) counts
+      sapply(colnames(seqs_expl), function(x) {
+        if (sum(rownames(seqs_expl) %in% paste(x)) == 0) {
+          seqs_expl <<- rbind(seqs_expl, rep(0, ncol(seqs_expl)))
+          
+          rownames(seqs_expl)[nrow(seqs_expl)] <<- paste(x)
+          seqs_expl[rownames(seqs_expl) %in% paste(x), paste(x)] <<-
+            0.01
+          
+        }
+      })
+      
+      # Build ratio dependent allele count distribution of multi assigned reads
+      seqs_expl_single <-
+        seqs_expl[grep(',', rownames(seqs_expl), invert = T),]
+      
+      seqs_expl_multi <-
+        seqs_expl[grep(',', rownames(seqs_expl), invert = F),]
+      if (is.null(nrow(seqs_expl_multi))) {
+        seqs_expl_multi <- t(as.data.frame(seqs_expl_multi))
+        rownames(seqs_expl_multi) <-
+          grep(',',
+               rownames(seqs_expl),
+               invert = F,
+               value = T)
+      }
+      
+      if (!is.null(nrow(seqs_expl_single))  &&
+          nrow(seqs_expl_single) != 0 &&
+          nrow(seqs_expl_single) != nrow(seqs_expl)) {
+        if (nrow(seqs_expl_multi) > 1) {
+          seqs_expl_multi <-
+            seqs_expl_multi[order(nchar(row.names(seqs_expl_multi))),]
+        }
+        sapply(1:nrow(seqs_expl_multi), function(x) {
+          genes <- unlist(strsplit(row.names(seqs_expl_multi)[x], ','))
+          
+          counts <-
+            seqs_expl_single[rownames(seqs_expl_single) %in% genes, genes]
+          counts <- colSums(counts)
+          counts_to_distribute <- seqs_expl_multi[x, genes]
+          
+          new_counts <-
+            counts + ((counts_to_distribute * counts) / sum(counts))
+          for (i in 1:length(new_counts)) {
+            gene_tmp <- names(new_counts)[i]
+            seqs_expl_single[rownames(seqs_expl_single) %in% gene_tmp, gene_tmp] <<-
+              new_counts[i]
+          }
+        })
+      }
+      
+      seqs_expl <-
+        if (is.null(nrow(seqs_expl_single)) ||
+            nrow(seqs_expl_single) == 0) {
+          seqs_expl
+        } else{
+          seqs_expl_single
+        }
+      seqs_expl <- round(seqs_expl)
+      if (sum(rowSums(seqs_expl) == 0) != 0) {
+        seqs_expl <- seqs_expl[rowSums(seqs_expl) != 0, ]
+      }
+      
+      allele_tot <-
+        sort(apply(seqs_expl, 2, sum), decreasing = TRUE)
+      
+      gene_table <-
+        data.table::data.table(
+          "gene" = g,
+          "v_allele" = names(allele_tot),
+          "count" = allele_tot,
+          "n_row_sub" = n_row_sub
+        )
+      gene_table <- gene_table[get("count") != 0]
+      
+      geno_V_fraction <- dplyr::bind_rows(geno_V_fraction, gene_table)
+    }
+    ############
+    geno_V_fraction <-
+      geno_V_fraction[, .("absolute_fraction" = round(get("count") / unique(get("n_row_sub")), 8),
+                          "count" = get("count")), by = mget(c("gene", "v_allele"))]
+    
+  }
+  
+  ## add original allele and cut off
+  geno_V_fraction[, "v_call" := paste0(get("gene"), "*", get("v_allele"))]
+  
+  if (any(duplicated(alleleClusterTable$new_allele))) {
+    alleleClusterTable <- setDT(alleleClusterTable)
+    
+    alleleClusterTable <-
+      alleleClusterTable[, .("imgt_allele" = paste0(sort(unlist(unique(mget(
+        c("imgt_allele")
+      )))), collapse = "/")), by = mget(names(alleleClusterTable)[names(alleleClusterTable) !=
+                                                                    "imgt_allele"])]
+  }
+  
+  alleles_clusters <-
+    setNames(alleleClusterTable$imgt_allele,
+             alleleClusterTable$new_allele)
+  geno_V_fraction[, "v_call_or" := alleles_clusters[get("v_call")]]
+  
+  
+  na_id <- which(is.na(geno_V_fraction$v_call_or))
+  if (length(na_id) != 0)
+    geno_V_fraction$v_call_or[na_id] <-
+    sapply(na_id, function(i) {
+      new_allele <- geno_V_fraction$v_call[i]
+      closest <- strsplit(geno_V_fraction$v_call[i], "_")[[1]][1]
+      or_allele <- alleles_clusters[closest]
+      paste0(or_allele, gsub(closest, "", new_allele, fixed = T))
+    })
+  
+  allele_cluster_threshold <-
+    setNames(as.numeric(alleleClusterTable$thresh), alleleClusterTable$new_allele)
+  geno_V_fraction <-
+    geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
+  
+  z_score <- function(Nai, N, Tai) (Nai - Tai*N) / sqrt(Tai*N*(1-Tai))
+  
+  geno_V_fraction <-
+    geno_V_fraction[, "genotype_confidence" := z_score(Nai=get("count"),N=n_row_sub,Tai=get("absolute_thresh"))]
+  
+  na_id <- which(is.na(geno_V_fraction$absolute_thresh))
+  if (length(na_id) != 0)
+    geno_V_fraction$absolute_thresh[na_id] <-
+    sapply(na_id, function(i) {
+      new_allele <- geno_V_fraction$v_call[i]
+      closest <- strsplit(geno_V_fraction$v_call[i], "_")[[1]][1]
+      allele_cluster_threshold[closest]
+    })
+  
+  ## check if allele is above thresh.
+  
+  geno_V_fraction[, "above_thresh" := get("absolute_fraction") >= get("absolute_thresh")]
+  
+  if(!is.null(confidence_level)) {
+    geno_V_fraction <- geno_V_fraction[, "above_confidence" := get("genotype_confidence") >= confidence_level]
+  }else{
+    geno_V_fraction <- geno_V_fraction[, "above_confidence" := TRUE]
+  }
+  
+  sortBy <- c('gene', 'absolute_fraction')
+  sortType <- c(1, -1)
+  data.table::setorderv(geno_V_fraction, sortBy, sortType)
+  genoV <-
+    geno_V_fraction[, .(
+      "alleles" = paste0(get("v_allele"), collapse = ","),
+      "imgt_alleles" = paste0(get("v_call_or"), collapse = ","),
+      "counts" = paste0(get("count"), collapse = ","),
+      "absolute_fraction" = paste0(round(get(
+        "absolute_fraction"
+      ), 7), collapse = ","),
+      "absolute_threshold" = paste0(formatC(get(
+        "absolute_thresh"
+      ), format = "f"), collapse = ","),
+      "genotype_confidence" = paste0(formatC(get(
+        "genotype_confidence"
+      ), format = "f"), collapse = ","),
+      "genotyped_alleles" = paste0(get("v_allele")[get("above_thresh") &
+                                                     get("above_confidence")], collapse = ","),
+      "genotyped_imgt_alleles" = paste0(get("v_call_or")[get("above_thresh") &
+                                                           get("above_confidence")], collapse = ",")
+    ), by = mget(c("gene"))]
+  
+  
+  # geno <- as.data.frame(genotype, stringsAsFactors = FALSE)
+  # if (find_unmutated == TRUE) {
+  #   seqs <- genotypeFasta(geno, germline_db)
+  #   dist_mat <- seqs %>% sapply(function(x) sapply((getMutatedPositions(seqs,
+  #                                                                       x)), length)) %>% as.matrix
+  #   rownames(dist_mat) <- colnames(dist_mat)
+  #   for (i in 1:nrow(dist_mat)) {
+  #     dist_mat[i, i] = NA
+  #   }
+  #   same <- which(dist_mat == 0, arr.ind = TRUE)
+  #   if (nrow(same) > 0) {
+  #     for (r in 1:nrow(same)) {
+  #       inds <- as.vector(same[r, ])
+  #       geno[getGene(rownames(dist_mat)[inds][1]), ]$note <- paste(rownames(dist_mat)[inds],
+  #                                                                  collapse = " and ") %>% paste("Cannot distinguish",
+  #                                                                                                .)
+  #     }
+  #   }
+  # }
+  # rownames(geno) <- NULL
+  
+  return(genoV)
+}

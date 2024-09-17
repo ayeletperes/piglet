@@ -37,6 +37,21 @@
 "hv_functionality"
 
 
+#' Allele thresholds table
+#'
+#' A \code{data.table} of the allele thresholds table. The V alleles are based on the
+#' \code{HVGERM} and \code{hv_functionality} germline reference set. The D, and the J are based on 
+#' the AIRR-C reference set (https://zenodo.org/records/10489725). The table contains these columns: allele - the IUIS allele name,
+#' asc_allele - the allele name based on allele similarity clusters (only for V), threshold = the genotype threshold for the alleles.
+#'
+#' @name allele_threshold_table
+#' @docType data
+#'
+#' @references Peres, et al (2022) <doi:10.1101/2022.12.26.521922>
+#' @keywords asc table
+"allele_threshold_table"
+
+
 #' Allele similarity cluster table
 #'
 #' A \code{data.table} of the allele similarity cluster table based on the 
@@ -50,4 +65,3 @@
 #' @references Peres, et al (2022) <doi:10.1101/2022.12.26.521922>
 #' @keywords asc table
 "allele_cluster_table"
-

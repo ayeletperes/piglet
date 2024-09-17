@@ -71,14 +71,16 @@
 #' @importFrom  Biostrings       DNAStringSet unmasked
 #' @importFrom  DECIPHER         DistanceMatrix
 #' @importFrom  RColorBrewer     brewer.pal.info brewer.pal
-#' @importFrom  splitstackshape  cSplit
 #' @importFrom  zen4R            download_zenodo
 #' @importFrom  methods          setOldClass
 NULL
 
 # Package loading actions
 .onAttach <- function(libname, pkgname) {
-  msg <- citation(pkgname)
-  msg <-paste(c(format(msg,"citation")),collapse="\n\n")
+  msg <- paste0("PIgLET version: ",packageVersion(pkgname))
+  msg <- paste(msg, 'New feature was added! A confidence level to the genotype inference. Check the news for more details', collapse = "\n\n")
+  cite <- citation(pkgname)
+  msg <-paste(msg,paste(format(cite,"citation"),collapse="\n\n"),collapse="\n\n")
   packageStartupMessage(msg)
+  invisible()
 }

@@ -579,7 +579,7 @@ following columns
 
 ```{r}
 # inferring the genotype
-asc_genotype <- inferGenotypeAllele(
+asc_genotype <- inferGenotypeAllele_asc(
   asc_data,
   alleleClusterTable = allele_cluster_table,
   germline_db = asc_germline,
