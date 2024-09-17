@@ -452,7 +452,7 @@ assignAlleleClusters <-
 #' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
 #' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
 #' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `allele_threshold_table`. Default is 1e-04.
-#'
+#' @param quiet                    Logical (TRUE by default). Do you want to suppress informative messages
 #' @return
 #' A a data.frame with the inferred V genotype. The table contains the following columns:
 #' 
@@ -490,6 +490,9 @@ assignAlleleClusters <-
 #' allele_threshold_table = allele_threshold_table,
 #' germline_db = HVGERM, find_unmutated=TRUE)
 #' 
+#' # filter alleles with z_score >= 0 
+#' 
+#' head(genotype[genotype$z_score >= 0,])
 #'
 #' @export
 # Parts are adapted from tigger::inferGenotype
@@ -502,7 +505,8 @@ inferGenotypeAllele <-
            germline_db = NA,
            find_unmutated = FALSE,
            seq = "sequence_alignment",
-           default_allele_threshold = 1e-04) {
+           default_allele_threshold = 1e-04,
+           quiet = TRUE) {
     . = NULL
     .. = NULL
     
@@ -514,13 +518,13 @@ inferGenotypeAllele <-
     if(is.null(allele_threshold_table)){
       ## load the default allele threshold table
       data(allele_threshold_table, envir = environment())
-      allele_threshold_table <- allele_threshold_table[get("tag") %in% segment]
     }
     
+    allele_threshold_table <- allele_threshold_table[get("tag") %in% segment]
     match <- unique_calls %in% allele_threshold_table$allele
     if (!all(match)) {
       for(allele in unique_calls[!match]) {
-        warning(paste0("The allele call ", allele, " is not in the allele threshold table. Using the default threshold: ", default_allele_threshold))
+        if(!quiet) warning(paste0("The allele call ", allele, " is not in the allele threshold table. Using the default threshold: ", default_allele_threshold))
         allele_threshold_table <- rbind(allele_threshold_table, 
                                     data.frame(
                                       "tag" = substr(allele,4,4),

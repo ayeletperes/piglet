@@ -13,7 +13,8 @@ inferGenotypeAllele(
   germline_db = NA,
   find_unmutated = FALSE,
   seq = "sequence_alignment",
-  default_allele_threshold = 1e-04
+  default_allele_threshold = 1e-04,
+  quiet = TRUE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ inferGenotypeAllele(
 \item{seq}{name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.}
 
 \item{default_allele_threshold}{The default allele threshold for the genotype inference, in case the allele threshold is not in the \code{allele_threshold_table}. Default is 1e-04.}
+
+\item{quiet}{Logical (TRUE by default). Do you want to suppress informative messages}
 }
 \value{
 A a data.frame with the inferred V genotype. The table contains the following columns:
@@ -73,6 +76,9 @@ data = data,
 allele_threshold_table = allele_threshold_table,
 germline_db = HVGERM, find_unmutated=TRUE)
 
+# filter alleles with z_score >= 0 
+
+head(genotype[genotype$z_score >= 0,])
 
 }
 \seealso{
