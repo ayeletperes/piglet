@@ -43,7 +43,7 @@ std::vector<std::string> allele_diff_strings(std::vector<std::string> germs, int
   
   auto setdiff_mat = [](const std::vector<char>& x) -> int {
     std::unordered_set<char> unique_chars(x.begin(), x.end());
-    std::unordered_set<char> filter_chars = { '.', 'N', '-' };
+    std::unordered_set<char> filter_chars = { '.', 'N', '-', 'X' };
     int diff_count = 0;
     for (const char& c : unique_chars) {
       if (filter_chars.find(c) == filter_chars.end()) {
@@ -103,7 +103,7 @@ std::vector<int> allele_diff_indices(std::vector<std::string> germs, int X=0) {
   
   auto setdiff_mat = [](const std::vector<char>& x) -> int {
     std::unordered_set<char> unique_chars(x.begin(), x.end());
-    std::unordered_set<char> filter_chars = { '.', 'N', '-' };
+    std::unordered_set<char> filter_chars = { '.', 'N', '-', 'X' };
     int diff_count = 0;
     for (const char& c : unique_chars) {
       if (filter_chars.find(c) == filter_chars.end()) {

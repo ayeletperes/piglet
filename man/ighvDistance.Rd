@@ -4,10 +4,12 @@
 \alias{ighvDistance}
 \title{Germline set alleles distance}
 \usage{
-ighvDistance(germline_set)
+ighvDistance(germline_set, AA = FALSE)
 }
 \arguments{
 \item{germline_set}{A character list of the IMGT aligned IGHV allele sequences. See details for curating options.}
+
+\item{AA}{Logical (FALSE by default). If to calculate the distance based on the amino acid sequences.}
 }
 \value{
 A \code{matrix} of the computed distances between the alleles pairs.

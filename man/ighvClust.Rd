@@ -7,7 +7,8 @@
 ighvClust(
   germline_distance,
   family_threshold = 75,
-  allele_cluster_threshold = 95
+  allele_cluster_threshold = 95,
+  cluster_method = "complete"
 )
 }
 \arguments{
@@ -16,6 +17,8 @@ ighvClust(
 \item{family_threshold}{The similarity threshold for the family level. Default is 75.}
 
 \item{allele_cluster_threshold}{The similarity threshold for the allele cluster level. Default is 95.}
+
+\item{cluster_method}{The hierarchical clustering method to use. Default is "complete".}
 }
 \value{
 A names list that includes the \code{data.frame} of the alleles clusters, the thresholds parameters and the

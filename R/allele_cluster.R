@@ -127,14 +127,15 @@ alignSeqs <- function(germline_set){
 #' If not the function will pad the sequences with to the longest sequence length with Ns.
 #'
 #' @param    germline_set          A character list of the IMGT aligned IGHV allele sequences. See details for curating options.
-#'
+#' @param    AA                    Logical (FALSE by default). If to calculate the distance based on the amino acid sequences.
+#' 
 #' @return
 #' A \code{matrix} of the computed distances between the alleles pairs.
 #'
 #' @details
 #' The aligned IMGT IGHV allele germline set can be download from the IMGT site \url{https://www.imgt.org/} under the section genedb.
 #' @export
-ighvDistance <- function(germline_set) {
+ighvDistance <- function(germline_set, AA=FALSE) {
   ## check if the input is list.
   
   if (!is.character(germline_set))
@@ -147,9 +148,16 @@ ighvDistance <- function(germline_set) {
   ## get the distance matrix
   germline_set = germline_set[order(names(germline_set))]
   #### change gaps from '.' to '-'
-  germline_set <- gsub("[.]", "-", germline_set)
-  #### create a dna string set
-  germline_set <- Biostrings::DNAStringSet(germline_set)
+  if(AA){
+    germline_set <- gsub("X", "-", germline_set)
+    #### create a dna string set
+    germline_set <- Biostrings::AAStringSet(germline_set)
+  }else{
+    germline_set <- gsub("[.]", "-", germline_set)
+    #### create a dna string set
+    germline_set <- Biostrings::DNAStringSet(germline_set)
+  }
+  
   #### compute the distance between pairs. penalize for gaps
   germline_distance <-
     DECIPHER::DistanceMatrix(
@@ -172,7 +180,8 @@ ighvDistance <- function(germline_set) {
 #' @param    germline_distance              A germline set distance matrix created by `ighvDistance`.
 #' @param    family_threshold               The similarity threshold for the family level. Default is 75.
 #' @param    allele_cluster_threshold       The similarity threshold for the allele cluster level. Default is 95.
-#'
+#' @param    cluster_method                 The hierarchical clustering method to use. Default is "complete".
+#' 
 #' @return
 #' A names list that includes the \code{data.frame} of the alleles clusters, the thresholds parameters and the
 #' hierarchical clustering of the germline set.
@@ -181,7 +190,8 @@ ighvDistance <- function(germline_set) {
 ighvClust <-
   function(germline_distance,
            family_threshold = 75,
-           allele_cluster_threshold = 95) {
+           allele_cluster_threshold = 95,
+           cluster_method = "complete") {
     # check the parameters
     ### check the class of the distance matrix
     
@@ -218,7 +228,7 @@ ighvClust <-
     
     # cluster the germline
     germline_cluster <-
-      hclust(as.dist(germline_distance), method = "complete")
+      hclust(as.dist(germline_distance), method = cluster_method)
     
     #### cut the groups based on the threshold
     families_cut <-
@@ -670,7 +680,9 @@ artificialFRW1Germline <-
 #' @param    family_threshold               The similarity threshold for the family level. Default is 75.
 #' @param    allele_cluster_threshold       The similarity threshold for the allele cluster level. Default is 95.
 #' @param    set_aligned                    If the germline set provided is aligned, if the set is not aligned an alignment with msa alignment is computed. Default is TRUE
-#'
+#' @param    cluster_method                 The hierarchical clustering method to use. Default is "complete".
+#' @param    aa_set                         Logical (FALSE by default). If the string set is of amino acid sequences.
+#' 
 #' @details
 #' The distance between pairs of the alleles germline set sequences is calculated, then the alleles are clustered based on two similarity thresholds.
 #' One for the family cluster and the other for the allele cluster. Then the new allele cluster names are generated and the germline set sequences are renamed and duplicated alleles are removed.
@@ -715,7 +727,9 @@ inferAlleleClusters <-
            mask_5prime_side = 0,
            family_threshold = 75,
            allele_cluster_threshold = 95,
-           set_aligned = TRUE) {
+           set_aligned = TRUE,
+           cluster_method = "complete",
+           aa_set = FALSE) {
     
     # if (!is.vector(germline_set, mode = "character"))
     #   germline_set <- tigger::readIgFasta(germline_set)
@@ -771,13 +785,14 @@ inferAlleleClusters <-
     }
     
     
-    germline_distance <- ighvDistance(germline_set)
+    germline_distance <- ighvDistance(germline_set, AA = aa_set)
     
     cluster_results <-
       ighvClust(
         germline_distance,
         family_threshold = family_threshold,
-        allele_cluster_threshold = allele_cluster_threshold
+        allele_cluster_threshold = allele_cluster_threshold,
+        cluster_method = cluster_method
       )
     
     cluster_renamed <-

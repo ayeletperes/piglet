@@ -10,7 +10,9 @@ inferAlleleClusters(
   mask_5prime_side = 0,
   family_threshold = 75,
   allele_cluster_threshold = 95,
-  set_aligned = TRUE
+  set_aligned = TRUE,
+  cluster_method = "complete",
+  aa_set = FALSE
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ inferAlleleClusters(
 \item{allele_cluster_threshold}{The similarity threshold for the allele cluster level. Default is 95.}
 
 \item{set_aligned}{If the germline set provided is aligned, if the set is not aligned an alignment with msa alignment is computed. Default is TRUE}
+
+\item{cluster_method}{The hierarchical clustering method to use. Default is "complete".}
+
+\item{aa_set}{Logical (FALSE by default). If the string set is of amino acid sequences.}
 }
 \value{
 An object of type \link{GermlineCluster} that includes the following slots:

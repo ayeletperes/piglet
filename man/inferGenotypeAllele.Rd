@@ -20,7 +20,7 @@ inferGenotypeAllele(
 \arguments{
 \item{data}{data.frame in AIRR format, containing allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.}
 
-\item{allele_threshold_table}{A data.frame of the alleles and their thresholds. Default is XXX.}
+\item{allele_threshold_table}{A data.frame of the alleles and their thresholds.}
 
 \item{call}{name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is \code{v_call}}
 

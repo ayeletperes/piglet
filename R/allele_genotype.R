@@ -444,7 +444,7 @@ assignAlleleClusters <-
 #' for the presence of the allele in the genotype. The user can select the confidence level for the genotype inference.
 #'
 #' @param data                     data.frame in AIRR format, containing allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
-#' @param allele_threshold_table   A data.frame of the alleles and their thresholds. Default is XXX. 
+#' @param allele_threshold_table   A data.frame of the alleles and their thresholds. 
 #' @param call                     name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is `v_call`
 #' @param translate_to_asc         For V allele calls, collapse identical allele for the genotype inference. Default is FALSE.
 #' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
@@ -520,6 +520,10 @@ inferGenotypeAllele <-
       data(allele_threshold_table, envir = environment())
     }
     
+    if(!"tag" %in% names(allele_threshold_table)){
+      allele_threshold_table[,"tag":=substr(get("allele"),4,4)]
+    }
+    
     allele_threshold_table <- allele_threshold_table[get("tag") %in% segment]
     match <- unique_calls %in% allele_threshold_table$allele
     if (!all(match)) {
@@ -529,7 +533,7 @@ inferGenotypeAllele <-
                                     data.frame(
                                       "tag" = substr(allele,4,4),
                                       "allele" = allele,
-                                      "asc_allele" = "",
+                                      "asc_allele" = allele,
                                       "threshold" = default_allele_threshold
                                       ))
       }
@@ -550,7 +554,14 @@ inferGenotypeAllele <-
       }
     }
     
-    genotype_dt <- data.table::data.table("allele" = allele_calls)
+    genotype_dt <- data.table::data.table(
+      "gene" = alakazam::getGene(
+        allele_calls,
+        first = F,
+        collapse = T,
+        strip_d = F
+      ),
+      "allele" = allele_calls)
     
     if(single_assignment){
       genotype_dt <- genotype_dt[!grepl(",",get("allele")),]    
@@ -569,14 +580,15 @@ inferGenotypeAllele <-
     genotype_dt <- genotype_dt[,.("count" = sum(get("fraction"))), by = mget(c("allele"))]
     genotype_dt <- merge(allele_threshold_table, genotype_dt, by = c("allele"), all.x = T, all.y=F)
     ## if translate_to_asc, then collapse similar alleles by asc.
-    final_columns <- c("allele", "count", "threshold", "z_score")
+    final_columns <- c("gene","allele", "count", "threshold", "z_score")
     if(translate_to_asc){
       genotype_dt <- genotype_dt[,.(
+        "gene" = paste0(unique(get("gene")),collapse = "/"),
         "allele" = paste0(get("allele"),collapse = "/"),
         "count" = sum(get("count"), na.rm = T),
         "threshold" = min(get("threshold"))
       ), by =.(get("asc_allele"))]
-      final_columns <- c("asc_allele", "count", "threshold", "z_score")
+      final_columns <- c("gene","asc_allele", "count", "threshold", "z_score")
     }
     ## add base counts
     genotype_dt[is.na(get("count")), "count" := base_count]
