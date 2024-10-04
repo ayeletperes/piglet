@@ -555,12 +555,6 @@ inferGenotypeAllele <-
     }
     
     genotype_dt <- data.table::data.table(
-      "gene" = alakazam::getGene(
-        allele_calls,
-        first = F,
-        collapse = T,
-        strip_d = F
-      ),
       "allele" = allele_calls)
     
     if(single_assignment){
@@ -579,6 +573,12 @@ inferGenotypeAllele <-
     genotype_dt[,"fraction":=get("multiple")*get("multiple_assignments_wheight")]
     genotype_dt <- genotype_dt[,.("count" = sum(get("fraction"))), by = mget(c("allele"))]
     genotype_dt <- merge(allele_threshold_table, genotype_dt, by = c("allele"), all.x = T, all.y=F)
+    genotype_dt[,"gene" := alakazam::getGene(
+      get("allele"),
+      first = F,
+      collapse = T,
+      strip_d = F
+    )]
     ## if translate_to_asc, then collapse similar alleles by asc.
     final_columns <- c("gene","allele", "count", "threshold", "z_score")
     if(translate_to_asc){

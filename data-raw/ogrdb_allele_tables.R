@@ -31,6 +31,8 @@ allele_table_vdjbase_piglet <- rbind(
   allele_table_piglet[!grepl("V",allele),]
 )
 
+allele_table_vdjbase_piglet[,tag:=substr(allele, 4, 4)]
+
 fwrite(allele_table_vdjbase_piglet, "data-raw/allele_threshold_table_ogrdb.tsv", sep = "\t", quote = F, row.names = F)
 writeFasta(asc@alleleClusterSet, "data-raw/HVGERM_ogrdb_asc.fasta")
 
@@ -55,5 +57,7 @@ allele_table_vdjbase_piglet_partial <- rbind(
   allele_table_partial[,.(allele,asc_allele,threshold)],
   allele_table_piglet[!grepl("V",allele),]
 )
+allele_table_vdjbase_piglet_partial[,tag:=substr(allele, 4, 4)]
 
 fwrite(allele_table_vdjbase_piglet_partial, "data-raw/allele_threshold_table_ogrdb_partial.tsv", sep = "\t", quote = F, row.names = F)
+writeFasta(asc_partial@alleleClusterSet, "data-raw/HVGERM_ogrdb_asc_partial.fasta")
