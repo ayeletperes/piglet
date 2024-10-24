@@ -458,6 +458,7 @@ assignAlleleClusters <-
 #' 
 #' - allele: The alleles in the `allele_threshold_table`.
 #' - counts: The number of reads for each alleles.
+#' - depth: The total number of reads in the genotype (Sum of counts).
 #' - threshold: The population driven allele thresholds for genotype presence.
 #' - z_score: The confidence level for the presence of the allele in the genotype.
 #' - asc_allele: If `translate_to_asc` is true, the asc allele value from allele_threshold_table.
@@ -580,7 +581,7 @@ inferGenotypeAllele <-
       strip_d = F
     )]
     ## if translate_to_asc, then collapse similar alleles by asc.
-    final_columns <- c("gene","allele", "count", "threshold", "z_score")
+    final_columns <- c("gene","allele", "count", "depth", "threshold", "z_score")
     if(translate_to_asc){
       genotype_dt <- genotype_dt[,.(
         "gene" = paste0(unique(get("gene")),collapse = "/"),
@@ -588,7 +589,7 @@ inferGenotypeAllele <-
         "count" = sum(get("count"), na.rm = T),
         "threshold" = min(get("threshold"))
       ), by =.(get("asc_allele"))]
-      final_columns <- c("gene","asc_allele", "count", "threshold", "z_score")
+      final_columns <- c("gene","asc_allele", "count", "depth", "threshold", "z_score")
     }
     ## add base counts
     genotype_dt[is.na(get("count")), "count" := base_count]
