@@ -446,6 +446,7 @@ assignAlleleClusters <-
 #' @param data                     data.frame in AIRR format, containing allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
 #' @param allele_threshold_table   A data.frame of the alleles and their thresholds. 
 #' @param call                     name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is `v_call`
+#' @param asc_annotation           Logical (FALSE by default). Are the allele calls annotated with the allele similarity clusters.
 #' @param translate_to_asc         For V allele calls, collapse identical allele for the genotype inference. Default is FALSE.
 #' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
 #' @param germline_db              named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
@@ -501,6 +502,7 @@ inferGenotypeAllele <-
   function(data,
            allele_threshold_table=NULL,
            call = "v_call",
+           asc_annotation = FALSE,
            single_assignment = FALSE,
            translate_to_asc = FALSE,
            germline_db = NA,
@@ -525,8 +527,13 @@ inferGenotypeAllele <-
       allele_threshold_table[,"tag":=substr(get("allele"),4,4)]
     }
     
+    asc_col <- "allele"
+    if(asc_annotation){
+      asc_col <- "asc_allele"
+    }
+    
     allele_threshold_table <- allele_threshold_table[get("tag") %in% segment]
-    match <- unique_calls %in% allele_threshold_table$allele
+    match <- unique_calls %in% allele_threshold_table[[asc_col]]
     if (!all(match)) {
       for(allele in unique_calls[!match]) {
         if(!quiet) warning(paste0("The allele call ", allele, " is not in the allele threshold table. Using the default threshold: ", default_allele_threshold))
@@ -540,7 +547,9 @@ inferGenotypeAllele <-
       }
     }
     
-    base_count <- 1/length(unique(allele_threshold_table$allele))
+    allele_threshold_table[,genotyped_allele:=get(asc_col)]
+    
+    base_count <- 1/length(unique(allele_threshold_table[["genotyped_allele"]]))
     
     ## check unmutated
     if (find_unmutated) {
@@ -556,40 +565,40 @@ inferGenotypeAllele <-
     }
     
     genotype_dt <- data.table::data.table(
-      "allele" = allele_calls)
+      "genotyped_allele" = allele_calls)
     
     if(single_assignment){
-      genotype_dt <- genotype_dt[!grepl(",",get("allele")),]    
+      genotype_dt <- genotype_dt[!grepl(",",get("genotyped_allele")),]    
     }
     
-    genotype_dt[,"multiple":=1/(stringi::stri_count_fixed(get("allele"), ",")+1)]
+    genotype_dt[,"multiple":=1/(stringi::stri_count_fixed(get("genotyped_allele"), ",")+1)]
     genotype_dt[,"nrow":=1:.N]
-    genotype_dt <- genotype_dt[, .("allele" = unlist(strsplit(get("allele"), ","))), by = mget(c("multiple", "nrow"))]
-    genotype_dt[,"single_assignments":=sum(get("multiple")==1), by = .(get("allele"))]
-    genotype_dt[,"multiple_assignments_wheight":=ifelse(get("single_assignments") == 0, 
-                                                        base_count, 
-                                                        get("single_assignments") / length(unique(allele_threshold_table$allele))), 
-                by = mget(c("allele", "nrow"))]
+    genotype_dt <- genotype_dt[, .("genotyped_allele" = unlist(strsplit(get("genotyped_allele"), ","))), by = mget(c("multiple", "nrow"))]
+    genotype_dt[,"single_assignments":=sum(get("multiple")==1), by = .(get("genotyped_allele"))]
+    genotype_dt[,"multiple_assignments_wheight":=ifelse(get("single_assignments") == 0,
+                                                        base_count,
+                                                        get("single_assignments") / length(unique(allele_threshold_table$allele))),
+                by = mget(c("genotyped_allele", "nrow"))]
     genotype_dt[get("multiple")==1, "multiple_assignments_wheight":=1]
     genotype_dt[,"fraction":=get("multiple")*get("multiple_assignments_wheight")]
-    genotype_dt <- genotype_dt[,.("count" = sum(get("fraction"))), by = mget(c("allele"))]
-    genotype_dt <- merge(allele_threshold_table, genotype_dt, by = c("allele"), all.x = T, all.y=F)
+    genotype_dt <- genotype_dt[,.("count" = sum(get("fraction"))), by = mget(c("genotyped_allele"))]
+    genotype_dt <- merge(allele_threshold_table, genotype_dt, by = c("genotyped_allele"), all.x = T, all.y=F)
     genotype_dt[,"gene" := alakazam::getGene(
-      get("allele"),
+      get("genotyped_allele"),
       first = F,
       collapse = T,
       strip_d = F
     )]
     ## if translate_to_asc, then collapse similar alleles by asc.
-    final_columns <- c("gene","allele", "count", "depth", "threshold", "z_score")
+    final_columns <- c("gene","genotyped_allele", "count", "depth", "threshold", "z_score")
     if(translate_to_asc){
       genotype_dt <- genotype_dt[,.(
         "gene" = paste0(unique(get("gene")),collapse = "/"),
-        "allele" = paste0(get("allele"),collapse = "/"),
+        "genotyped_allele" = paste0(get("genotyped_allele"),collapse = "/"),
         "count" = sum(get("count"), na.rm = T),
         "threshold" = min(get("threshold"))
       ), by =.(get("asc_allele"))]
-      final_columns <- c("gene","asc_allele", "count", "depth", "threshold", "z_score")
+      final_columns <- c("gene","genotyped_allele", "count", "depth", "threshold", "z_score")
     }
     ## add base counts
     genotype_dt[is.na(get("count")), "count" := base_count]
@@ -598,6 +607,7 @@ inferGenotypeAllele <-
     ## get the z_score
     genotype_dt[, "z_score" := z_score(get("count"), get("depth"), get("threshold"))]
     genotype_dt <- genotype_dt[, .SD, .SDcols = final_columns]
+    names(genotype_dt)[2] <- "allele"
     return(genotype_dt)
 }
 

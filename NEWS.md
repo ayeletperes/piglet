@@ -1,4 +1,10 @@
-Version 1.0.5:  April 24, 2024
+Version 1.0.6:  Nov 7, 2024
+-------------------------------------------------------------------------------
+
++ An asc_annotation flag was added to `inferGenotypeAllele` to simplify genotype by asc annotation.
+
+
+Version 1.0.5:  Oct 1, 2024
 -------------------------------------------------------------------------------
 
 + New Feature! We added a confidence level to genotype inference `genotype_confidence`.
