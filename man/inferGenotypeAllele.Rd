@@ -8,6 +8,7 @@ inferGenotypeAllele(
   data,
   allele_threshold_table = NULL,
   call = "v_call",
+  asc_annotation = FALSE,
   single_assignment = FALSE,
   translate_to_asc = FALSE,
   germline_db = NA,
@@ -23,6 +24,8 @@ inferGenotypeAllele(
 \item{allele_threshold_table}{A data.frame of the alleles and their thresholds.}
 
 \item{call}{name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is \code{v_call}}
+
+\item{asc_annotation}{Logical (FALSE by default). Are the allele calls annotated with the allele similarity clusters.}
 
 \item{single_assignment}{if TRUE, the method only considers sequence with single assignment for the genotype inference.}
 
@@ -43,6 +46,7 @@ A a data.frame with the inferred V genotype. The table contains the following co
 \itemize{
 \item allele: The alleles in the \code{allele_threshold_table}.
 \item counts: The number of reads for each alleles.
+\item depth: The total number of reads in the genotype (Sum of counts).
 \item threshold: The population driven allele thresholds for genotype presence.
 \item z_score: The confidence level for the presence of the allele in the genotype.
 \item asc_allele: If \code{translate_to_asc} is true, the asc allele value from allele_threshold_table.

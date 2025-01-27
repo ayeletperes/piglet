@@ -4,12 +4,14 @@
 \alias{allele_diff_indices}
 \title{Calculate differences between characters in columns of germs and return their indices as an int vector.}
 \usage{
-allele_diff_indices(germs, X = 0L)
+allele_diff_indices(germs, X = 0L, non_mismatch_chars_nullable = NULL)
 }
 \arguments{
 \item{germs}{A vector of strings representing germ sequences.}
 
 \item{X}{The threshold index from which to return differences as indices.}
+
+\item{non_mismatch_chars}{A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).}
 }
 \value{
 A vector of integers containing indices of differing columns.
@@ -18,12 +20,8 @@ A vector of integers containing indices of differing columns.
 Calculate differences between characters in columns of germs and return their indices as an int vector.
 }
 \examples{
-
-{
 germs = c("ATCG", "ATCC") 
 X = 3 
 result = allele_diff_indices(germs, X)
 # 1, 2, 3
-}
-
 }

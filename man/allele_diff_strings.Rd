@@ -4,12 +4,14 @@
 \alias{allele_diff_strings}
 \title{Calculate differences between characters in columns of germs and return them as a string vector.}
 \usage{
-allele_diff_strings(germs, X = 0L)
+allele_diff_strings(germs, X = 0L, non_mismatch_chars_nullable = NULL)
 }
 \arguments{
 \item{germs}{A vector of strings representing germ sequences.}
 
 \item{X}{The threshold index from which to return differences as strings.}
+
+\item{non_mismatch_chars}{A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).}
 }
 \value{
 A vector of strings containing differences between characters in columns.
@@ -18,11 +20,8 @@ A vector of strings containing differences between characters in columns.
 Calculate differences between characters in columns of germs and return them as a string vector.
 }
 \examples{
-{
 germs = c("ATCG", "ATCC") 
 X = 3 
 result = allele_diff_strings(germs, X) 
 # "A2T", "T3C", "C2G"
-}
-
 }
