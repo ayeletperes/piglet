@@ -5,7 +5,7 @@
 #'
 #' @param germs A vector of strings representing germ sequences.
 #' @param X The threshold index from which to return differences as strings.
-#' @param non_mismatch_chars A set of characters that are ignored in comparisons (default: {'N', '.', '-'}).
+#' @param non_mismatch_chars A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
 #' @return A vector of strings containing differences between characters in columns.
 #'
 #' @examples
@@ -13,15 +13,17 @@
 #' X = 3 
 #' result = allele_diff_strings(germs, X) 
 #' # "A2T", "T3C", "C2G"
+#' @name allele_diff_strings
 #' @export
-#' [[Rcpp::export]]
-NULL
+allele_diff_strings <- function(germs, X = 0L, non_mismatch_chars_nullable = NULL) {
+    .Call(`_piglet_allele_diff_strings`, germs, X, non_mismatch_chars_nullable)
+}
 
 #' Calculate differences between characters in columns of germs and return their indices as an int vector.
 #'
 #' @param germs A vector of strings representing germ sequences.
 #' @param X The threshold index from which to return differences as indices.
-#' @param non_mismatch_chars A set of characters that are ignored in comparisons (default: {'N', '.', '-'}).
+#' @param non_mismatch_chars A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
 #' @return A vector of integers containing indices of differing columns.
 #'
 #' @examples 
@@ -29,9 +31,11 @@ NULL
 #' X = 3 
 #' result = allele_diff_indices(germs, X)
 #' # 1, 2, 3
+#' @name allele_diff_indices
 #' @export
-#' [[Rcpp::export]]
-NULL
+allele_diff_indices <- function(germs, X = 0L, non_mismatch_chars_nullable = NULL) {
+    .Call(`_piglet_allele_diff_indices`, germs, X, non_mismatch_chars_nullable)
+}
 
 #' Calculate SNPs or their count for each germline-input sequence pair with optional parallel execution.
 #'
@@ -41,9 +45,12 @@ NULL
 #' @param parallel A boolean flag to enable parallel processing (default: FALSE).
 #' @param return_count A boolean flag to return the count of mutations instead of their indices (default: FALSE).
 #' @return A list of integer vectors (if return_count = FALSE) or a vector of integers (if return_count = TRUE).
+#' 
+#' @name allele_diff_indices_parallel
 #' @export
-#' [[Rcpp::export]]
-NULL
+allele_diff_indices_parallel <- function(germs, inputs, X = 0L, parallel = FALSE, return_count = FALSE) {
+    .Call(`_piglet_allele_diff_indices_parallel`, germs, inputs, X, parallel, return_count)
+}
 
 #' Calculate SNPs or their count for each germline-input sequence pair with optional parallel execution.
 #'
@@ -75,8 +82,9 @@ NULL
 #'
 #' @name allele_diff_indices_parallel2
 #' @export
-#' [[Rcpp::export]]
-NULL
+allele_diff_indices_parallel2 <- function(germs, inputs, X = 0L, parallel = FALSE, return_count = FALSE, non_mismatch_chars_nullable = NULL) {
+    .Call(`_piglet_allele_diff_indices_parallel2`, germs, inputs, X, parallel, return_count, non_mismatch_chars_nullable)
+}
 
 #' Insert gaps into an ungapped sequence based on a gapped reference sequence.
 #'
@@ -86,7 +94,6 @@ NULL
 #'
 #' @param gapped A vector of strings representing the reference sequences with gaps.
 #' @param ungapped A vector of strings representing the sequences without gaps.
-#' @param gap_chars A set of characters treated as gaps (default: {'.', '-'}).
 #' @param parallel A boolean flag to enable parallel processing (default: FALSE).
 #' @return A vector of strings with gaps inserted to match the gapped reference.
 #'
@@ -105,6 +112,7 @@ NULL
 #'
 #' @name insert_gaps2_vec
 #' @export
-#' [[Rcpp::export]]
-NULL
+insert_gaps2_vec <- function(gapped, ungapped, parallel = FALSE) {
+    .Call(`_piglet_insert_gaps2_vec`, gapped, ungapped, parallel)
+}
 

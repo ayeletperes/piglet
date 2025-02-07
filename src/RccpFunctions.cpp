@@ -28,7 +28,7 @@ using namespace Rcpp;
 //' @param X The threshold index from which to return SNP indices or counts (default: 0).
 //' @param parallel A boolean flag to enable parallel processing (default: FALSE).
 //' @param return_count A boolean flag to return the count of mutations instead of their indices (default: FALSE).
-//' @param non_mismatch_chars A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
+//' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
 //' @return A list of integer vectors (if `return_count = FALSE`) or a vector of integers (if `return_count = TRUE`).
 //'
 //' @examples
