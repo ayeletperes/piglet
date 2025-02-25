@@ -513,7 +513,13 @@ inferGenotypeAllele <-
     . = NULL
     .. = NULL
     
-    allele_calls <- clean_allele_calls(data[[call]])
+    # only clean the allele calls if they don't start with IG/TR
+    if (any(!grepl("IG|TR", data[[call]]))) {
+      allele_calls <- clean_allele_calls(data[[call]])
+    }else{
+      allele_calls <- data[[call]]
+    }
+    
     unique_calls <- unique(unlist(allele_calls))
     allele_calls <- sapply(allele_calls, function(x) paste0(x, collapse = ","))
     segment <- unique(substr(unique_calls,4,4))
