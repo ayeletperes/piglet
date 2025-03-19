@@ -21,7 +21,7 @@ using namespace Rcpp;
 //'
 //' @param germs A vector of strings representing germ sequences.
 //' @param X The threshold index from which to return differences as strings.
-//' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
+//' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
 //' @return A vector of strings containing differences between characters in columns.
 //'
 //' @examples
@@ -93,7 +93,7 @@ std::vector<std::string> allele_diff_strings(std::vector<std::string> germs,
 //'
 //' @param germs A vector of strings representing germ sequences.
 //' @param X The threshold index from which to return differences as indices.
-//' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
+//' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
 //' @return A vector of integers containing indices of differing columns.
 //'
 //' @examples 

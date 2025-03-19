@@ -1,5 +1,5 @@
 Package: piglet
-Title: Program for Inferring Ig Allele Similarity Clusters and Genotypes
+Title: Program for Inferring Immunoglobulin Allele Similarity Clusters and Genotypes
 Version: 1.0.7
 Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"), 
                     email="peresay@biu.ac.il"),
@@ -7,10 +7,10 @@ Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"),
                     email="william@lees.org.uk"),
              person("Gur", "Yaari", role=c("aut","cph"), 
                     email="gur.yaari@biu.ac.il"))
-Description: Improves genotype inference and downstream AIRR-seq data analysis. Inference of allele similarity clusters, an alternative naming scheme and genotype inference for IGH repertoires. 
-             The main tools are allele similarity clusters (ASC), and allele based genotype. The first tool is designed to reduce the ambiguity within the IGHV alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes. 
-             The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population.
-Citation: Peres, et al (2023) <doi:10.1093/nar/gkad603>.
+Description: Improves genotype inference and downstream Adaptive Immune Receptor Repertoire Sequence data analysis. Inference of allele similarity clusters, an alternative naming scheme and genotype inference for immunoglobulin heavy chain repertoires. 
+             The main tools are allele similarity clusters, and allele based genotype. The first tool is designed to reduce the ambiguity within the immunoglobulin heavy chain V alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes. 
+             The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population. 
+             Peres, et al (2023) doi.org/10.1093/nar/gkad603.
 License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -33,7 +33,6 @@ Imports:
     R6 (>= 2.5.1),
     jsonlite (>= 1.8.3),
     Rcpp (>= 0.11.0), 
-    msa(>= 1.32.0),
     magrittr,
     ggmsa,
     ComplexHeatmap

@@ -399,38 +399,6 @@ repressed using the `quiet=TRUE` flag.
 germline_frw1 <- artificialFRW1Germline(germline, mask_primer = T)
 ```
 
-We will look at one sequence, `IGHV1-8*01` to see the masking (Fig. \@ref(fig:nuc-plot))
-
-```{r nuc-plot, fig.width=8, fig.height=4, echo=FALSE, fig.cap="IGHV1-8*01 germline sequence. The allele's germline sequence before and after masking. The colors represents the different nucleotides."}
-
-allele = "IGHV1-8*01"
-dna_seq <-
-  Biostrings::DNAStringSet(setNames(
-    c(germline[allele], germline_frw1[allele]),
-    c("IGHS1V1-8*01", "IGHS2V1-8*01")
-  ))
-colors <- data.frame(
-  names = c("A", "T", "C", "G", "N", "."),
-  color = c(
-    "#ff6d6d",
-    "#769dcc",
-    "#f2be3c",
-    "#74ce98",
-    "#b8b8b8",
-    "#ffffff"
-  )
-)
-
-if (requireNamespace("ggmsa", quietly = TRUE)) {
-  ggmsa::ggmsa(dna_seq, custom_color = colors, show.legend = T) +
-    ggmsa::facet_msa(field = 80)
- } else {
-    
- }
-
-
-```
-
 We can use the artificial germline set to infer the ASC clusters in the
 same fashion as in section \@ref(sec-asc).
 

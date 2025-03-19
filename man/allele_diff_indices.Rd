@@ -11,7 +11,7 @@ allele_diff_indices(germs, X = 0L, non_mismatch_chars_nullable = NULL)
 
 \item{X}{The threshold index from which to return differences as indices.}
 
-\item{non_mismatch_chars}{A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).}
+\item{non_mismatch_chars_nullable}{A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').}
 }
 \value{
 A vector of integers containing indices of differing columns.

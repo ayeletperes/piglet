@@ -24,7 +24,7 @@ allele_diff_indices_parallel2(
 
 \item{return_count}{A boolean flag to return the count of mutations instead of their indices (default: FALSE).}
 
-\item{non_mismatch_chars}{A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).}
+\item{non_mismatch_chars_nullable}{A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').}
 }
 \value{
 A list of integer vectors (if \code{return_count = FALSE}) or a vector of integers (if \code{return_count = TRUE}).
@@ -41,11 +41,13 @@ inputs <- c("ATTG", "ATTA")
 X <- 0
 
 # Return indices of SNPs
-result_indices <- allele_diff_indices_parallel2(germs, inputs, X, parallel = TRUE, return_count = FALSE)
+result_indices <- allele_diff_indices_parallel2(germs, inputs, X, 
+parallel = TRUE, return_count = FALSE)
 print(result_indices)  # list(c(4), c(3, 4))
 
 # Return counts of SNPs
-result_counts <- allele_diff_indices_parallel2(germs, inputs, X, parallel = FALSE, return_count = TRUE)
+result_counts <- allele_diff_indices_parallel2(germs, inputs, X, 
+parallel = FALSE, return_count = TRUE)
 print(result_counts)  # c(1, 2)
 
 }

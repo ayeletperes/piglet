@@ -97,14 +97,14 @@ allele_diff <-
 
 # ------------------------------------------------------------------------------
 
-alignSeqs <- function(germline_set){
-  if (!is.vector(germline_set, mode = "character"))
-    germline_set <- tigger::readIgFasta(germline_set)
-  
-  aligned_set <- msa::msa(germline_set, type = "dna")
-  xn <- as.character(unmasked(aligned_set))
-  setNames(unname(xn), names(xn))
-}
+# alignSeqs <- function(germline_set){
+#   if (!is.vector(germline_set, mode = "character"))
+#     germline_set <- tigger::readIgFasta(germline_set)
+#   
+#   aligned_set <- msa::msa(germline_set, type = "dna")
+#   xn <- as.character(unmasked(aligned_set))
+#   setNames(unname(xn), names(xn))
+# }
 
 
 # ------------------------------------------------------------------------------
@@ -727,10 +727,10 @@ inferAlleleClusters <-
            mask_5prime_side = 0,
            family_threshold = 75,
            allele_cluster_threshold = 95,
-           set_aligned = TRUE,
            cluster_method = "complete",
            aa_set = FALSE) {
     
+    #set_aligned = TRUE,
     # if (!is.vector(germline_set, mode = "character"))
     #   germline_set <- tigger::readIgFasta(germline_set)
     # 
@@ -739,9 +739,9 @@ inferAlleleClusters <-
       stop("The input germline set file is not valid.")
     
     ## check if the germline set is aligned, if not align it.
-    if(!set_aligned){
-      germline_set <- alignSeqs(germline_set)
-    }
+    # if(!set_aligned){
+    #   germline_set <- alignSeqs(germline_set)
+    # }
     
     ### create a copy of the germline set to return, the trimming and masking is only for the clustering
     

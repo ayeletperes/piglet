@@ -5,7 +5,7 @@
 #'
 #' @param germs A vector of strings representing germ sequences.
 #' @param X The threshold index from which to return differences as strings.
-#' @param non_mismatch_chars A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
+#' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
 #' @return A vector of strings containing differences between characters in columns.
 #'
 #' @examples
@@ -23,7 +23,7 @@ allele_diff_strings <- function(germs, X = 0L, non_mismatch_chars_nullable = NUL
 #'
 #' @param germs A vector of strings representing germ sequences.
 #' @param X The threshold index from which to return differences as indices.
-#' @param non_mismatch_chars A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
+#' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
 #' @return A vector of integers containing indices of differing columns.
 #'
 #' @examples 
@@ -63,7 +63,7 @@ allele_diff_indices_parallel <- function(germs, inputs, X = 0L, parallel = FALSE
 #' @param X The threshold index from which to return SNP indices or counts (default: 0).
 #' @param parallel A boolean flag to enable parallel processing (default: FALSE).
 #' @param return_count A boolean flag to return the count of mutations instead of their indices (default: FALSE).
-#' @param non_mismatch_chars A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).
+#' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
 #' @return A list of integer vectors (if `return_count = FALSE`) or a vector of integers (if `return_count = TRUE`).
 #'
 #' @examples
@@ -73,11 +73,13 @@ allele_diff_indices_parallel <- function(germs, inputs, X = 0L, parallel = FALSE
 #' X <- 0
 #'
 #' # Return indices of SNPs
-#' result_indices <- allele_diff_indices_parallel2(germs, inputs, X, parallel = TRUE, return_count = FALSE)
+#' result_indices <- allele_diff_indices_parallel2(germs, inputs, X, 
+#' parallel = TRUE, return_count = FALSE)
 #' print(result_indices)  # list(c(4), c(3, 4))
 #'
 #' # Return counts of SNPs
-#' result_counts <- allele_diff_indices_parallel2(germs, inputs, X, parallel = FALSE, return_count = TRUE)
+#' result_counts <- allele_diff_indices_parallel2(germs, inputs, X, 
+#' parallel = FALSE, return_count = TRUE)
 #' print(result_counts)  # c(1, 2)
 #'
 #' @name allele_diff_indices_parallel2

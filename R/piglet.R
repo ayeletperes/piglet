@@ -52,7 +52,6 @@
 #' @import   jsonlite
 #' @import   ComplexHeatmap
 #' @importFrom  Rcpp             sourceCpp evalCpp
-#' @importFrom  ggmsa            ggmsa facet_msa
 #' @importFrom  msa              msa
 #' @importFrom  R6               R6Class
 #' @importFrom  dplyr            do n desc funs %>% distinct

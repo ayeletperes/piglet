@@ -11,7 +11,7 @@ allele_diff_strings(germs, X = 0L, non_mismatch_chars_nullable = NULL)
 
 \item{X}{The threshold index from which to return differences as strings.}
 
-\item{non_mismatch_chars}{A set of characters that are ignored when comparing sequences (default: {'N', '.', '-'}).}
+\item{non_mismatch_chars_nullable}{A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').}
 }
 \value{
 A vector of strings containing differences between characters in columns.

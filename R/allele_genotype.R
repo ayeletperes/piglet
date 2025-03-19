@@ -553,7 +553,7 @@ inferGenotypeAllele <-
       }
     }
     
-    allele_threshold_table[,genotyped_allele:=get(asc_col)]
+    allele_threshold_table[,"genotyped_allele":=get(asc_col)]
     
     base_count <- 1/length(unique(allele_threshold_table[["genotyped_allele"]]))
     
