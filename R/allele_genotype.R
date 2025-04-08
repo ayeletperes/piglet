@@ -12,8 +12,8 @@ NULL
 # ------------------------------------------------------------------------------
 #' zenodoArchive
 #' @docType class
-#' @return Object of \code{\link{R6Class}} for modelling an zenodoArchive for ASC cluster files
-#' @format \code{\link{R6Class}} object.
+#' @return Object of \code{R6Class} for modelling an zenodoArchive for ASC cluster files
+#' @format \code{R6Class} object.
 #'
 #' @examples
 #' \donttest{

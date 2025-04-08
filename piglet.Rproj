@@ -17,6 +17,6 @@ LineEndingConversion: Posix
 
 BuildType: Package
 PackageUseDevtools: Yes
-PackageBuildArgs: --resave-data=best --compact-vignettes=both -fopenmp
+PackageBuildArgs: --resave-data=best --compact-vignettes=both --as-cran
 PackageCheckArgs: --as-cran
 PackageRoxygenize: rd,collate,namespace

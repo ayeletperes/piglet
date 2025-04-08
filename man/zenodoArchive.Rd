@@ -5,10 +5,10 @@
 \alias{zenodoArchive}
 \title{zenodoArchive}
 \format{
-\code{\link{R6Class}} object.
+\code{R6Class} object.
 }
 \value{
-Object of \code{\link{R6Class}} for modelling an zenodoArchive for ASC cluster files
+Object of \code{R6Class} for modelling an zenodoArchive for ASC cluster files
 }
 \description{
 zenodoArchive

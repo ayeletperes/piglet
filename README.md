@@ -49,7 +49,6 @@ For help, questions, or suggestions, please contact:
 
 * [Ayelet Peres](mailto:peresay@biu.ac.il)
 * [Gur Yaari](mailto:gur.yaari@biu.ac.il)
-* [Issue tracker](https://bitbucket.org/yaarilab/piglet/issues?status=new&status=open)
 
 ## Copying ##
 

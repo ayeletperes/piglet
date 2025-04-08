@@ -669,7 +669,7 @@ artificialFRW1Germline <-
   }
 
 # ------------------------------------------------------------------------------
-
+# @param    set_aligned                    If the germline set provided is aligned, if the set is not aligned an alignment with msa alignment is computed. Default is TRUE
 #' Allele similarity cluster
 #'
 #' A wrapper function to infer the allele clusters. See details for cluster inference
@@ -679,7 +679,6 @@ artificialFRW1Germline <-
 #' @param    mask_5prime_side               Mimic short sequence libraries, gets the length of nucleotides to mask from the 5' side, the staring position. Default is 0.
 #' @param    family_threshold               The similarity threshold for the family level. Default is 75.
 #' @param    allele_cluster_threshold       The similarity threshold for the allele cluster level. Default is 95.
-#' @param    set_aligned                    If the germline set provided is aligned, if the set is not aligned an alignment with msa alignment is computed. Default is TRUE
 #' @param    cluster_method                 The hierarchical clustering method to use. Default is "complete".
 #' @param    aa_set                         Logical (FALSE by default). If the string set is of amino acid sequences.
 #' 

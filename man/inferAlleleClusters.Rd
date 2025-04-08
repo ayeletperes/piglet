@@ -10,7 +10,6 @@ inferAlleleClusters(
   mask_5prime_side = 0,
   family_threshold = 75,
   allele_cluster_threshold = 95,
-  set_aligned = TRUE,
   cluster_method = "complete",
   aa_set = FALSE
 )
@@ -25,8 +24,6 @@ inferAlleleClusters(
 \item{family_threshold}{The similarity threshold for the family level. Default is 75.}
 
 \item{allele_cluster_threshold}{The similarity threshold for the allele cluster level. Default is 95.}
-
-\item{set_aligned}{If the germline set provided is aligned, if the set is not aligned an alignment with msa alignment is computed. Default is TRUE}
 
 \item{cluster_method}{The hierarchical clustering method to use. Default is "complete".}
 
