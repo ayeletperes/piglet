@@ -579,8 +579,8 @@ tigger::plotGenotype(genotype = genotype)
 
 For help, questions, or suggestions, please contact:
 
-* [Ayelet Peres](mailto:peresay@biu.ac.il)
-* [Gur Yaari](mailto:gur.yaari@biu.ac.il)
+* [Ayelet Peres](mailto:ayelet.peres@yale.edu)
+* [Gur Yaari](mailto:gur.yaari@yale.edu)
 * [Issue tracker](https://bitbucket.org/yaarilab/piglet/issues?status=new&status=open&status=submitted&is_spam=!spam)
 
 # References

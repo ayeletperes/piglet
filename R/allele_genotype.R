@@ -385,8 +385,10 @@ germlineASC <- function(allele_cluster_table, germline) {
 #' assignments to the new annotations before inferring a genotype.
 #'
 #' @param data                  data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
-#' @param v_call                name of the V allele call column. Default is `v_call`
 #' @param alleleClusterTable    A data.frame of the allele clusters new annotations relative to the original reference set. See details.
+#' @param v_call                name of the V allele call column. Default is `v_call`
+#' @param from_col              name of the column in alleleClusterTable to use as the source for the dictionary. Default is `imgt_allele`
+#' @param to_col                name of the column in alleleClusterTable to use as the target for the dictionary. Default is `new_allele`
 #'
 #' @return
 #' A modified input \code{data.frame} with the new assigned
@@ -409,30 +411,37 @@ germlineASC <- function(allele_cluster_table, germline) {
 #'
 #'
 #' @export
-assignAlleleClusters <-
-  function(data, alleleClusterTable, v_call = "v_call") {
-    . <- NULL
-    
-    setDT(alleleClusterTable)
-    if (any(grepl("/", alleleClusterTable$imgt_allele))) {
-      alleleClusterTable <- alleleClusterTable[, .("imgt_allele" = unlist(strsplit(get("imgt_allele"),"/"))), by = setdiff(names(alleleClusterTable), "imgt_allele")]
-    }
-    
-    # set the dictionary
-    germline_set <-
-      setNames(alleleClusterTable$new_allele,
-               alleleClusterTable$imgt_allele)
-    
-    # switch the assignments
-    data[[v_call]] <- sapply(data[[v_call]], function(x) {
-      calls <- unlist(strsplit(x, ","))
-      calls <- germline_set[calls]
-      calls <- calls[!duplicated(calls)]
-      paste0(calls, collapse = ",")
-    }, USE.NAMES = F)
-    
-    return(data)
+assignAlleleClusters <- function(
+  data, 
+  alleleClusterTable, 
+  v_call = "v_call", 
+  from_col = "imgt_allele", 
+  to_col = "new_allele"
+) {
+  . <- NULL
+  
+  setDT(alleleClusterTable)
+  # Handle cases where alleles are separated by "/"
+  if (any(grepl("/", alleleClusterTable[[from_col]]))) {
+    alleleClusterTable <- alleleClusterTable[, .(
+      from = unlist(strsplit(get(from_col), "/"))
+    ), by = setdiff(names(alleleClusterTable), from_col)]
+    setnames(alleleClusterTable, "from", from_col)
   }
+  
+  # set the dictionary
+  germline_set <- setNames(alleleClusterTable[[to_col]], alleleClusterTable[[from_col]])
+  
+  # switch the assignments
+  data[[v_call]] <- sapply(data[[v_call]], function(x) {
+    calls <- unlist(strsplit(x, ","))
+    calls <- germline_set[calls]
+    calls <- calls[!duplicated(calls)]
+    paste0(calls, collapse = ",")
+  }, USE.NAMES = FALSE)
+  
+  return(data)
+}
 
 # ------------------------------------------------------------------------------
 
@@ -913,8 +922,7 @@ inferGenotypeAllele_asc <- function(data,
   
   allele_cluster_threshold <-
     setNames(as.numeric(alleleClusterTable$thresh), alleleClusterTable$new_allele)
-  geno_V_fraction <-
-    geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
+  geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
   
   z_score <- function(Nai, N, Tai) (Nai - Tai*N) / sqrt(Tai*N*(1-Tai))
   
