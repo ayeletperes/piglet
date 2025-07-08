@@ -40,7 +40,12 @@ knitr::opts_chunk$set(
   comment = "#>",
   crop = knitr::hook_pdfcrop
 )
-suppressMessages(library(htmltools))
+suppressMessages({
+  library(data.table)
+  library(tigger)
+  library(piglet)
+  library(htmltools)
+})
 ```
 
 ```{r, echo=FALSE}

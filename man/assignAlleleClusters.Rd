@@ -4,7 +4,13 @@
 \alias{assignAlleleClusters}
 \title{Assign allele similarity clusters}
 \usage{
-assignAlleleClusters(data, alleleClusterTable, v_call = "v_call")
+assignAlleleClusters(
+  data,
+  alleleClusterTable,
+  v_call = "v_call",
+  from_col = "imgt_allele",
+  to_col = "new_allele"
+)
 }
 \arguments{
 \item{data}{data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.}
@@ -12,6 +18,10 @@ assignAlleleClusters(data, alleleClusterTable, v_call = "v_call")
 \item{alleleClusterTable}{A data.frame of the allele clusters new annotations relative to the original reference set. See details.}
 
 \item{v_call}{name of the V allele call column. Default is \code{v_call}}
+
+\item{from_col}{name of the column in alleleClusterTable to use as the source for the dictionary. Default is \code{imgt_allele}}
+
+\item{to_col}{name of the column in alleleClusterTable to use as the target for the dictionary. Default is \code{new_allele}}
 }
 \value{
 A modified input \code{data.frame} with the new assigned
