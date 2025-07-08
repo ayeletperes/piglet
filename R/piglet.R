@@ -61,7 +61,7 @@
 #'                               mutate mutate_ summarize summarize_
 #'                               mutate_at summarize_at count_ count
 #'                               rename rename_ transmute transmute_ pull ungroup row_number
-#' @importFrom  data.table       := rbindlist data.table .N setDT CJ setorderv setkey .SD %chin% setNames
+#' @importFrom  data.table       := rbindlist data.table .N setDT CJ setorderv setkey .SD %chin% setnames
 #' @importFrom  stats            hclust as.dendrogram as.dist binom.test p.adjust setNames weighted.mean median
 #' @importFrom  alakazam         getGene getAllele getFamily
 #' @importFrom  rlang            .data
