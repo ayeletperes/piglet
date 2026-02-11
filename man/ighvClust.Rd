@@ -2,7 +2,7 @@
 % Please edit documentation in R/allele_cluster.R
 \name{ighvClust}
 \alias{ighvClust}
-\title{Allele similarity clustering}
+\title{Allele similarity clustering (deprecated)}
 \usage{
 ighvClust(
   germline_distance,
@@ -12,19 +12,20 @@ ighvClust(
 )
 }
 \arguments{
-\item{germline_distance}{A germline set distance matrix created by \code{ighvDistance}.}
+\item{germline_distance}{A germline set distance matrix created by \code{\link{igDistance}}.}
 
-\item{family_threshold}{The similarity threshold for the family level. Default is 75.}
+\item{family_threshold}{The similarity threshold for family level (hierarchical only). Default is 75.}
 
-\item{allele_cluster_threshold}{The similarity threshold for the allele cluster level. Default is 95.}
+\item{allele_cluster_threshold}{The similarity threshold for allele cluster level (hierarchical only). Default is 95.}
 
-\item{cluster_method}{The hierarchical clustering method to use. Default is "complete".}
+\item{cluster_method}{The hierarchical clustering linkage method. Default is "complete".}
 }
 \value{
-A names list that includes the \code{data.frame} of the alleles clusters, the thresholds parameters and the
-hierarchical clustering of the germline set.
+A named list with clustering results.
 }
 \description{
-Cluster the distance matrix from \code{ighvDistance} to create the allele clusters based on two thresholds:
-75\% similarity which represents the family clustering and 95\% similarity between alleles which represents the allele clusters
+This function is deprecated. Use \code{\link{igClust}} instead.
+}
+\seealso{
+\code{\link{igClust}} for the current implementation
 }

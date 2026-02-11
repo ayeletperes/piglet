@@ -107,14 +107,7 @@ allele_table_frw1[,tag:=substr(allele, 4, 4)]
 
 ```
 
-4. Optional: Export ASC FASTA and Threshold Table
-
-```{r, eval=FALSE}
-fwrite(allele_table_frw1, "allele_threshold_table_ogrdb_frw1.tsv", sep = "\t", quote = FALSE)
-writeFasta(asc_frw1@alleleClusterSet, "HVGERM_ogrdb_frw1_asc.fasta")
-```
-
-5. Load Precomputed Partial BIOMED Reference
+4. Load Precomputed Partial BIOMED Reference
 
 ```{r, eval=FALSE}
 url <- "https://bitbucket.org/yaarilab/piglet/raw/70b7d4491e25e7197e2a94bd890ce5b6e3b506a8/data-raw/HVGERM_ogrdb_asc_partial.fasta"
@@ -126,7 +119,7 @@ asc_germline <- readIgFasta(tmp_dest_file)
 allele_table <- fread("https://bitbucket.org/yaarilab/piglet/raw/70b7d4491e25e7197e2a94bd890ce5b6e3b506a8/data-raw/allele_threshold_table_ogrdb_partial.tsv")
 ```
 
-6. Convert Annotations to ASC format
+5. Convert Annotations to ASC format
 
 ```{r, eval=FALSE}
 data <- tigger::AIRRDb

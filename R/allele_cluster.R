@@ -9,37 +9,114 @@ NULL
 # ------------------------------------------------------------------------------
 
 #### Classes ####
-#methods::setOldClass("hclust")
 
-#' Output of inferAlleleClusters
+#' Create a GermlineCluster object
 #'
-#' \code{GermlineCluster} contains output from \link{inferAlleleClusters} function.
-#' It includes the allele cluster table, the germline set hierarchical clustering,
-#' and the threshold parameters.
+#' \code{GermlineCluster} is an S3 class that stores the output of
+#' \code{\link{inferAlleleClusters}}. It contains the allele cluster table,
+#' clustering objects, and threshold parameters used for inference.
 #'
-#' @slot   germlineSet             the original germline set provided
-#' @slot   alleleClusterSet        the renamed germline set with the allele clusters
-#' @slot   alleleClusterTable      the allele cluster table
-#' @slot   hclustAlleleCluster     the hierarchical clustering object of the germline set.
-#' @slot   threshold               the threshold used for the family and the allele clusters.
+#' @param germlineSet The original germline set provided.
+#' @param alleleClusterSet The renamed germline set with allele clusters.
+#' @param alleleClusterTable The allele cluster table.
+#' @param threshold The threshold used for family and allele clusters.
+#' @param hclustAlleleCluster A hierarchical clustering object for the germline set,
+#'   or \code{NULL}.
+#' @param clusteringMethod The clustering method used, either \code{"hierarchical"}
+#'   or \code{"leiden"}.
+#' @param communityObject A community detection object for Leiden clustering, or \code{NULL}.
+#' @param graphObject An \pkg{igraph} graph object for Leiden clustering, or \code{NULL}.
+#' @param distanceMatrix The distance matrix used for clustering, or \code{NULL}.
+#' @param silhouetteScore The silhouette score for community detection.
+#' @param resolutionParameter The resolution parameter used for Leiden clustering.
+#' @param locus The locus identifier, for example \code{"IGHV"}, \code{"IGHD"}, \code{"IGHJ"}.
 #'
-#' @seealso      \link{inferAlleleClusters}
+#' @return An object of class \code{"GermlineCluster"}.
 #'
-#' @name         GermlineCluster-class
-#' @rdname       GermlineCluster-class
-#' @aliases      GermlineCluster
-#' @exportClass  GermlineCluster
-setClass(
-  "GermlineCluster",
-  #contains = "hclust",
-  slots = representation(
-    germlineSet = "character",
-    alleleClusterSet = "character",
-    alleleClusterTable = "data.frame",
-    threshold = "list",
-    hclustAlleleCluster = "ANY"
+#' @seealso \code{\link{inferAlleleClusters}}
+#' @seealso \code{\link{GermlineCluster}}
+#'
+#' @export
+#' @family GermlineCluster
+new_germline_cluster <- function(germlineSet,
+                                 alleleClusterSet,
+                                 alleleClusterTable,
+                                 threshold,
+                                 hclustAlleleCluster = NULL,
+                                 clusteringMethod = "hierarchical",
+                                 communityObject = NULL,
+                                 graphObject = NULL,
+                                 distanceMatrix = NULL,
+                                 silhouetteScore = NA_real_,
+                                 resolutionParameter = NA_real_,
+                                 locus = "IGHV") {
+  structure(
+    list(
+      germlineSet = germlineSet,
+      alleleClusterSet = alleleClusterSet,
+      alleleClusterTable = alleleClusterTable,
+      threshold = threshold,
+      hclustAlleleCluster = hclustAlleleCluster,
+      clusteringMethod = clusteringMethod,
+      communityObject = communityObject,
+      graphObject = graphObject,
+      distanceMatrix = distanceMatrix,
+      silhouetteScore = silhouetteScore,
+      resolutionParameter = resolutionParameter,
+      locus = locus
+    ),
+    class = "GermlineCluster"
   )
-)
+}
+
+#' Print method for GermlineCluster
+#'
+#' @param x A GermlineCluster object
+#' @param ... Additional arguments (ignored)
+#'
+#' @return Invisibly returns x
+#' @export
+print.GermlineCluster <- function(x, ...) {
+  cat("GermlineCluster Object\n")
+  cat("======================\n")
+  cat("Locus:", x$locus, "\n")
+  cat("Clustering method:", x$clusteringMethod, "\n")
+
+  cat("Number of alleles:", length(x$germlineSet), "\n")
+  cat("Number of allele clusters:", length(unique(x$alleleClusterTable$Allele_Cluster)), "\n")
+  cat("Number of family clusters:", length(unique(x$alleleClusterTable$Family)), "\n")
+  cat("Thresholds:\n")
+  cat("  - Family:", x$threshold$family_threshold, "\n")
+  cat("  - Allele cluster:", x$threshold$allele_cluster_threshold, "\n")
+  if (!is.na(x$silhouetteScore)) {
+    cat("Silhouette score:", round(x$silhouetteScore, 4), "\n")
+  }
+  if (!is.na(x$resolutionParameter)) {
+    cat("Resolution parameter:", round(x$resolutionParameter, 4), "\n")
+  }
+  invisible(x)
+}
+
+#' Summary method for GermlineCluster
+#'
+#' @param object A GermlineCluster object
+#' @param ... Additional arguments (ignored)
+#'
+#' @return A list with summary statistics
+#' @export
+summary.GermlineCluster <- function(object, ...) {
+  list(
+    locus = object$locus,
+    clustering_method = object$clusteringMethod,
+    n_alleles = length(object$germlineSet),
+    n_clusters = length(unique(object$alleleClusterTable$Allele_Cluster)),
+    n_families = length(unique(object$alleleClusterTable$Family)),
+    family_threshold = object$threshold$family_threshold,
+    cluster_threshold = object$threshold$allele_cluster_threshold,
+    silhouette_score = object$silhouetteScore,
+    resolution_parameter = object$resolutionParameter
+  )
+}
 
 # ------------------------------------------------------------------------------
 
@@ -123,151 +200,379 @@ allele_diff <-
 #' Germline set alleles distance
 #'
 #' Calculates the distance between pairs of alleles based on their aligned germline sequences.
-#' The function assume the germline set sequence are at an even length.
-#' If not the function will pad the sequences with to the longest sequence length with Ns.
+#' Supports multiple distance methods for different segment types.
 #'
-#' @param    germline_set          A character list of the IMGT aligned IGHV allele sequences. See details for curating options.
-#' @param    AA                    Logical (FALSE by default). If to calculate the distance based on the amino acid sequences.
-#' 
+#' @param germline_set A character vector of aligned allele sequences. See details for curating options.
+#' @param AA Logical (FALSE by default). If TRUE, calculate the distance based on amino acid sequences.
+#' @param method Distance calculation method. One of:
+#'   \itemize{
+#'     \item \code{"decipher"}: Uses DECIPHER::DistanceMatrix (requires aligned sequences, best for V segments)
+#'     \item \code{"hamming"}: Hamming distance (requires equal length, sequences padded if needed)
+#'     \item \code{"lv"}: Levenshtein distance (handles variable length, good for D/J segments)
+#'   }
+#' @param trim_3prime Optional position to trim sequences from 3' end before distance calculation
+#' @param return_type One of "matrix" (default) or "dist" to return a dist object
+#' @param quiet Logical (TRUE by default). Suppress informative messages
+#'
 #' @return
-#' A \code{matrix} of the computed distances between the alleles pairs.
+#' A \code{matrix} or \code{dist} object of the computed distances between allele pairs.
 #'
 #' @details
-#' The aligned IMGT IGHV allele germline set can be download from the IMGT site \url{https://www.imgt.org/} under the section genedb.
+#' The aligned IMGT IGHV allele germline set can be downloaded from the IMGT site
+#' \url{https://www.imgt.org/} under the section genedb.
+#'
+#' For V segments, the "decipher" method is recommended as it handles alignment gaps properly.
+#' For D and J segments which may have variable lengths, the "lv" (Levenshtein) method is appropriate.
+#'
+#' @seealso \code{\link{ighvDistance}} for backward compatibility wrapper
+#'
+#' @examples
+#' data(HVGERM)
+#' # Using DECIPHER method (default, for V segments)
+#' d1 <- igDistance(HVGERM[1:10], method = "decipher")
+#'
+#' # Using Hamming distance
+#' d2 <- igDistance(HVGERM[1:10], method = "hamming")
+#'
+#' # Using Levenshtein distance (good for D/J segments)
+#' d3 <- igDistance(HVGERM[1:10], method = "lv")
+#'
 #' @export
-ighvDistance <- function(germline_set, AA=FALSE) {
-  ## check if the input is list.
-  
+igDistance <- function(germline_set,
+                       AA = FALSE,
+                       method = c("decipher", "hamming", "lv"),
+                       trim_3prime = NULL,
+                       return_type = c("matrix", "dist"),
+                       quiet = TRUE) {
+
+  method <- match.arg(method)
+  return_type <- match.arg(return_type)
+
   if (!is.character(germline_set))
     stop("The input germline set is not in a character class.")
-  
-  ## check sequences length. If not even pad the sequences to the max length
-  germline_set <-
-    gsub("\\s", "N", format(germline_set, width = max(nchar(germline_set))))
-  
-  ## get the distance matrix
-  germline_set = germline_set[order(names(germline_set))]
-  #### change gaps from '.' to '-'
-  if(AA){
-    germline_set <- gsub("X", "-", germline_set)
-    #### create a dna string set
-    germline_set <- Biostrings::AAStringSet(germline_set)
-  }else{
-    germline_set <- gsub("[.]", "-", germline_set)
-    #### create a dna string set
-    germline_set <- Biostrings::DNAStringSet(germline_set)
+
+  if (length(germline_set) < 2)
+    stop("At least two sequences are required for distance calculation.")
+
+  ## optionally trim sequences
+  if (!is.null(trim_3prime)) {
+    stopifnot(is.numeric(trim_3prime), trim_3prime >= 1)
+    germline_set <- substr(germline_set, 1, trim_3prime)
   }
-  
-  #### compute the distance between pairs. penalize for gaps
-  germline_distance <-
-    DECIPHER::DistanceMatrix(
-      germline_set,
-      includeTerminalGaps = FALSE,
-      penalizeGapLetterMatches = TRUE,
-      verbose = FALSE
-    )
-  
-  return(germline_distance)
+
+  ## sort by name
+  germline_set <- germline_set[order(names(germline_set))]
+
+  if (method == "decipher") {
+    ## DECIPHER method (original implementation)
+    germline_set <-
+      gsub("\\s", "N", format(germline_set, width = max(nchar(germline_set))))
+
+    if (AA) {
+      germline_set <- gsub("X", "-", germline_set)
+      germline_set <- Biostrings::AAStringSet(germline_set)
+    } else {
+      germline_set <- gsub("[.]", "-", germline_set)
+      germline_set <- Biostrings::DNAStringSet(germline_set)
+    }
+
+    germline_distance <-
+      DECIPHER::DistanceMatrix(
+        germline_set,
+        includeTerminalGaps = FALSE,
+        penalizeGapLetterMatches = TRUE,
+        verbose = FALSE
+      )
+
+    if (return_type == "dist") {
+      return(stats::as.dist(germline_distance))
+    }
+    return(germline_distance)
+
+  } else {
+    ## stringdist methods (hamming or levenshtein)
+
+    if (method == "hamming") {
+      ## pad sequences to equal length for Hamming
+      if (!quiet) message(sprintf("Padding to max length %s.", max(nchar(germline_set))))
+      germline_set <- gsub("\\s", "N", format(germline_set, width = max(nchar(germline_set))))
+    }
+
+    ## check if sequences have names
+    useNames <- "names"
+    if (is.null(names(germline_set)) || any(is.na(names(germline_set)))) {
+      useNames <- "strings"
+    }
+
+    d <- stringdist::stringdistmatrix(germline_set, method = method, useNames = useNames)
+
+    if (return_type == "dist") {
+      return(stats::as.dist(d))
+    }
+    return(as.matrix(d))
+  }
+}
+
+#' Germline set alleles distance (deprecated)
+#'
+#' This function is deprecated. Use \code{\link{igDistance}} instead.
+#'
+#' @param germline_set A character list of aligned IGHV allele sequences.
+#' @param AA Logical (FALSE by default). If to calculate the distance based on amino acid sequences.
+#'
+#' @return A matrix of computed distances between allele pairs.
+#'
+#' @seealso \code{\link{igDistance}} for the current implementation
+#'
+#' @export
+ighvDistance <- function(germline_set, AA = FALSE) {
+  .Deprecated("igDistance")
+  igDistance(germline_set, AA = AA, method = "decipher")
 }
 
 # ------------------------------------------------------------------------------
 
 #' Allele similarity clustering
 #'
-#' Cluster the distance matrix from `ighvDistance` to create the allele clusters based on two thresholds:
-#' 75% similarity which represents the family clustering and 95% similarity between alleles which represents the allele clusters
+#' Cluster the distance matrix to create allele clusters. Supports both
+#' hierarchical clustering (default) and Leiden community detection.
 #'
-#' @param    germline_distance              A germline set distance matrix created by `ighvDistance`.
-#' @param    family_threshold               The similarity threshold for the family level. Default is 75.
-#' @param    allele_cluster_threshold       The similarity threshold for the allele cluster level. Default is 95.
-#' @param    cluster_method                 The hierarchical clustering method to use. Default is "complete".
-#' 
+#' @param germline_distance A germline set distance matrix created by \code{\link{igDistance}}.
+#' @param method Clustering method. One of "hierarchical" (default) or "leiden".
+#' @param family_threshold The similarity threshold for family level (hierarchical only). Default is 75.
+#' @param allele_cluster_threshold The similarity threshold for allele cluster level (hierarchical only). Default is 95.
+#' @param cluster_method The hierarchical clustering linkage method. Default is "complete".
+#' @param resolution Resolution parameter for Leiden clustering. If NULL, will be optimized.
+#' @param target_clusters Target number of clusters for Leiden optimization. Default is NULL.
+#' @param optimize_silhouette Logical. Optimize resolution using silhouette score (Leiden only). Default is TRUE.
+#' @param ncores Number of cores for parallel processing (Leiden only). Default is 1.
+#' @param quiet Logical. Suppress messages. Default is FALSE.
+#'
 #' @return
-#' A names list that includes the \code{data.frame} of the alleles clusters, the thresholds parameters and the
-#' hierarchical clustering of the germline set.
+#' A named list that includes:
+#' \itemize{
+#'   \item \code{alleleClusterTable}: data.frame of allele clusters
+#'   \item \code{threshold}: list of threshold parameters
+#'   \item \code{hclustAlleleCluster}: hierarchical clustering object (hierarchical method)
+#'   \item \code{communityObject}: community detection result (Leiden method)
+#'   \item \code{graphObject}: igraph object (Leiden method)
+#'   \item \code{silhouetteScore}: silhouette score (Leiden method)
+#'   \item \code{resolutionParameter}: resolution used (Leiden method)
+#' }
+#'
+#' @seealso \code{\link{igDistance}}, \code{\link{inferAlleleClusters}}
 #'
 #' @export
-ighvClust <-
-  function(germline_distance,
-           family_threshold = 75,
-           allele_cluster_threshold = 95,
-           cluster_method = "complete") {
-    # check the parameters
-    ### check the class of the distance matrix
-    
-    if (!is.matrix(germline_distance))
-      stop("The input germline_distance is not in a matrix class.")
-    
-    ### check that the threshold of cluster is not above family
-    
-    if (any(!dplyr::between(c(
-      family_threshold, allele_cluster_threshold
-    ), 0, 100)))
-      stop("One of the thresholds is not between 0-100.")
-    
-    if (family_threshold > allele_cluster_threshold) {
-      message(
-        "The family threshold is higher than the allele cluster threshold. Switching between the thresholds"
-      )
-      
-      allele_cluster_threshold <-
-        allele_cluster_threshold + family_threshold
-      family_threshold <-
-        allele_cluster_threshold - family_threshold
-      allele_cluster_threshold <-
-        allele_cluster_threshold - family_threshold
-      
-    }
-    
-    # cluster the distance matrix
-    
-    ## threshold should be the additive inverse
-    
-    family_threshold <- 1 - family_threshold / 100
-    allele_cluster_threshold <- 1 - allele_cluster_threshold / 100
-    
-    # cluster the germline
-    germline_cluster <-
-      hclust(as.dist(germline_distance), method = cluster_method)
-    
-    #### cut the groups based on the threshold
-    families_cut <-
-      data.frame(
-        "Family" = dendextend::cutree(
-          as.dendrogram(germline_cluster, hang = -1),
-          h = family_threshold,
-          order_clusters_as_data = F
-        )
-      )
-    families_cut$imgt_allele <- rownames(families_cut)
-    allele_cluster_cut <-
-      data.frame(
-        "Allele_Cluster" = dendextend::cutree(
-          as.dendrogram(germline_cluster, hang = -1),
-          h = allele_cluster_threshold,
-          order_clusters_as_data = F
-        )
-      )
-    allele_cluster_cut$imgt_allele <- rownames(allele_cluster_cut)
-    
-    ## merge the tables
-    alleleClusterTable <- dplyr::right_join(families_cut,
-                                            allele_cluster_cut,
-                                            by = "imgt_allele")
-    alleleClusterTable <-
-      alleleClusterTable[, c("imgt_allele", "Family", "Allele_Cluster")]
-    
-    return(
-      list(
-        alleleClusterTable = alleleClusterTable,
-        threshold = list(
-          family_threshold = family_threshold,
-          allele_cluster_threshold = allele_cluster_threshold
-        ),
-        hclustAlleleCluster = germline_cluster
-      )
-    )
+igClust <- function(germline_distance,
+                    method = c("hierarchical", "leiden"),
+                    family_threshold = 75,
+                    allele_cluster_threshold = 95,
+                    cluster_method = "complete",
+                    resolution = NULL,
+                    target_clusters = NULL,
+                    optimize_silhouette = TRUE,
+                    ncores = 1,
+                    quiet = FALSE) {
+
+  method <- match.arg(method)
+
+  ## check the class of the distance matrix
+  if (!is.matrix(germline_distance) && !inherits(germline_distance, "dist"))
+    stop("The input germline_distance must be a matrix or dist object.")
+
+  if (is.matrix(germline_distance) && nrow(germline_distance) != ncol(germline_distance))
+    stop("The input germline_distance must be a square matrix.")
+
+  ## convert to matrix if needed for processing
+  if (inherits(germline_distance, "dist")) {
+    dist_obj <- germline_distance
+    germline_distance <- as.matrix(germline_distance)
+  } else {
+    dist_obj <- stats::as.dist(germline_distance)
   }
+
+  if (method == "hierarchical") {
+    ## Original hierarchical clustering implementation
+    return(.igClust_hierarchical(
+      germline_distance = germline_distance,
+      family_threshold = family_threshold,
+      allele_cluster_threshold = allele_cluster_threshold,
+      cluster_method = cluster_method
+    ))
+  } else {
+    ## Leiden community detection
+    return(.igClust_leiden(
+      germline_distance = germline_distance,
+      dist_obj = dist_obj,
+      resolution = resolution,
+      target_clusters = target_clusters,
+      optimize_silhouette = optimize_silhouette,
+      ncores = ncores,
+      quiet = quiet
+    ))
+  }
+}
+
+## Internal function for hierarchical clustering
+.igClust_hierarchical <- function(germline_distance,
+                                  family_threshold,
+                                  allele_cluster_threshold,
+                                  cluster_method) {
+
+  ## check that thresholds are valid
+  if (any(c(family_threshold, allele_cluster_threshold) < 0 |
+          c(family_threshold, allele_cluster_threshold) > 100))
+    stop("One of the thresholds is not between 0-100.")
+
+  if (family_threshold > allele_cluster_threshold) {
+    message("The family threshold is higher than the allele cluster threshold. Switching between the thresholds")
+    tmp <- family_threshold
+    family_threshold <- allele_cluster_threshold
+    allele_cluster_threshold <- tmp
+  }
+
+  ## convert thresholds to distance scale (similarity to distance)
+  family_threshold_dist <- 1 - family_threshold / 100
+  allele_cluster_threshold_dist <- 1 - allele_cluster_threshold / 100
+
+  ## cluster the germline
+  germline_cluster <- hclust(stats::as.dist(germline_distance), method = cluster_method)
+
+  ## cut the groups based on the threshold
+  families_cut <- data.frame(
+    "Family" = dendextend::cutree(
+      as.dendrogram(germline_cluster, hang = -1),
+      h = family_threshold_dist,
+      order_clusters_as_data = FALSE
+    )
+  )
+  families_cut$imgt_allele <- rownames(families_cut)
+
+  allele_cluster_cut <- data.frame(
+    "Allele_Cluster" = dendextend::cutree(
+      as.dendrogram(germline_cluster, hang = -1),
+      h = allele_cluster_threshold_dist,
+      order_clusters_as_data = FALSE
+    )
+  )
+  allele_cluster_cut$imgt_allele <- rownames(allele_cluster_cut)
+
+  ## merge the tables
+  alleleClusterTable <- merge(families_cut, allele_cluster_cut, by = "imgt_allele", all.y = TRUE)
+  alleleClusterTable <- alleleClusterTable[, c("imgt_allele", "Family", "Allele_Cluster")]
+
+  list(
+    alleleClusterTable = alleleClusterTable,
+    threshold = list(
+      family_threshold = family_threshold,
+      allele_cluster_threshold = allele_cluster_threshold
+    ),
+    hclustAlleleCluster = germline_cluster,
+    communityObject = NULL,
+    graphObject = NULL,
+    silhouetteScore = NA_real_,
+    resolutionParameter = NA_real_
+  )
+}
+
+## Internal function for Leiden community detection
+.igClust_leiden <- function(germline_distance,
+                            dist_obj,
+                            resolution,
+                            target_clusters,
+                            optimize_silhouette,
+                            ncores,
+                            quiet) {
+
+  ## convert distance to similarity graph
+  g <- distance_to_graph(germline_distance)
+
+  ## determine resolution
+  if (is.null(resolution)) {
+    if (optimize_silhouette && !is.null(target_clusters)) {
+      if (!quiet) message("Optimizing resolution using silhouette score...")
+      opt_result <- optimize_resolution(
+        g = g,
+        distance_matrix = dist_obj,
+        target_clusters = target_clusters,
+        ncores = ncores
+      )
+      resolution <- opt_result$best_resolution
+      membership <- opt_result$best_partition
+      silhouette_score <- opt_result$results$Silhouette[
+        opt_result$results$Resolution == resolution
+      ]
+    } else if (!is.null(target_clusters)) {
+      ## use binary search to find resolution
+      if (!quiet) message("Finding resolution for target clusters...")
+      tuned <- .getNClusters(g, target_clusters)
+      resolution <- tuned$best_resolution
+      membership <- igraph::membership(tuned$partition)
+      silhouette_score <- NA_real_
+    } else {
+      ## use default resolution
+      resolution <- 0.5
+      comm <- detect_communities_leiden(g, resolution = resolution)
+      membership <- igraph::membership(comm)
+      silhouette_score <- NA_real_
+    }
+  } else {
+    ## use provided resolution
+    comm <- detect_communities_leiden(g, resolution = resolution)
+    membership <- igraph::membership(comm)
+    silhouette_score <- NA_real_
+  }
+
+  ## build allele cluster table
+  allele_names <- names(membership)
+  cluster_ids <- as.integer(membership)
+
+  alleleClusterTable <- data.frame(
+    imgt_allele = allele_names,
+    Family = cluster_ids,  ## For Leiden, family = cluster
+    Allele_Cluster = cluster_ids,
+    stringsAsFactors = FALSE
+  )
+
+  list(
+    alleleClusterTable = alleleClusterTable,
+    threshold = list(
+      family_threshold = NA_real_,
+      allele_cluster_threshold = NA_real_,
+      resolution = resolution
+    ),
+    hclustAlleleCluster = NULL,
+    communityObject = if (exists("comm")) comm else NULL,
+    graphObject = g,
+    silhouetteScore = silhouette_score,
+    resolutionParameter = resolution
+  )
+}
+
+#' Allele similarity clustering (deprecated)
+#'
+#' This function is deprecated. Use \code{\link{igClust}} instead.
+#'
+#' @inheritParams igClust
+#'
+#' @return A named list with clustering results.
+#'
+#' @seealso \code{\link{igClust}} for the current implementation
+#'
+#' @export
+ighvClust <- function(germline_distance,
+                      family_threshold = 75,
+                      allele_cluster_threshold = 95,
+                      cluster_method = "complete") {
+  .Deprecated("igClust")
+  igClust(
+    germline_distance = germline_distance,
+    method = "hierarchical",
+    family_threshold = family_threshold,
+    allele_cluster_threshold = allele_cluster_threshold,
+    cluster_method = cluster_method
+  )
+}
 
 # ------------------------------------------------------------------------------
 
@@ -433,7 +738,7 @@ generateReferenceSet <-
     
     if (!(is.matrix(germline_distance) &
           is.array(germline_distance)))
-      stop("The input germline distance was not create with `ighvDistance`.")
+      stop("The input germline distance was not create with ighvDistance.")
     
     ### check the class of the germline set
     if (!is.character(germline_set))
@@ -491,7 +796,7 @@ generateReferenceSet <-
       }
     
     if (!is.null(trim_3prime_side)) {
-      alleleClusterTable.tmp[, "diff_pos_past_trim" := check_alleles(get("imgt_allele"), germline_set, trim_3prime_side), by = get("new_allele")]
+      alleleClusterTable.tmp[, "diff_pos_past_trim" := check_alleles(get("imgt_allele"), germline_set, trim_3prime_side), by = list(get("new_allele"))]
       
       alleleClusterTable.tmp$new_allele[alleleClusterTable.tmp$diff_pos_past_trim !=
                                           ""] <-
@@ -672,154 +977,213 @@ artificialFRW1Germline <-
 # @param    set_aligned                    If the germline set provided is aligned, if the set is not aligned an alignment with msa alignment is computed. Default is TRUE
 #' Allele similarity cluster
 #'
-#' A wrapper function to infer the allele clusters. See details for cluster inference
+#' A wrapper function to infer the allele clusters. Supports both hierarchical
+#' clustering (default) and Leiden community detection.
 #'
-#' @param    germline_set                   Either a character vector of strings representing Ig sequence alleles, or a path to to the germline set file (must be gapped by IMGT scheme for optimal results).
-#' @param    trim_3prime_side               To which nucleotide position to trim the sequences. Default is 318; NULL will take the entire sequence length.
-#' @param    mask_5prime_side               Mimic short sequence libraries, gets the length of nucleotides to mask from the 5' side, the staring position. Default is 0.
-#' @param    family_threshold               The similarity threshold for the family level. Default is 75.
-#' @param    allele_cluster_threshold       The similarity threshold for the allele cluster level. Default is 95.
-#' @param    cluster_method                 The hierarchical clustering method to use. Default is "complete".
-#' @param    aa_set                         Logical (FALSE by default). If the string set is of amino acid sequences.
-#' 
+#' @param germline_set A character vector of Ig sequence alleles (must be gapped by IMGT scheme for optimal results).
+#' @param locus The locus type. One of "IGHV", "IGKV", "IGLV", "IGHD", "IGHJ", "IGKJ", "IGLJ".
+#'   Default is NULL (auto-detected from sequence names).
+#' @param clustering_method Clustering method. One of "hierarchical" (default) or "leiden".
+#' @param distance_method Distance calculation method. One of "decipher" (default), "hamming", or "lv".
+#' @param trim_3prime_side Position to trim sequences from 3' end. Default is 318; NULL uses full length.
+#' @param mask_5prime_side Length to mask from 5' side. Default is 0.
+#' @param family_threshold Similarity threshold for family level (hierarchical only). Default is 75.
+#' @param allele_cluster_threshold Similarity threshold for allele cluster level (hierarchical only). Default is 95.
+#' @param cluster_method Hierarchical clustering linkage method. Default is "complete".
+#' @param resolution Resolution parameter for Leiden clustering. Default is NULL (auto-optimized).
+#' @param target_clusters Target number of clusters for Leiden optimization. Default is NULL.
+#' @param optimize_silhouette Optimize resolution using silhouette score (Leiden only). Default is TRUE.
+#' @param ncores Number of cores for parallel processing (Leiden only). Default is 1.
+#' @param aa_set Logical. Is the sequence set amino acids? Default is FALSE.
+#' @param quiet Logical. Suppress messages. Default is FALSE.
+#'
 #' @details
-#' The distance between pairs of the alleles germline set sequences is calculated, then the alleles are clustered based on two similarity thresholds.
-#' One for the family cluster and the other for the allele cluster. Then the new allele cluster names are generated and the germline set sequences are renamed and duplicated alleles are removed.
+#' The distance between pairs of allele sequences is calculated, then the alleles are clustered.
+#' For hierarchical clustering, two similarity thresholds define family and allele clusters.
+#' For Leiden clustering, community detection identifies clusters at a specified resolution.
 #'
-#' The allele cluster names are by the following scheme:
+#' The allele cluster names follow this scheme:
 #' IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster numbering,
-#' G1 - allele cluster numbering, and 01 = allele numbering (given by clustering order, no connection to the expression)
+#' G1 = allele cluster numbering, 01 = allele numbering (by clustering order)
 #'
-#' To plot the allele clusters dendrogram use the \code{plot} function on the \link{GermlineCluster} object
+#' For V segments, the "decipher" distance method is recommended.
+#' For D and J segments with variable lengths, "lv" (Levenshtein) is more appropriate.
 #'
 #' @return
-#' An object of type \link{GermlineCluster} that includes the following slots:
-#' @slot  germlineSet - A character vector with the modified germline set (3' trimming and 5' masking).
-#' @slot alleleClusterSet - A character vector of renamed input germline set to the ASC name scheme (Without 3' and 5' modifications).
-#' @slot alleleClusterTable - A data.frame of the allele similarity cluster with the new names and the default thresholds.
-#' @slot threshold - A list of the input family and allele cluster similarity thresholds.
-#' @slot hclustAlleleCluster - An hclust object of the germline set hierarchical clustering,
+#' An object of class \link{GermlineCluster} containing:
+#' \itemize{
+#'   \item germlineSet: Modified germline set (3' trimming and 5' masking)
+#'   \item alleleClusterSet: Renamed germline set with ASC names
+#'   \item alleleClusterTable: data.frame of allele similarity clusters
+#'   \item threshold: List of threshold parameters
+#'   \item hclustAlleleCluster: hclust object (hierarchical method)
+#'   \item clusteringMethod: Method used ("hierarchical" or "leiden")
+#'   \item communityObject: Community object (Leiden method)
+#'   \item graphObject: igraph object (Leiden method)
+#'   \item silhouetteScore: Silhouette score (Leiden method)
+#'   \item resolutionParameter: Resolution used (Leiden method)
+#'   \item locus: Locus identifier
+#' }
 #'
-#' @seealso
-#'
-#' By using the plot function on the returned object, a colorful visualization of the allele clusters dendrogram and threshold is received
+#' @seealso \code{\link{igDistance}}, \code{\link{igClust}}, \code{\link{plot.GermlineCluster}}
 #'
 #' @examples
-#'
 #' # load the initial germline set
 #' \donttest{
 #' data(HVGERM)
 #'
 #' germline <- HVGERM[!grepl("^[.]", HVGERM)]
 #'
+#' # Hierarchical clustering (default)
 #' asc <- inferAlleleClusters(germline)
 #'
-#' ## plotting the clusters
+#' # Leiden community detection
+#' asc_leiden <- inferAlleleClusters(germline[1:50],
+#'                                   clustering_method = "leiden",
+#'                                   target_clusters = 10)
 #'
+#' ## plotting the clusters
 #' plot(asc)
 #' }
 #' @export
+inferAlleleClusters <- function(germline_set,
+                                locus = NULL,
+                                clustering_method = c("hierarchical", "leiden"),
+                                distance_method = c("decipher", "hamming", "lv"),
+                                trim_3prime_side = 318,
+                                mask_5prime_side = 0,
+                                family_threshold = 75,
+                                allele_cluster_threshold = 95,
+                                cluster_method = "complete",
+                                resolution = NULL,
+                                target_clusters = NULL,
+                                optimize_silhouette = TRUE,
+                                ncores = 1,
+                                aa_set = FALSE,
+                                quiet = FALSE) {
 
-inferAlleleClusters <-
-  function(germline_set,
-           trim_3prime_side = 318,
-           mask_5prime_side = 0,
-           family_threshold = 75,
-           allele_cluster_threshold = 95,
-           cluster_method = "complete",
-           aa_set = FALSE) {
-    
-    #set_aligned = TRUE,
-    # if (!is.vector(germline_set, mode = "character"))
-    #   germline_set <- tigger::readIgFasta(germline_set)
-    # 
-    
-    if (!is.vector(germline_set, mode = "character"))
-      stop("The input germline set file is not valid.")
-    
-    ## check if the germline set is aligned, if not align it.
-    # if(!set_aligned){
-    #   germline_set <- alignSeqs(germline_set)
-    # }
-    
-    ### create a copy of the germline set to return, the trimming and masking is only for the clustering
-    
-    germline_set_copy <- germline_set
-    
-    ## check if to trim the 3'
-    if (!is.null(trim_3prime_side)) {
-      germline_set <- substr(germline_set, 1, trim_3prime_side)
-    }
-    
-    ## check if to mask the 5'
-    if (mask_5prime_side != 0) {
-      trailing <-
-        substr(germline_set, mask_5prime_side + 1, stop = 1000000L)
-      preceding <- paste0(rep("N", mask_5prime_side), collapse = "")
-      
-      ## paste the mask
-      
-      germline_set <- paste0(preceding, trailing)
-      names(germline_set) <- names(trailing)
-    }
-    
-    ### check the thresholds
-    if (any(!dplyr::between(c(
-      family_threshold, allele_cluster_threshold
-    ), 0, 100)))
-      stop("One of the thresholds is not between 0-100.")
-    
+  clustering_method <- match.arg(clustering_method)
+  distance_method <- match.arg(distance_method)
+
+  if (!is.vector(germline_set, mode = "character"))
+    stop("The input germline set must be a character vector.")
+
+  if (length(germline_set) < 2)
+    stop("At least two sequences are required.")
+
+  ## detect locus from germline names if not provided
+  if (is.null(locus)) {
+    locus <- substr(names(germline_set)[1], 1, 4)
+  }
+
+  ## create a copy of the germline set to return (trimming/masking only for clustering)
+  germline_set_copy <- germline_set
+
+  ## apply 3' trimming
+  if (!is.null(trim_3prime_side)) {
+    germline_set <- substr(germline_set, 1, trim_3prime_side)
+  }
+
+  ## apply 5' masking
+  if (mask_5prime_side != 0) {
+    trailing <- substr(germline_set, mask_5prime_side + 1, stop = 1000000L)
+    preceding <- paste0(rep("N", mask_5prime_side), collapse = "")
+    germline_set <- paste0(preceding, trailing)
+    names(germline_set) <- names(trailing)
+  }
+
+  ## calculate distance matrix
+  germline_distance <- igDistance(
+    germline_set,
+    AA = aa_set,
+    method = distance_method,
+    quiet = quiet
+  )
+
+  if (clustering_method == "hierarchical") {
+    ## check thresholds
+    if (any(c(family_threshold, allele_cluster_threshold) < 0 |
+            c(family_threshold, allele_cluster_threshold) > 100))
+      stop("Thresholds must be between 0-100.")
+
     if (family_threshold > allele_cluster_threshold) {
-      message(
-        "The family threshold is higher than the allele cluster threshold. Switching between the thresholds"
-      )
-      
-      allele_cluster_threshold <-
-        allele_cluster_threshold + family_threshold
-      family_threshold <-
-        allele_cluster_threshold - family_threshold
-      allele_cluster_threshold <-
-        allele_cluster_threshold - family_threshold
-      
+      if (!quiet) message("Switching family and allele cluster thresholds.")
+      tmp <- family_threshold
+      family_threshold <- allele_cluster_threshold
+      allele_cluster_threshold <- tmp
     }
-    
-    
-    germline_distance <- ighvDistance(germline_set, AA = aa_set)
-    
-    cluster_results <-
-      ighvClust(
-        germline_distance,
-        family_threshold = family_threshold,
-        allele_cluster_threshold = allele_cluster_threshold,
-        cluster_method = cluster_method
-      )
-    
-    cluster_renamed <-
-      generateReferenceSet(
-        germline_distance = germline_distance,
-        germline_set = germline_set_copy,
-        alleleClusterTable = cluster_results$alleleClusterTable,
-        trim_3prime_side = trim_3prime_side
-      )
-    
-    alleleClusterSet = cluster_renamed$alleleClusterSet
-    alleleClusterTable = cluster_renamed$alleleClusterTable
-    hclustAlleleCluster = cluster_results$hclustAlleleCluster
-    
-    results <- new(
-      "GermlineCluster",
+
+    ## hierarchical clustering
+    cluster_results <- igClust(
+      germline_distance,
+      method = "hierarchical",
+      family_threshold = family_threshold,
+      allele_cluster_threshold = allele_cluster_threshold,
+      cluster_method = cluster_method
+    )
+
+    cluster_renamed <- generateReferenceSet(
+      germline_distance = germline_distance,
+      germline_set = germline_set_copy,
+      alleleClusterTable = cluster_results$alleleClusterTable,
+      trim_3prime_side = trim_3prime_side
+    )
+
+    results <- new_germline_cluster(
       germlineSet = germline_set,
-      alleleClusterSet = alleleClusterSet,
-      alleleClusterTable = alleleClusterTable,
+      alleleClusterSet = cluster_renamed$alleleClusterSet,
+      alleleClusterTable = as.data.frame(cluster_renamed$alleleClusterTable),
       threshold = list(
         family_threshold = family_threshold,
         allele_cluster_threshold = allele_cluster_threshold
       ),
-      hclustAlleleCluster = hclustAlleleCluster
+      hclustAlleleCluster = cluster_results$hclustAlleleCluster,
+      clusteringMethod = "hierarchical",
+      distanceMatrix = germline_distance,
+      locus = locus
     )
-    
-    return(results)
+
+  } else {
+    ## Leiden community detection
+    cluster_results <- igClust(
+      germline_distance,
+      method = "leiden",
+      resolution = resolution,
+      target_clusters = target_clusters,
+      optimize_silhouette = optimize_silhouette,
+      ncores = ncores,
+      quiet = quiet
+    )
+
+    cluster_renamed <- generateReferenceSet(
+      germline_distance = germline_distance,
+      germline_set = germline_set_copy,
+      alleleClusterTable = cluster_results$alleleClusterTable,
+      trim_3prime_side = trim_3prime_side
+    )
+
+    results <- new_germline_cluster(
+      germlineSet = germline_set,
+      alleleClusterSet = cluster_renamed$alleleClusterSet,
+      alleleClusterTable = as.data.frame(cluster_renamed$alleleClusterTable),
+      threshold = list(
+        family_threshold = NA_real_,
+        allele_cluster_threshold = NA_real_,
+        resolution = cluster_results$resolutionParameter
+      ),
+      hclustAlleleCluster = NULL,
+      clusteringMethod = "leiden",
+      communityObject = cluster_results$communityObject,
+      graphObject = cluster_results$graphObject,
+      distanceMatrix = germline_distance,
+      silhouetteScore = cluster_results$silhouetteScore,
+      resolutionParameter = cluster_results$resolutionParameter,
+      locus = locus
+    )
   }
+
+  return(results)
+}
 
 # ------------------------------------------------------------------------------
 
@@ -838,15 +1202,15 @@ plotAlleleCluster <- function(x,
                               cex = 1,
                               seed = 9999) {
   ## check the class of the object
-  
+
   if (!inherits(x, "GermlineCluster"))
     stop("Object is not of class GermlineCluster")
-  
-  alleleClusterTable <- x@alleleClusterTable
-  hclustAlleleCluster <- x@hclustAlleleCluster
-  
-  fam_cut = 1 - x@threshold$family_threshold / 100
-  group_cut = 1 - x@threshold$allele_cluster_threshold / 100
+
+  alleleClusterTable <- x$alleleClusterTable
+  hclustAlleleCluster <- x$hclustAlleleCluster
+
+  fam_cut = 1 - x$threshold$family_threshold / 100
+  group_cut = 1 - x$threshold$allele_cluster_threshold / 100
   
   ## get the colors
   qual_col_pals = RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category %chin% c('qual', 'div'),]
@@ -1126,21 +1490,19 @@ plotAlleleCluster <- function(x,
   
 }
 
-#' @describeIn GermlineCluster Plot the dendrogram for the allele clusters.
+#' Plot method for GermlineCluster
 #'
-#' @param x      GermlineCluster object
-#' @param y      not in use. missing.
-#' @param cex    Controls the size of the allele label. Default is 1.
-#' @param seed   Set a seed number for drawing the dendrogram. Default 9999.
+#' @param x GermlineCluster object
+#' @param y Not used
+#' @param cex Controls the size of the allele label. Default is 1.
+#' @param seed Set a seed number for drawing the dendrogram. Default 9999.
+#' @param ... Additional arguments passed to plotting functions
 #'
-#' @aliases plot,GermlineCluster,missing, numeric
-#' @exportMethod plot
-#' @importFrom methods signature
-#'
-setMethod("plot",
-          methods::signature(x = "GermlineCluster", y = "missing"),
-          #, cex = "numeric", seed = "numeric"
-          plotAlleleCluster)
+#' @return A plot of the allele clusters dendrogram
+#' @export
+plot.GermlineCluster <- function(x, y = NULL, cex = 1, seed = 9999, ...) {
+  plotAlleleCluster(x, y = y, cex = cex, seed = seed)
+}
 
 
 ### adapted from the circlize package.

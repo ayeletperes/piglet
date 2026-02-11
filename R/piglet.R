@@ -50,17 +50,13 @@
 #' @import   ggplot2
 #' @import   circlize
 #' @import   jsonlite
-#' @import   ComplexHeatmap
 #' @importFrom  Rcpp             sourceCpp evalCpp
 #' @importFrom  R6               R6Class
-#' @importFrom  dplyr            do n desc funs %>% distinct
-#'                               as_data_frame data_frame
-#'                               bind_cols bind_rows combine rowwise slice
-#'                               filter select arrange
-#'                               group_by ungroup
-#'                               mutate mutate_ summarize summarize_
-#'                               mutate_at summarize_at count_ count
-#'                               rename rename_ transmute transmute_ pull ungroup row_number
+#' @importFrom  magrittr         %>%
+#' @importFrom  igraph           graph_from_adjacency_matrix cluster_leiden
+#'                               cluster_louvain edge_attr_names E V is_igraph membership
+#' @importFrom  stringdist       stringdistmatrix
+#' @importFrom  cluster          silhouette
 #' @importFrom  data.table       := rbindlist data.table .N setDT CJ setorderv setkey .SD %chin% setnames
 #' @importFrom  stats            hclust as.dendrogram as.dist binom.test p.adjust setNames weighted.mean median
 #' @importFrom  alakazam         getGene getAllele getFamily

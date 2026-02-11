@@ -52,21 +52,21 @@ unique_l <- function(l) {
 
 extract_clusters <- function(asc) {
   data.frame(
-    thresh_fam = asc@threshold[[1]],
-    fam_clust = unique_l(asc@alleleClusterTable$Family),
-    thresh_asc = asc@threshold[[2]],
-    asc_clust  = unique_l(asc@alleleClusterTable$Allele_Cluster)
+    thresh_fam = asc$threshold[[1]],
+    fam_clust = unique_l(asc$alleleClusterTable$Family),
+    thresh_asc = asc$threshold[[2]],
+    asc_clust  = unique_l(asc$alleleClusterTable$Allele_Cluster)
   )
 }
 
 genes_to_cluster <- function(asc) {
-  asc@alleleClusterTable$iuis_gene <-
-    alakazam::getGene(asc@alleleClusterTable$imgt_allele,
+  asc$alleleClusterTable$iuis_gene <-
+    alakazam::getGene(asc$alleleClusterTable$imgt_allele,
                       collapse = T,
                       strip_d = F)
-  asc@alleleClusterTable %>% group_by(Family) %>%
+  asc$alleleClusterTable %>% group_by(Family) %>%
     summarise(genes = sum(unique_l(iuis_gene) > 1),
-              thresh = unique(asc@threshold[[1]])) %>%
+              thresh = unique(asc$threshold[[1]])) %>%
     group_by(thresh) %>%
     summarise(
       clust_gene = sum(genes) / unique_l(Family),
@@ -93,9 +93,9 @@ asc_thresholds <- function(germline_set) {
   gene_clust_tab <- rbindlist(lapply(fam_asc, genes_to_cluster))
   
   asc_to_iuis <- sapply(fam_asc, function(x) {
-    iuis_g <- getGene(x@alleleClusterTable$imgt_allele, strip_d = F)
+    iuis_g <- getGene(x$alleleClusterTable$imgt_allele, strip_d = F)
     asc_g <-
-      x@alleleClusterTable %>% mutate(g = getGene(imgt_allele, strip_d = F),
+      x$alleleClusterTable %>% mutate(g = getGene(imgt_allele, strip_d = F),
                                       asc = getGene(new_allele, strip_d = F)) %>%
       dplyr::group_by(g) %>%
       dplyr::summarise(asc = unique_l(asc)) %>%
@@ -410,7 +410,7 @@ server <- function(input, output, session) {
         mask_5prime_side = input$mask_5prime_side
       )
       inferred_asc(inferred_asc_result)
-      output$asc_table <- DT::renderDataTable(inferred_asc()@alleleClusterTable)
+      output$asc_table <- DT::renderDataTable(inferred_asc()$alleleClusterTable)
       
       output$asc_plot <- renderPlot({
         plot(inferred_asc())
@@ -425,7 +425,7 @@ server <- function(input, output, session) {
       paste("asc_table_", Sys.Date(), ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(inferred_asc()@alleleClusterTable, file)
+      write.csv(inferred_asc()$alleleClusterTable, file)
     }
   )
   
@@ -434,7 +434,7 @@ server <- function(input, output, session) {
       paste("germline_set_", Sys.Date(), ".fasta", sep = "")
     },
     content = function(file) {
-      writeLines(germlineASC(inferred_asc()@alleleClusterTable, germline_set()),
+      writeLines(germlineASC(inferred_asc()$alleleClusterTable, germline_set()),
                  file)
     }
   )

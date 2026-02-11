@@ -882,7 +882,7 @@ inferGenotypeAllele_asc <- function(data,
         )
       gene_table <- gene_table[get("count") != 0]
       
-      geno_V_fraction <- dplyr::bind_rows(geno_V_fraction, gene_table)
+      geno_V_fraction <- data.table::rbindlist(list(geno_V_fraction, gene_table), fill = TRUE)
     }
     ############
     geno_V_fraction <-

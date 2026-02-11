@@ -50,3 +50,7 @@ Thumbs.db
 
 .Rproj.user
 inst/doc
+
+# Claude
+CLAUDE.local.md
+.claude/
