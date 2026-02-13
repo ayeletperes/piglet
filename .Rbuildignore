@@ -14,3 +14,6 @@
 ^\.claude$
 ^conda-recipe$
 ^CLAUDE\.local\.md$
+^LICENSE$
+^LICENSE.md$
+
