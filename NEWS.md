@@ -1,3 +1,17 @@
+Version 1.2.1:  Feb 2026
+-------------------------------------------------------------------------------
+
+BUG FIXES:
+
++ Leiden clustering now uses hierarchical clustering for Family assignment,
+  matching the behavior of the reference script. Previously, Family was set
+  equal to Allele_Cluster (both from Leiden), losing the hierarchical family
+  structure. Now Family comes from hierarchical clustering and Allele_Cluster
+  from Leiden community detection.
+
++ Leiden results now populate `hclustAlleleCluster` and `family_threshold`,
+  enabling `plotTruncatedTree()` to work with Leiden-based results.
+
 Version 1.2.0:  Feb 2026
 -------------------------------------------------------------------------------
 

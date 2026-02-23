@@ -57,6 +57,32 @@ test_that("igClust works with leiden method", {
   expect_equal(nrow(result$alleleClusterTable), 4)
 })
 
+test_that("igClust leiden produces hclust object and stores family_threshold", {
+  skip_on_cran()
+
+  seqs <- c(
+    A1 = "ACGTTGCAACGT",
+    A2 = "ACGTTGCAACGA",
+    B1 = "TTGCAAATTTGG",
+    B2 = "TTGCAAATTTGA"
+  )
+
+  d <- igDistance(seqs, method = "hamming")
+
+  result <- igClust(d, method = "leiden", resolution = 0.5, family_threshold = 75)
+
+  # hclust object should be populated (not NULL)
+  expect_true(!is.null(result$hclustAlleleCluster))
+  expect_s3_class(result$hclustAlleleCluster, "hclust")
+
+  # family_threshold should be stored in threshold
+
+  expect_equal(result$threshold$family_threshold, 75)
+
+  # Family and Allele_Cluster columns should both exist
+  expect_true(all(c("Family", "Allele_Cluster") %in% names(result$alleleClusterTable)))
+})
+
 test_that("igClust accepts dist object", {
   d_mat <- matrix(c(0, 0.1, 0.3, 0.1, 0, 0.25, 0.3, 0.25, 0), nrow = 3)
   rownames(d_mat) <- colnames(d_mat) <- c("A", "B", "C")
@@ -77,4 +103,19 @@ test_that("ighvClust is deprecated but works", {
   )
 
   expect_true(is.data.frame(result$alleleClusterTable))
+})
+
+test_that("alleleClusterNames respects family_prefix = FALSE", {
+  skip_on_cran()
+  seqs <- c(
+    "IGHV1*01" = "ACGTTGCAACGTACGTTGCAACGT",
+    "IGHV1*02" = "ACGTTGCAACGAACGTTGCAACGA"
+  )
+  result_with <- inferAlleleClusters(seqs, trim_3prime_side = NULL, family_prefix = TRUE)
+  result_without <- inferAlleleClusters(seqs, trim_3prime_side = NULL, family_prefix = FALSE)
+
+  # With prefix: names contain "F"
+  expect_true(any(grepl("F", result_with$alleleClusterTable$new_allele)))
+  # Without prefix: no "F" immediately after the segment prefix
+  expect_false(any(grepl("IGHVF", result_without$alleleClusterTable$new_allele)))
 })

@@ -46,6 +46,13 @@ test_that("inferAlleleClusters works with leiden method", {
   expect_s3_class(result, "GermlineCluster")
   expect_equal(result$clusteringMethod, "leiden")
   expect_true(!is.null(result$graphObject))
+
+  # Leiden should now produce hclust object for family assignment
+  expect_true(!is.null(result$hclustAlleleCluster))
+  expect_s3_class(result$hclustAlleleCluster, "hclust")
+
+  # family_threshold should be stored (not NA)
+  expect_equal(result$threshold$family_threshold, 75)
 })
 
 test_that("inferAlleleClusters auto-detects locus", {
