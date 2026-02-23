@@ -100,23 +100,23 @@ plotTruncatedTree <- function(x,
   ## get hclust object and allele table
 
   hc <- x$hclustAlleleCluster
-  allele_table <- as.data.frame(x$alleleClusterTable)
+  allele_table <- .compat_allele_table(as.data.frame(x$alleleClusterTable))
 
   ## extract ASC subgroup from new_allele (e.g., IGHVF1-G1 from IGHVF1-G1*01)
   allele_table$asc_subgroup <- sapply(allele_table$new_allele, function(a) {
     gsub("[*].*$", "", a)
   })
 
-  ## get IUIS subgroup from imgt_allele
+  ## get IUIS subgroup from iuis_allele
   allele_table$iuis_subgroup <- alakazam::getGene(
-    allele_table$imgt_allele,
+    allele_table$iuis_allele,
     strip_d = FALSE,
     omit_nl = FALSE
   )
 
-  ## get IUIS family from imgt_allele
+  ## get IUIS family from iuis_allele
   allele_table$iuis_family <- alakazam::getFamily(
-    allele_table$imgt_allele,
+    allele_table$iuis_allele,
     strip_d = FALSE,
     omit_nl = FALSE
   )
@@ -127,8 +127,8 @@ plotTruncatedTree <- function(x,
     if (length(parts) > 0) parts[1] else a
   })
 
-  ## Create mapping from imgt_allele to new_allele for renaming hclust labels
-  imgt_to_asc <- stats::setNames(allele_table$new_allele, allele_table$imgt_allele)
+  ## Create mapping from iuis_allele to new_allele for renaming hclust labels
+  imgt_to_asc <- stats::setNames(allele_table$new_allele, allele_table$iuis_allele)
 
   ## Rename hclust labels to ASC names
   hc_asc <- hc
@@ -142,7 +142,7 @@ plotTruncatedTree <- function(x,
     ## Group by ASC subgroup (from new_allele)
     group_col <- "asc_subgroup"
   } else if (collapse_to == "iuis_subgroup") {
-    ## Group by IUIS subgroup (from imgt_allele)
+    ## Group by IUIS subgroup (from iuis_allele)
     group_col <- "iuis_subgroup"
   } else {
     ## Group by ASC family
@@ -201,14 +201,14 @@ plotTruncatedTree <- function(x,
     if (length(idx) > 0) allele_table$asc_family[idx[1]] else NA
   })
 
-  tip_metadata$Family <- sapply(tip_labels_asc, function(lab) {
+  tip_metadata$family <- sapply(tip_labels_asc, function(lab) {
     idx <- which(allele_table$new_allele == lab)
-    if (length(idx) > 0) allele_table$Family[idx[1]] else NA
+    if (length(idx) > 0) allele_table$family[idx[1]] else NA
   })
 
-  tip_metadata$Allele_Cluster <- sapply(tip_labels_asc, function(lab) {
+  tip_metadata$allele_cluster <- sapply(tip_labels_asc, function(lab) {
     idx <- which(allele_table$new_allele == lab)
-    if (length(idx) > 0) allele_table$Allele_Cluster[idx[1]] else NA
+    if (length(idx) > 0) allele_table$allele_cluster[idx[1]] else NA
   })
 
   ## count alleles per group
@@ -429,7 +429,7 @@ plotCommunityNetwork <- function(x,
   layout <- match.arg(layout)
 
   g <- x$graphObject
-  allele_table <- x$alleleClusterTable
+  allele_table <- .compat_allele_table(as.data.frame(x$alleleClusterTable))
 
   ## create layout
   if (layout == "fr") {
@@ -449,7 +449,7 @@ plotCommunityNetwork <- function(x,
   )
 
   ## add cluster info
-  cluster_map <- stats::setNames(allele_table$Allele_Cluster, allele_table$imgt_allele)
+  cluster_map <- stats::setNames(allele_table$allele_cluster, allele_table$iuis_allele)
   node_data$cluster <- as.factor(cluster_map[node_data$name])
 
   ## add family info
@@ -679,21 +679,21 @@ plotClusterComparison <- function(hierarchical_result,
     stop("Second argument must be from Leiden clustering")
 
   ## get cluster assignments
-  hier_table <- hierarchical_result$alleleClusterTable
-  leid_table <- leiden_result$alleleClusterTable
+  hier_table <- .compat_allele_table(as.data.frame(hierarchical_result$alleleClusterTable))
+  leid_table <- .compat_allele_table(as.data.frame(leiden_result$alleleClusterTable))
 
   ## merge by allele name
   comparison <- merge(
-    hier_table[, c("imgt_allele", "Allele_Cluster")],
-    leid_table[, c("imgt_allele", "Allele_Cluster")],
-    by = "imgt_allele",
+    hier_table[, c("iuis_allele", "allele_cluster")],
+    leid_table[, c("iuis_allele", "allele_cluster")],
+    by = "iuis_allele",
     suffixes = c("_hier", "_leid")
   )
 
   ## create confusion matrix
   confusion <- table(
-    Hierarchical = comparison$Allele_Cluster_hier,
-    Leiden = comparison$Allele_Cluster_leid
+    Hierarchical = comparison$allele_cluster_hier,
+    Leiden = comparison$allele_cluster_leid
   )
 
   ## convert to data frame for plotting

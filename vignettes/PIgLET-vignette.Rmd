@@ -361,13 +361,13 @@ The table is has identical ASC clusters to the table we created above
 ```{r, echo=FALSE}
 asc_tables <- dplyr::left_join(
   asc$alleleClusterTable %>%
-    dplyr::select(new_allele, imgt_allele) %>% dplyr::group_by(new_allele) %>%
-    dplyr::summarise(imgt_allele = paste0(sort(
-      unique(imgt_allele)
+    dplyr::select(new_allele, iuis_allele) %>% dplyr::group_by(new_allele) %>%
+    dplyr::summarise(iuis_allele = paste0(sort(
+      unique(iuis_allele)
     ), collapse = "/")),
-  allele_cluster_table %>% dplyr::select(new_allele, imgt_allele) %>% dplyr::group_by(new_allele) %>%
-    dplyr::summarise(imgt_allele = paste0(sort(
-      unique(imgt_allele)
+  allele_cluster_table %>% dplyr::select(new_allele, iuis_allele) %>% dplyr::group_by(new_allele) %>%
+    dplyr::summarise(iuis_allele = paste0(sort(
+      unique(iuis_allele)
     ), collapse = "/")),
   by = "new_allele",
   suffix = c(".piglet", ".zenodo")
@@ -426,7 +426,7 @@ First we will collapse allele duplication in the ASC-table
 ```{r}
 allele_cluster_table <-
   allele_cluster_table %>% dplyr::group_by(new_allele, func_group, thresh) %>%
-  dplyr::summarise(imgt_allele = paste0(sort(unique(imgt_allele)), collapse = "/"),
+  dplyr::summarise(iuis_allele = paste0(sort(unique(iuis_allele)), collapse = "/"),
                    .groups = "keep")
 ```
 
@@ -454,9 +454,9 @@ Once we have both the modified dataset and germline reference set, we
 can infer the genotype. The function returns the genotype table with the
 following columns
 
-| gene           | alleles             | imgt_alleles          | counts              | absolute_fraction     | absolute_threshold           | genotyped_alleles | genotype_imgt_alleles |
+| gene           | alleles             | iuis_alleles          | counts              | absolute_fraction     | absolute_threshold           | genotyped_alleles | genotype_iuis_alleles |
 |---------|---------|---------|---------|---------|---------|---------|---------|
-| allele cluster | the present alleles | the imgt nomenclature | the number of reads | the absolute fraction | the population driven allele | the alleles which | the imgt nomenclature |
+| allele cluster | the present alleles | the IUIS nomenclature | the number of reads | the absolute fraction | the population driven allele | the alleles which | the IUIS nomenclature |
 
 ```{r}
 # inferring the genotype
@@ -475,7 +475,7 @@ small modification to our genotype table
 
 ```{r}
 # get the genotype alleles
-alleles <- unlist(strsplit(asc_genotype$genotyped_imgt_alleles, ","))
+alleles <- unlist(strsplit(asc_genotype$genotyped_iuis_alleles, ","))
 # get the genes
 genes <- gsub("[*][0-9]+", "", alleles)
 # extract the alleles

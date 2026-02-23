@@ -53,23 +53,23 @@ unique_l <- function(l) {
 extract_clusters <- function(asc) {
   data.frame(
     thresh_fam = asc$threshold[[1]],
-    fam_clust = unique_l(asc$alleleClusterTable$Family),
+    fam_clust = unique_l(asc$alleleClusterTable$family),
     thresh_asc = asc$threshold[[2]],
-    asc_clust  = unique_l(asc$alleleClusterTable$Allele_Cluster)
+    asc_clust  = unique_l(asc$alleleClusterTable$allele_cluster)
   )
 }
 
 genes_to_cluster <- function(asc) {
   asc$alleleClusterTable$iuis_gene <-
-    alakazam::getGene(asc$alleleClusterTable$imgt_allele,
+    alakazam::getGene(asc$alleleClusterTable$iuis_allele,
                       collapse = T,
                       strip_d = F)
-  asc$alleleClusterTable %>% group_by(Family) %>%
+  asc$alleleClusterTable %>% group_by(family) %>%
     summarise(genes = sum(unique_l(iuis_gene) > 1),
               thresh = unique(asc$threshold[[1]])) %>%
     group_by(thresh) %>%
     summarise(
-      clust_gene = sum(genes) / unique_l(Family),
+      clust_gene = sum(genes) / unique_l(family),
       num_clust = unique_l(Family),
       num_shared = sum(genes)
     )
@@ -93,9 +93,9 @@ asc_thresholds <- function(germline_set) {
   gene_clust_tab <- rbindlist(lapply(fam_asc, genes_to_cluster))
   
   asc_to_iuis <- sapply(fam_asc, function(x) {
-    iuis_g <- getGene(x$alleleClusterTable$imgt_allele, strip_d = F)
+    iuis_g <- getGene(x$alleleClusterTable$iuis_allele, strip_d = F)
     asc_g <-
-      x$alleleClusterTable %>% mutate(g = getGene(imgt_allele, strip_d = F),
+      x$alleleClusterTable %>% mutate(g = getGene(iuis_allele, strip_d = F),
                                       asc = getGene(new_allele, strip_d = F)) %>%
       dplyr::group_by(g) %>%
       dplyr::summarise(asc = unique_l(asc)) %>%

@@ -18,7 +18,7 @@ ref <- setNames(ref_df_filter$seq, ref_df_filter$allele_ogrdb)
 asc <- inferAlleleClusters(ref)
 
 allele_table <- setDT(asc@alleleClusterTable)
-allele_table <- allele_table[,.(imgt_allele, new_allele)]
+allele_table <- allele_table[,.(iuis_allele, new_allele)]
 names(allele_table) <- c("allele","asc_allele")
 
 allele_table_piglet <- fread("data-raw/allele_threshold_table.tsv")
@@ -41,7 +41,7 @@ ref_ogrdb_partial <- readIgFasta("data-raw/HVGERM_OGRDB_PARTIAL.fasta")
 asc_partial <- inferAlleleClusters(ref_ogrdb_partial)
 
 allele_table_partial <- setDT(asc_partial@alleleClusterTable)
-allele_table_partial <- allele_table_partial[,.(imgt_allele, new_allele)]
+allele_table_partial <- allele_table_partial[,.(iuis_allele, new_allele)]
 names(allele_table_partial) <- c("allele","asc_allele")
 allele_table_partial$threshold <- 1e-04
 allele_table_partial$threshold <- apply(allele_table_partial, 1, function(x){

@@ -9,7 +9,7 @@ germlineASC(allele_cluster_table, germline)
 \arguments{
 \item{allele_cluster_table}{The allele cluster table.}
 
-\item{germline}{An IGHV germline set with matching names to the "imgt_allele" column in the allele_cluster_table.}
+\item{germline}{An IGHV germline set with matching names to the "iuis_allele" column in the allele_cluster_table.}
 }
 \value{
 Returns the IGHV germline set with the ASC allele names.

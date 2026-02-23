@@ -4,7 +4,7 @@ test_that("new_germline_cluster creates valid object", {
   obj <- new_germline_cluster(
     germlineSet = c(A = "ACGT"),
     alleleClusterSet = c("G1*01" = "ACGT"),
-    alleleClusterTable = data.frame(imgt_allele = "A", Family = 1, Allele_Cluster = 1),
+    alleleClusterTable = data.frame(iuis_allele = "A", family =1, allele_cluster =1),
     threshold = list(family_threshold = 75, allele_cluster_threshold = 95)
   )
 
@@ -18,7 +18,7 @@ test_that("GermlineCluster has default values for new slots", {
   obj <- new_germline_cluster(
     germlineSet = c(A = "ACGT"),
     alleleClusterSet = c("G1*01" = "ACGT"),
-    alleleClusterTable = data.frame(imgt_allele = "A", Family = 1, Allele_Cluster = 1),
+    alleleClusterTable = data.frame(iuis_allele = "A", family =1, allele_cluster =1),
     threshold = list(family_threshold = 75, allele_cluster_threshold = 95)
   )
 
@@ -33,9 +33,9 @@ test_that("print.GermlineCluster works", {
     germlineSet = c(A = "ACGT", B = "ACGA"),
     alleleClusterSet = c("G1*01" = "ACGT", "G1*02" = "ACGA"),
     alleleClusterTable = data.frame(
-      imgt_allele = c("A", "B"),
-      Family = c(1, 1),
-      Allele_Cluster = c(1, 1)
+      iuis_allele = c("A", "B"),
+      family =c(1, 1),
+      allele_cluster =c(1, 1)
     ),
     threshold = list(family_threshold = 75, allele_cluster_threshold = 95)
   )
@@ -51,9 +51,9 @@ test_that("summary.GermlineCluster returns list", {
     germlineSet = c(A = "ACGT", B = "ACGA"),
     alleleClusterSet = c("G1*01" = "ACGT", "G1*02" = "ACGA"),
     alleleClusterTable = data.frame(
-      imgt_allele = c("A", "B"),
-      Family = c(1, 1),
-      Allele_Cluster = c(1, 1)
+      iuis_allele = c("A", "B"),
+      family =c(1, 1),
+      allele_cluster =c(1, 1)
     ),
     threshold = list(family_threshold = 75, allele_cluster_threshold = 95)
   )
@@ -73,7 +73,7 @@ test_that("GermlineCluster slots can be accessed with $", {
   obj <- new_germline_cluster(
     germlineSet = c(A = "ACGT"),
     alleleClusterSet = c("G1*01" = "ACGT"),
-    alleleClusterTable = data.frame(imgt_allele = "A", Family = 1, Allele_Cluster = 1),
+    alleleClusterTable = data.frame(iuis_allele = "A", family =1, allele_cluster =1),
     threshold = list(family_threshold = 75, allele_cluster_threshold = 95),
     locus = "IGHV"
   )

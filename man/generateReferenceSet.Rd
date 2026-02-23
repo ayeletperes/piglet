@@ -8,7 +8,8 @@ generateReferenceSet(
   germline_distance,
   germline_set,
   alleleClusterTable,
-  trim_3prime_side = NULL
+  trim_3prime_side = NULL,
+  family_prefix = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ generateReferenceSet(
 \item{alleleClusterTable}{A data.frame of the alleles and their clusters created by \link{ighvClust}.}
 
 \item{trim_3prime_side}{If a 3' position trim is supplied, duplicated sequences will be checked for differential positions past the trim position. Default NULL; NULL will not activate the check. see @details}
+
+\item{family_prefix}{Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1\emph{01). If FALSE, omit the "F" (e.g. IGHV1-G1}01).}
 }
 \value{
 A \code{list} with the re-named germline set, and a table of the allele clusters and thresholds.
@@ -29,7 +32,7 @@ similar alleles and assign them into their respective allele clusters and family
 }
 \details{
 Each allele is named by this scheme:
-IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster numbering,
+IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster numbering (the "F" prefix can be omitted by setting family_prefix = FALSE),
 G1 - allele cluster numbering, and 01 = allele numbering (given by clustering order, no connection to the expression)
 
 In case there are alleles that are differentiated in a nucleotide position past the trimming position used for the clustering,

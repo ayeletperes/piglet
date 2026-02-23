@@ -80,7 +80,7 @@ ref_ogrdb_frw1 <- piglet::artificialFRW1Germline(ref_ogrdb)
 
 ```{r, eval=FALSE}
 asc_frw1 <- inferAlleleClusters(ref_ogrdb_frw1)
-allele_table_frw1 <- setDT(asc_frw1@alleleClusterTable)[, .(imgt_allele, new_allele)]
+allele_table_frw1 <- setDT(asc_frw1@alleleClusterTable)[, .(iuis_allele, new_allele)]
 setnames(allele_table_frw1, c("allele", "asc_allele"))
 ```
 

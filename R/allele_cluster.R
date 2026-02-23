@@ -50,6 +50,10 @@ new_germline_cluster <- function(germlineSet,
                                  silhouetteScore = NA_real_,
                                  resolutionParameter = NA_real_,
                                  locus = "IGHV") {
+  alleleClusterTable <- structure(
+    as.data.frame(alleleClusterTable),
+    class = c("AlleleClusterTable", "data.frame")
+  )
   structure(
     list(
       germlineSet = germlineSet,
@@ -83,8 +87,8 @@ print.GermlineCluster <- function(x, ...) {
   cat("Clustering method:", x$clusteringMethod, "\n")
 
   cat("Number of alleles:", length(x$germlineSet), "\n")
-  cat("Number of allele clusters:", length(unique(x$alleleClusterTable$Allele_Cluster)), "\n")
-  cat("Number of family clusters:", length(unique(x$alleleClusterTable$Family)), "\n")
+  cat("Number of allele clusters:", length(unique(x$alleleClusterTable$allele_cluster)), "\n")
+  cat("Number of family clusters:", length(unique(x$alleleClusterTable$family)), "\n")
   cat("Thresholds:\n")
   cat("  - Family:", x$threshold$family_threshold, "\n")
   cat("  - Allele cluster:", x$threshold$allele_cluster_threshold, "\n")
@@ -109,13 +113,90 @@ summary.GermlineCluster <- function(object, ...) {
     locus = object$locus,
     clustering_method = object$clusteringMethod,
     n_alleles = length(object$germlineSet),
-    n_clusters = length(unique(object$alleleClusterTable$Allele_Cluster)),
-    n_families = length(unique(object$alleleClusterTable$Family)),
+    n_clusters = length(unique(object$alleleClusterTable$allele_cluster)),
+    n_families = length(unique(object$alleleClusterTable$family)),
     family_threshold = object$threshold$family_threshold,
     cluster_threshold = object$threshold$allele_cluster_threshold,
     silhouette_score = object$silhouetteScore,
     resolution_parameter = object$resolutionParameter
   )
+}
+
+# ------------------------------------------------------------------------------
+
+#### AlleleClusterTable S3 class ####
+
+#' Dollar accessor for AlleleClusterTable (backward-compatible deprecation)
+#'
+#' Intercepts access to the deprecated \code{imgt_allele} column name and
+#' redirects it to \code{iuis_allele} with a deprecation warning.
+#'
+#' @param x An AlleleClusterTable object.
+#' @param name Column name.
+#' @keywords internal
+#' @export
+`$.AlleleClusterTable` <- function(x, name) {
+  if (identical(name, "imgt_allele")) {
+    .Deprecated(msg = "Column 'imgt_allele' has been renamed to 'iuis_allele'. Please update your code.")
+    name <- "iuis_allele"
+  } else if (identical(name, "Family")) {
+    .Deprecated(msg = "Column 'Family' has been renamed to 'family'. Please update your code.")
+    name <- "family"
+  } else if (identical(name, "Allele_Cluster")) {
+    .Deprecated(msg = "Column 'Allele_Cluster' has been renamed to 'allele_cluster'. Please update your code.")
+    name <- "allele_cluster"
+  }
+  .subset2(x, name)
+}
+
+#' Double-bracket accessor for AlleleClusterTable (backward-compatible deprecation)
+#'
+#' Intercepts access to the deprecated \code{imgt_allele} column name and
+#' redirects it to \code{iuis_allele} with a deprecation warning.
+#'
+#' @param x An AlleleClusterTable object.
+#' @param i Index or column name.
+#' @param ... Additional arguments.
+#' @keywords internal
+#' @export
+`[[.AlleleClusterTable` <- function(x, i, ...) {
+  if (is.character(i)) {
+    if (identical(i, "imgt_allele")) {
+      .Deprecated(msg = "Column 'imgt_allele' has been renamed to 'iuis_allele'. Please update your code.")
+      i <- "iuis_allele"
+    } else if (identical(i, "Family")) {
+      .Deprecated(msg = "Column 'Family' has been renamed to 'family'. Please update your code.")
+      i <- "family"
+    } else if (identical(i, "Allele_Cluster")) {
+      .Deprecated(msg = "Column 'Allele_Cluster' has been renamed to 'allele_cluster'. Please update your code.")
+      i <- "allele_cluster"
+    }
+  }
+  NextMethod()
+}
+
+#' Backward-compatible allele cluster table helper
+#'
+#' Renames the deprecated \code{imgt_allele} column to \code{iuis_allele} if present.
+#' Called at the boundary of exported functions that accept an \code{alleleClusterTable}.
+#'
+#' @param tbl A data.frame that may contain an \code{imgt_allele} column.
+#' @return The table with \code{imgt_allele} renamed to \code{iuis_allele} if needed.
+#' @keywords internal
+.compat_allele_table <- function(tbl) {
+  if ("imgt_allele" %in% names(tbl) && !"iuis_allele" %in% names(tbl)) {
+    .Deprecated(msg = "Column 'imgt_allele' has been renamed to 'iuis_allele'. Please update your alleleClusterTable.")
+    names(tbl)[names(tbl) == "imgt_allele"] <- "iuis_allele"
+  }
+  if ("Family" %in% names(tbl) && !"family" %in% names(tbl)) {
+    .Deprecated(msg = "Column 'Family' has been renamed to 'family'. Please update your alleleClusterTable.")
+    names(tbl)[names(tbl) == "Family"] <- "family"
+  }
+  if ("Allele_Cluster" %in% names(tbl) && !"allele_cluster" %in% names(tbl)) {
+    .Deprecated(msg = "Column 'Allele_Cluster' has been renamed to 'allele_cluster'. Please update your alleleClusterTable.")
+    names(tbl)[names(tbl) == "Allele_Cluster"] <- "allele_cluster"
+  }
+  tbl
 }
 
 # ------------------------------------------------------------------------------
@@ -442,26 +523,26 @@ igClust <- function(germline_distance,
 
   ## cut the groups based on the threshold
   families_cut <- data.frame(
-    "Family" = dendextend::cutree(
+    "family" = dendextend::cutree(
       as.dendrogram(germline_cluster, hang = -1),
       h = family_threshold_dist,
       order_clusters_as_data = FALSE
     )
   )
-  families_cut$imgt_allele <- rownames(families_cut)
+  families_cut$iuis_allele <- rownames(families_cut)
 
   allele_cluster_cut <- data.frame(
-    "Allele_Cluster" = dendextend::cutree(
+    "allele_cluster" = dendextend::cutree(
       as.dendrogram(germline_cluster, hang = -1),
       h = allele_cluster_threshold_dist,
       order_clusters_as_data = FALSE
     )
   )
-  allele_cluster_cut$imgt_allele <- rownames(allele_cluster_cut)
+  allele_cluster_cut$iuis_allele <- rownames(allele_cluster_cut)
 
   ## merge the tables
-  alleleClusterTable <- merge(families_cut, allele_cluster_cut, by = "imgt_allele", all.y = TRUE)
-  alleleClusterTable <- alleleClusterTable[, c("imgt_allele", "Family", "Allele_Cluster")]
+  alleleClusterTable <- merge(families_cut, allele_cluster_cut, by = "iuis_allele", all.y = TRUE)
+  alleleClusterTable <- alleleClusterTable[, c("iuis_allele", "family", "allele_cluster")]
 
   list(
     alleleClusterTable = alleleClusterTable,
@@ -535,22 +616,22 @@ igClust <- function(germline_distance,
   family_threshold_dist <- 1 - family_threshold / 100
   germline_cluster <- hclust(stats::as.dist(germline_distance), method = cluster_method)
   families_cut <- data.frame(
-    "Family" = dendextend::cutree(
+    "family" = dendextend::cutree(
       as.dendrogram(germline_cluster, hang = -1),
       h = family_threshold_dist,
-      order_clusters_as_data = FALSE
+      order_clusters_as_data = TRUE
     )
   )
-  families_cut$imgt_allele <- rownames(families_cut)
+  families_cut$iuis_allele <- rownames(families_cut)
 
   ## merge hierarchical families with Leiden allele clusters
   leiden_table <- data.frame(
-    imgt_allele = allele_names,
-    Allele_Cluster = cluster_ids,
+    iuis_allele = allele_names,
+    allele_cluster = cluster_ids,
     stringsAsFactors = FALSE
   )
-  alleleClusterTable <- merge(families_cut, leiden_table, by = "imgt_allele", all.y = TRUE)
-  alleleClusterTable <- alleleClusterTable[, c("imgt_allele", "Family", "Allele_Cluster")]
+  alleleClusterTable <- merge(families_cut, leiden_table, by = "iuis_allele", all.y = TRUE)
+  alleleClusterTable <- alleleClusterTable[, c("iuis_allele", "family", "allele_cluster")]
 
   list(
     alleleClusterTable = alleleClusterTable,
@@ -623,8 +704,8 @@ alleleClusterNames <- function(cluster,
   
   # Filter allele cluster table
   allele.cluster.table <-
-    allele.cluster.table[allele.cluster.table$Family == family_cluster &
-                           allele.cluster.table$Allele_Cluster == allele_cluster,]
+    allele.cluster.table[allele.cluster.table$family == family_cluster &
+                           allele.cluster.table$allele_cluster == allele_cluster,]
   
   # Check the number of alleles
   if (nrow(allele.cluster.table) == 1) {
@@ -636,7 +717,7 @@ alleleClusterNames <- function(cluster,
   
   # Subset the distance matrix
   germ.dist <-
-    germ.dist[allele.cluster.table$imgt_allele, allele.cluster.table$imgt_allele]
+    germ.dist[allele.cluster.table$iuis_allele, allele.cluster.table$iuis_allele]
   diag(germ.dist) <- NA
   
   # Find similar alleles
@@ -692,7 +773,7 @@ alleleClusterNames <- function(cluster,
     allele.cluster.table$new_allele <- ""
     for (i in seq_along(keep_alleles_list)) {
       a <- keep_alleles_list[i]
-      allele.cluster.table$new_allele[allele.cluster.table$imgt_allele == a] <-
+      allele.cluster.table$new_allele[allele.cluster.table$iuis_allele == a] <-
         paste0(segment,
                f_prefix,
                family_cluster,
@@ -701,20 +782,20 @@ alleleClusterNames <- function(cluster,
                "*",
                sprintf("%02d", i))
     }
-    
+
     # Add the new names for the removed alleles
     if (length(remove_allele_list) != 0) {
       for (i in seq_along(remove_allele_list)) {
         a <- names(remove_allele_list)[i]
         a_new <- remove_allele_list[i]
-        allele.cluster.table$new_allele[allele.cluster.table$imgt_allele == a] <-
-          allele.cluster.table$new_allele[allele.cluster.table$imgt_allele == a_new]
+        allele.cluster.table$new_allele[allele.cluster.table$iuis_allele == a] <-
+          allele.cluster.table$new_allele[allele.cluster.table$iuis_allele == a_new]
       }
     }
-    
+
     # Flag duplicated alleles
     allele.cluster.table$removed_duplicated <-
-      allele.cluster.table$imgt_allele %in% allele_remove
+      allele.cluster.table$iuis_allele %in% allele_remove
   }
   
   return(allele.cluster.table)
@@ -758,19 +839,22 @@ generateReferenceSet <-
            family_prefix = TRUE) {
     # check the parameters
     ### check the class of the distance matrix
-    
+
     if (!(is.matrix(germline_distance) &
           is.array(germline_distance)))
       stop("The input germline distance was not create with ighvDistance.")
-    
+
     ### check the class of the germline set
     if (!is.character(germline_set))
       stop("The input germline set is not in a character class.")
-    
+
+    ### apply backward-compat shim before validation
+    alleleClusterTable <- .compat_allele_table(alleleClusterTable)
+
     ### check the class and names in alleleClusterTable
     if (!(is.data.frame(alleleClusterTable) &
           all(
-            names(alleleClusterTable) %chin% c("imgt_allele", "Family", "Allele_Cluster")
+            names(alleleClusterTable) %chin% c("iuis_allele", "family", "allele_cluster")
           )))
       stop("alleleClusterTable does not match the ouput from ighvClust.")
     
@@ -820,7 +904,7 @@ generateReferenceSet <-
       }
     
     if (!is.null(trim_3prime_side)) {
-      alleleClusterTable.tmp[, "diff_pos_past_trim" := check_alleles(get("imgt_allele"), germline_set, trim_3prime_side), by = list(get("new_allele"))]
+      alleleClusterTable.tmp[, "diff_pos_past_trim" := check_alleles(get("iuis_allele"), germline_set, trim_3prime_side), by = list(get("new_allele"))]
       
       alleleClusterTable.tmp$new_allele[alleleClusterTable.tmp$diff_pos_past_trim !=
                                           ""] <-
@@ -840,7 +924,7 @@ generateReferenceSet <-
     germline_set.tmp <- germline_set
     names(germline_set.tmp) <-
       sapply(names(germline_set.tmp), function(x) {
-        alleleClusterTable.tmp$new_allele[alleleClusterTable.tmp$imgt_allele == x]
+        alleleClusterTable.tmp$new_allele[alleleClusterTable.tmp$iuis_allele == x]
       })
     # remove the duplicated alleles from the germline set
     germline_set.tmp <-
@@ -1250,28 +1334,28 @@ plotAlleleCluster <- function(x,
     rownames(qual_col_pals)
   ))
   group_color_vector = setNames(c("#FFFFFF", col_vector), c(0, sort(
-    unique(alleleClusterTable$Allele_Cluster)
+    unique(alleleClusterTable$allele_cluster)
   )))
   
   col_fun = circlize::colorRamp2(breaks = c(0:length(
-    unique(alleleClusterTable$Allele_Cluster)
+    unique(alleleClusterTable$allele_cluster)
   )),
-  colors = group_color_vector[1:(length(unique(alleleClusterTable$Allele_Cluster)) +
+  colors = group_color_vector[1:(length(unique(alleleClusterTable$allele_cluster)) +
                                    1)])
   
   ## prepare the data
   db_sub <-
     alleleClusterTable[!alleleClusterTable$removed_duplicated,]
-  chain <- substr(alleleClusterTable$imgt_allele[1], 1, 3)
-  segment <- substr(alleleClusterTable$imgt_allele[1], 1, 4)
-  imgt_allele <-
+  chain <- substr(alleleClusterTable$iuis_allele[1], 1, 3)
+  segment <- substr(alleleClusterTable$iuis_allele[1], 1, 4)
+  iuis_to_asc <-
     setNames(alleleClusterTable$new_allele,
-             alleleClusterTable$imgt_allele)
-  
+             alleleClusterTable$iuis_allele)
+
   group.df <- data.frame(
     A = labels(hclustAlleleCluster),
-    Allele = imgt_allele[labels(hclustAlleleCluster)],
-    fam = sapply(strsplit(imgt_allele[labels(hclustAlleleCluster)], "-"), "[[", 1),
+    Allele = iuis_to_asc[labels(hclustAlleleCluster)],
+    fam = sapply(strsplit(iuis_to_asc[labels(hclustAlleleCluster)], "-"), "[[", 1),
     row.names = labels(hclustAlleleCluster)
   )
   
@@ -1280,7 +1364,7 @@ plotAlleleCluster <- function(x,
   group.df$Group <- 0
   for (i in 1:nrow(group.df)) {
     allele <- group.df$A[i]
-    full_allele <- db_sub$new_allele[db_sub$imgt_allele == allele]
+    full_allele <- db_sub$new_allele[db_sub$iuis_allele == allele]
     
     if (length(full_allele) != 0) {
       # potential groups

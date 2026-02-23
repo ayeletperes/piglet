@@ -80,8 +80,8 @@ unique_l <- function(l) {
 extract_clusters <- function(asc) {
   data.frame(
     thresh_fam = asc$threshold[[1]],
-    fam_clust = unique_l(asc$alleleClusterTable$Family),
+    fam_clust = unique_l(asc$alleleClusterTable$family),
     thresh_asc = asc$threshold[[2]],
-    asc_clust  = unique_l(asc$alleleClusterTable$Allele_Cluster)
+    asc_clust  = unique_l(asc$alleleClusterTable$allele_cluster)
   )
 }

@@ -14,11 +14,11 @@ ighvClust(
 \arguments{
 \item{germline_distance}{A germline set distance matrix created by \code{\link{igDistance}}.}
 
-\item{family_threshold}{The similarity threshold for family level (hierarchical only). Default is 75.}
+\item{family_threshold}{The similarity threshold for family level. Default is 75.}
 
 \item{allele_cluster_threshold}{The similarity threshold for allele cluster level (hierarchical only). Default is 95.}
 
-\item{cluster_method}{The hierarchical clustering linkage method. Default is "complete".}
+\item{cluster_method}{The linkage method for hierarchical clustering (used for family assignment in both methods). Default is "complete".}
 }
 \value{
 A named list with clustering results.

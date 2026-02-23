@@ -296,7 +296,7 @@ recentAlleleClusters <-
 #' The table columns:
 #' `new_allele` - the ASC given allele name
 #' `func_group` - the ASC cluster number
-#' `imgt_allele` - the original IUIS/IMGT allele name
+#' `iuis_allele` - the original IUIS allele name
 #' `thresh` - the allele threshold for ASC-based genotype inference
 #' `amplicon_length` - is the original length of the reference set.
 #' 
@@ -324,15 +324,16 @@ extractASCTable <- function(archive_file = NULL) {
   }
   
   setDT(allele_cluster_table)
-  allele_cluster_table <- allele_cluster_table[, .("imgt_allele" = unlist(strsplit(get("imgt_allele"),"/"))), by = setdiff(names(allele_cluster_table), "imgt_allele")]
-  
+  allele_cluster_table <- .compat_allele_table(allele_cluster_table)
+  allele_cluster_table <- allele_cluster_table[, .("iuis_allele" = unlist(strsplit(get("iuis_allele"),"/"))), by = setdiff(names(allele_cluster_table), "iuis_allele")]
+
   return(allele_cluster_table)
 }
 
 #' Converts IGHV germline set to ASC germline set.
 #'
 #' @param allele_cluster_table    The allele cluster table.
-#' @param germline                An IGHV germline set with matching names to the "imgt_allele" column in the allele_cluster_table.
+#' @param germline                An IGHV germline set with matching names to the "iuis_allele" column in the allele_cluster_table.
 #'
 #' @return
 #'
@@ -357,17 +358,18 @@ extractASCTable <- function(archive_file = NULL) {
 #' @export
 germlineASC <- function(allele_cluster_table, germline) {
   . <- NULL
-  
+
+  allele_cluster_table <- .compat_allele_table(allele_cluster_table)
   setDT(allele_cluster_table)
-  if (any(grepl("/", allele_cluster_table$imgt_allele))) {
-    allele_cluster_table <- allele_cluster_table[, .("imgt_allele" = unlist(strsplit(get("imgt_allele"),"/"))), by = setdiff(names(allele_cluster_table), "imgt_allele")]
+  if (any(grepl("/", allele_cluster_table$iuis_allele))) {
+    allele_cluster_table <- allele_cluster_table[, .("iuis_allele" = unlist(strsplit(get("iuis_allele"),"/"))), by = setdiff(names(allele_cluster_table), "iuis_allele")]
   }
-  
-  germline_asc <- germline[allele_cluster_table$imgt_allele]
-  
+
+  germline_asc <- germline[allele_cluster_table$iuis_allele]
+
   asc_alleles <-
     setNames(allele_cluster_table$new_allele,
-             allele_cluster_table$imgt_allele)
+             allele_cluster_table$iuis_allele)
   
   names(germline_asc) <- asc_alleles[names(germline_asc)]
   
@@ -387,7 +389,7 @@ germlineASC <- function(allele_cluster_table, germline) {
 #' @param data                  data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
 #' @param alleleClusterTable    A data.frame of the allele clusters new annotations relative to the original reference set. See details.
 #' @param v_call                name of the V allele call column. Default is `v_call`
-#' @param from_col              name of the column in alleleClusterTable to use as the source for the dictionary. Default is `imgt_allele`
+#' @param from_col              name of the column in alleleClusterTable to use as the source for the dictionary. Default is `iuis_allele`
 #' @param to_col                name of the column in alleleClusterTable to use as the target for the dictionary. Default is `new_allele`
 #'
 #' @return
@@ -412,14 +414,21 @@ germlineASC <- function(allele_cluster_table, germline) {
 #'
 #' @export
 assignAlleleClusters <- function(
-  data, 
-  alleleClusterTable, 
-  v_call = "v_call", 
-  from_col = "imgt_allele", 
+  data,
+  alleleClusterTable,
+  v_call = "v_call",
+  from_col = "iuis_allele",
   to_col = "new_allele"
 ) {
   . <- NULL
-  
+
+  ## backward-compat: rename old column and warn if user passed old default
+  alleleClusterTable <- .compat_allele_table(alleleClusterTable)
+  if (identical(from_col, "imgt_allele")) {
+    .Deprecated(msg = "from_col = 'imgt_allele' is deprecated. The column has been renamed to 'iuis_allele'. Please update your code.")
+    from_col <- "iuis_allele"
+  }
+
   setDT(alleleClusterTable)
   # Handle cases where alleles are separated by "/"
   if (any(grepl("/", alleleClusterTable[[from_col]]))) {
@@ -646,10 +655,10 @@ inferGenotypeAllele <-
 #'
 #' @return
 #' A a data.frame with the inferred V genotype. The table contains the following columns:
-#' 	|gene            | alleles             | imgt_alleles          | counts              | absolute_fraction     | absolute_threshold               | genotyped_alleles    | genotype_imgt_alleles|
+#' 	|gene            | alleles             | iuis_alleles          | counts              | absolute_fraction     | absolute_threshold               | genotyped_alleles    | genotype_iuis_alleles|
 #'  |----------------|---------------------|-----------------------|---------------------|-----------------------|----------------------------------|----------------------|----------------------|
-#'  | allele cluster | the present alleles | the imgt nomenclature | the number of reads | the absolute fraction | the population driven allele     | the alleles which    | the imgt nomenclature|
-#'  |                | in the repertoire   | of the alleles        | for each alleles    | of the alleles        | thresholds for genotype presence | entered the genotype | of the alleles 		  |
+#'  | allele cluster | the present alleles | the IUIS nomenclature | the number of reads | the absolute fraction | the population driven allele     | the alleles which    | the IUIS nomenclature|
+#'  |                | in the repertoire   | of the alleles        | for each alleles    | of the alleles        | thresholds for genotype presence | entered the genotype | of the alleles       |
 #'
 #' @details
 #'
@@ -701,7 +710,8 @@ inferGenotypeAllele_asc <- function(data,
          confidence_level = NULL,
          default_allele_threshold = 1e-04) {
   . = NULL
-  
+
+  alleleClusterTable <- .compat_allele_table(alleleClusterTable)
   allele_calls = clean_allele_calls(data[[v_call]])
   
   ## check that the allele calls are in the supplied alleleClusterTable
@@ -712,10 +722,10 @@ inferGenotypeAllele_asc <- function(data,
     for(allele in unique_calls[!match]) {
       warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
       
-      alleleClusterTable <- rbind(alleleClusterTable, 
+      alleleClusterTable <- rbind(alleleClusterTable,
                                   data.frame(new_allele = allele,
-                                             func_group = strsplit(allele,'[*]')[[1]][1], 
-                                             imgt_allele = allele,
+                                             func_group = strsplit(allele,'[*]')[[1]][1],
+                                             iuis_allele = allele,
                                              thresh = default_allele_threshold))
     }
     
@@ -896,16 +906,16 @@ inferGenotypeAllele_asc <- function(data,
   
   if (any(duplicated(alleleClusterTable$new_allele))) {
     alleleClusterTable <- setDT(alleleClusterTable)
-    
+
     alleleClusterTable <-
-      alleleClusterTable[, .("imgt_allele" = paste0(sort(unlist(unique(mget(
-        c("imgt_allele")
+      alleleClusterTable[, .("iuis_allele" = paste0(sort(unlist(unique(mget(
+        c("iuis_allele")
       )))), collapse = "/")), by = mget(names(alleleClusterTable)[names(alleleClusterTable) !=
-                                                                    "imgt_allele"])]
+                                                                    "iuis_allele"])]
   }
-  
+
   alleles_clusters <-
-    setNames(alleleClusterTable$imgt_allele,
+    setNames(alleleClusterTable$iuis_allele,
              alleleClusterTable$new_allele)
   geno_V_fraction[, "v_call_or" := alleles_clusters[get("v_call")]]
   
@@ -954,7 +964,7 @@ inferGenotypeAllele_asc <- function(data,
   genoV <-
     geno_V_fraction[, .(
       "alleles" = paste0(get("v_allele"), collapse = ","),
-      "imgt_alleles" = paste0(get("v_call_or"), collapse = ","),
+      "iuis_alleles" = paste0(get("v_call_or"), collapse = ","),
       "counts" = paste0(get("count"), collapse = ","),
       "absolute_fraction" = paste0(round(get(
         "absolute_fraction"
@@ -967,7 +977,7 @@ inferGenotypeAllele_asc <- function(data,
       ), format = "f"), collapse = ","),
       "genotyped_alleles" = paste0(get("v_allele")[get("above_thresh") &
                                                      get("above_confidence")], collapse = ","),
-      "genotyped_imgt_alleles" = paste0(get("v_call_or")[get("above_thresh") &
+      "genotyped_iuis_alleles" = paste0(get("v_call_or")[get("above_thresh") &
                                                            get("above_confidence")], collapse = ",")
     ), by = mget(c("gene"))]
   

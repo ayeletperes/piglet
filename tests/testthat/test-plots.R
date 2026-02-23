@@ -16,9 +16,9 @@ test_that("plotCommunityNetwork doesn't error", {
     germlineSet = seqs,
     alleleClusterSet = seqs,
     alleleClusterTable = data.frame(
-      imgt_allele = names(seqs),
-      Family = c(1, 1, 2),
-      Allele_Cluster = c(1, 1, 2)
+      iuis_allele = names(seqs),
+      family =c(1, 1, 2),
+      allele_cluster =c(1, 1, 2)
     ),
     threshold = list(family_threshold = NA, allele_cluster_threshold = NA),
     clusteringMethod = "leiden",
@@ -35,7 +35,7 @@ test_that("plotCommunityNetwork validates input", {
   obj <- new_germline_cluster(
     germlineSet = c(A = "ACGT"),
     alleleClusterSet = c(A = "ACGT"),
-    alleleClusterTable = data.frame(imgt_allele = "A", Family = 1, Allele_Cluster = 1),
+    alleleClusterTable = data.frame(iuis_allele = "A", family =1, allele_cluster =1),
     threshold = list()
   )
 
@@ -64,7 +64,7 @@ test_that("plotClusterComparison validates inputs", {
   obj1 <- new_germline_cluster(
     germlineSet = c(A = "ACGT"),
     alleleClusterSet = c(A = "ACGT"),
-    alleleClusterTable = data.frame(imgt_allele = "A", Family = 1, Allele_Cluster = 1),
+    alleleClusterTable = data.frame(iuis_allele = "A", family =1, allele_cluster =1),
     threshold = list(),
     clusteringMethod = "hierarchical"
   )
@@ -72,7 +72,7 @@ test_that("plotClusterComparison validates inputs", {
   obj2 <- new_germline_cluster(
     germlineSet = c(A = "ACGT"),
     alleleClusterSet = c(A = "ACGT"),
-    alleleClusterTable = data.frame(imgt_allele = "A", Family = 1, Allele_Cluster = 1),
+    alleleClusterTable = data.frame(iuis_allele = "A", family =1, allele_cluster =1),
     threshold = list(),
     clusteringMethod = "leiden"
   )

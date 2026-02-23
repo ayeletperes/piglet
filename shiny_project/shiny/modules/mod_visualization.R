@@ -177,7 +177,7 @@ visualizationServer <- function(id, clustering_data, germline_data) {
       req(clustering_data$result())
       result <- clustering_data$result()
 
-      cluster_sizes <- table(result$alleleClusterTable$Allele_Cluster)
+      cluster_sizes <- table(result$alleleClusterTable$allele_cluster)
       size_df <- data.frame(
         Cluster = names(cluster_sizes),
         Size = as.integer(cluster_sizes)

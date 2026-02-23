@@ -22,11 +22,11 @@ igClust(
 
 \item{method}{Clustering method. One of "hierarchical" (default) or "leiden".}
 
-\item{family_threshold}{The similarity threshold for family level (hierarchical only). Default is 75.}
+\item{family_threshold}{The similarity threshold for family level. Default is 75.}
 
 \item{allele_cluster_threshold}{The similarity threshold for allele cluster level (hierarchical only). Default is 95.}
 
-\item{cluster_method}{The hierarchical clustering linkage method. Default is "complete".}
+\item{cluster_method}{The linkage method for hierarchical clustering (used for family assignment in both methods). Default is "complete".}
 
 \item{resolution}{Resolution parameter for Leiden clustering. If NULL, will be optimized.}
 
@@ -43,7 +43,7 @@ A named list that includes:
 \itemize{
 \item \code{alleleClusterTable}: data.frame of allele clusters
 \item \code{threshold}: list of threshold parameters
-\item \code{hclustAlleleCluster}: hierarchical clustering object (hierarchical method)
+\item \code{hclustAlleleCluster}: hierarchical clustering object (both methods)
 \item \code{communityObject}: community detection result (Leiden method)
 \item \code{graphObject}: igraph object (Leiden method)
 \item \code{silhouetteScore}: silhouette score (Leiden method)

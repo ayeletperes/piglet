@@ -1,4 +1,4 @@
-new_allele	func_group	imgt_allele	thresh	amplicon_length
+new_allele	func_group	iuis_allele	thresh	amplicon_length
 IGHVF1-G1*01	IGHVF1-G1	IGHV3-72*01	1e-4	S1
 IGHVF1-G2*01	IGHVF1-G2	IGHV3-73*01	1e-4	S1
 IGHVF1-G2*02	IGHVF1-G2	IGHV3-73*02	1e-4	S1

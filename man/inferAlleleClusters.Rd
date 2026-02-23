@@ -19,7 +19,8 @@ inferAlleleClusters(
   optimize_silhouette = TRUE,
   ncores = 1,
   aa_set = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  family_prefix = TRUE
 )
 }
 \arguments{
@@ -36,11 +37,11 @@ Default is NULL (auto-detected from sequence names).}
 
 \item{mask_5prime_side}{Length to mask from 5' side. Default is 0.}
 
-\item{family_threshold}{Similarity threshold for family level (hierarchical only). Default is 75.}
+\item{family_threshold}{Similarity threshold for family level. Default is 75.}
 
 \item{allele_cluster_threshold}{Similarity threshold for allele cluster level (hierarchical only). Default is 95.}
 
-\item{cluster_method}{Hierarchical clustering linkage method. Default is "complete".}
+\item{cluster_method}{The linkage method for hierarchical clustering (used for family assignment in both methods). Default is "complete".}
 
 \item{resolution}{Resolution parameter for Leiden clustering. Default is NULL (auto-optimized).}
 
@@ -53,6 +54,8 @@ Default is NULL (auto-detected from sequence names).}
 \item{aa_set}{Logical. Is the sequence set amino acids? Default is FALSE.}
 
 \item{quiet}{Logical. Suppress messages. Default is FALSE.}
+
+\item{family_prefix}{Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1\emph{01). If FALSE, omit the "F" (e.g. IGHV1-G1}01).}
 }
 \value{
 An object of class \link{GermlineCluster} containing:
@@ -61,7 +64,7 @@ An object of class \link{GermlineCluster} containing:
 \item alleleClusterSet: Renamed germline set with ASC names
 \item alleleClusterTable: data.frame of allele similarity clusters
 \item threshold: List of threshold parameters
-\item hclustAlleleCluster: hclust object (hierarchical method)
+\item hclustAlleleCluster: hclust object (both methods)
 \item clusteringMethod: Method used ("hierarchical" or "leiden")
 \item communityObject: Community object (Leiden method)
 \item graphObject: igraph object (Leiden method)

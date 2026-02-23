@@ -152,7 +152,7 @@ clusteringServer <- function(id, germline_data) {
 
           showNotification(
             sprintf("Clustering complete! Found %d clusters with %d alleles",
-                    length(unique(result$alleleClusterTable$Allele_Cluster)),
+                    length(unique(result$alleleClusterTable$allele_cluster)),
                     nrow(result$alleleClusterTable)),
             type = "message",
             duration = 5

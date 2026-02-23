@@ -4,7 +4,14 @@
 \alias{alleleClusterNames}
 \title{Allele similarity cluster naming scheme}
 \usage{
-alleleClusterNames(cluster, allele.cluster.table, germ.dist, chain, segment)
+alleleClusterNames(
+  cluster,
+  allele.cluster.table,
+  germ.dist,
+  chain,
+  segment,
+  family_prefix = TRUE
+)
 }
 \arguments{
 \item{cluster}{A vector with the cluster identifier - the family and allele cluster number.}
@@ -16,6 +23,8 @@ alleleClusterNames(cluster, allele.cluster.table, germ.dist, chain, segment)
 \item{chain}{A character with the chain identifier: IGH/IGL/IGK/TRB/TRA... (Currently only IGH is supported)}
 
 \item{segment}{A character with the segment identifier: IGHV/IGHD/IGHJ.... (Currently only IGHV is supported)}
+
+\item{family_prefix}{Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1\emph{01). If FALSE, omit the "F" (e.g. IGHV1-G1}01).}
 }
 \value{
 A data.frame with the clusters renamed alleles based on the ASC scheme.

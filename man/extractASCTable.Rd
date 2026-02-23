@@ -15,7 +15,7 @@ Returns the allele cluster table.
 The table columns:
 \code{new_allele} - the ASC given allele name
 \code{func_group} - the ASC cluster number
-\code{imgt_allele} - the original IUIS/IMGT allele name
+\code{iuis_allele} - the original IUIS allele name
 \code{thresh} - the allele threshold for ASC-based genotype inference
 \code{amplicon_length} - is the original length of the reference set.
 }

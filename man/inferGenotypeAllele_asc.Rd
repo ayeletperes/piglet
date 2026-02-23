@@ -37,8 +37,8 @@ inferGenotypeAllele_asc(
 }
 \value{
 A a data.frame with the inferred V genotype. The table contains the following columns:\tabular{llllllll}{
-   gene \tab alleles \tab imgt_alleles \tab counts \tab absolute_fraction \tab absolute_threshold \tab genotyped_alleles \tab genotype_imgt_alleles \cr
-   allele cluster \tab the present alleles \tab the imgt nomenclature \tab the number of reads \tab the absolute fraction \tab the population driven allele \tab the alleles which \tab the imgt nomenclature \cr
+   gene \tab alleles \tab iuis_alleles \tab counts \tab absolute_fraction \tab absolute_threshold \tab genotyped_alleles \tab genotype_iuis_alleles \cr
+   allele cluster \tab the present alleles \tab the IUIS nomenclature \tab the number of reads \tab the absolute fraction \tab the population driven allele \tab the alleles which \tab the IUIS nomenclature \cr
     \tab in the repertoire \tab of the alleles \tab for each alleles \tab of the alleles \tab thresholds for genotype presence \tab entered the genotype \tab of the alleles \cr
 }
 }

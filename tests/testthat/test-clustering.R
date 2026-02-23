@@ -79,8 +79,8 @@ test_that("igClust leiden produces hclust object and stores family_threshold", {
 
   expect_equal(result$threshold$family_threshold, 75)
 
-  # Family and Allele_Cluster columns should both exist
-  expect_true(all(c("Family", "Allele_Cluster") %in% names(result$alleleClusterTable)))
+  # family and allele_cluster columns should both exist
+  expect_true(all(c("family", "allele_cluster") %in% names(result$alleleClusterTable)))
 })
 
 test_that("igClust accepts dist object", {

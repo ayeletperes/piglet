@@ -8,7 +8,7 @@ assignAlleleClusters(
   data,
   alleleClusterTable,
   v_call = "v_call",
-  from_col = "imgt_allele",
+  from_col = "iuis_allele",
   to_col = "new_allele"
 )
 }
@@ -19,7 +19,7 @@ assignAlleleClusters(
 
 \item{v_call}{name of the V allele call column. Default is \code{v_call}}
 
-\item{from_col}{name of the column in alleleClusterTable to use as the source for the dictionary. Default is \code{imgt_allele}}
+\item{from_col}{name of the column in alleleClusterTable to use as the source for the dictionary. Default is \code{iuis_allele}}
 
 \item{to_col}{name of the column in alleleClusterTable to use as the target for the dictionary. Default is \code{new_allele}}
 }
