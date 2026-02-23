@@ -1,6 +1,6 @@
 Package: piglet
 Title: Program for Inferring Immunoglobulin Allele Similarity Clusters and Genotypes
-Version: 1.2.1
+Version: 1.3.0
 Authors@R: c(person("Ayelet", "Peres", role=c("aut","cre"),
                     email="ayelet.peres@yale.edu"),
             person("William", "Lees", role=c("aut"),

@@ -1,3 +1,31 @@
+Version 1.3.0:  Feb 2026
+-------------------------------------------------------------------------------
+
+API CHANGES:
+
++ Column renames in `AlleleClusterTable` with backward-compatible deprecation warnings:
+  - `imgt_allele` → `iuis_allele` (IUIS is the correct naming authority; IMGT is a database)
+  - `Family` → `family` (lowercase snake_case for consistency)
+  - `Allele_Cluster` → `allele_cluster` (lowercase snake_case for consistency)
+
++ Backward compatibility: accessing old column names via `$` or `[[` on an
+  `AlleleClusterTable` object emits a deprecation warning and redirects to the
+  new name. Functions accepting an `alleleClusterTable` as input also silently
+  rename old columns via an internal `.compat_allele_table()` shim.
+
++ `assignAlleleClusters()`: default `from_col` changed from `"imgt_allele"` to
+  `"iuis_allele"`.
+
++ Output columns of `inferGenotypeAllele_asc()` renamed: `imgt_alleles` →
+  `iuis_alleles`, `genotyped_imgt_alleles` → `genotyped_iuis_alleles`.
+
+NEW FEATURES:
+
++ `GermlineCluster` objects now store the raw family cut data.frame as the
+  hidden slot `.familiesCut` (columns `iuis_allele` and `family`), produced
+  at the hierarchical-clustering step before merging with allele-cluster
+  assignments.
+
 Version 1.2.1:  Feb 2026
 -------------------------------------------------------------------------------
 

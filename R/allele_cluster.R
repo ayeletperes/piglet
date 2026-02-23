@@ -49,7 +49,8 @@ new_germline_cluster <- function(germlineSet,
                                  distanceMatrix = NULL,
                                  silhouetteScore = NA_real_,
                                  resolutionParameter = NA_real_,
-                                 locus = "IGHV") {
+                                 locus = "IGHV",
+                                 .familiesCut = NULL) {
   alleleClusterTable <- structure(
     as.data.frame(alleleClusterTable),
     class = c("AlleleClusterTable", "data.frame")
@@ -67,7 +68,8 @@ new_germline_cluster <- function(germlineSet,
       distanceMatrix = distanceMatrix,
       silhouetteScore = silhouetteScore,
       resolutionParameter = resolutionParameter,
-      locus = locus
+      locus = locus,
+      .familiesCut = .familiesCut
     ),
     class = "GermlineCluster"
   )
@@ -420,8 +422,16 @@ ighvDistance <- function(germline_set, AA = FALSE) {
 #'
 #' @param germline_distance A germline set distance matrix created by \code{\link{igDistance}}.
 #' @param method Clustering method. One of "hierarchical" (default) or "leiden".
-#' @param family_threshold The similarity threshold for family level. Default is 75.
-#' @param allele_cluster_threshold The similarity threshold for allele cluster level (hierarchical only). Default is 95.
+#' @param distance_method The distance method used to compute \code{germline_distance}.
+#'   One of \code{"decipher"} (default), \code{"hamming"}, or \code{"lv"}.
+#'   For \code{"decipher"}, thresholds are similarity percentages in \code{[0, 100]};
+#'   for \code{"hamming"} and \code{"lv"}, thresholds are raw integer mismatch counts.
+#' @param family_threshold The threshold for family-level grouping.
+#'   For \code{distance_method = "decipher"}: similarity percentage (default 75).
+#'   For \code{"hamming"} / \code{"lv"}: maximum number of mismatches (must be >= allele_cluster_threshold).
+#' @param allele_cluster_threshold The threshold for allele-cluster-level grouping (hierarchical only).
+#'   For \code{distance_method = "decipher"}: similarity percentage (default 95).
+#'   For \code{"hamming"} / \code{"lv"}: maximum number of mismatches (must be <= family_threshold).
 #' @param cluster_method The linkage method for hierarchical clustering (used for family assignment in both methods). Default is "complete".
 #' @param resolution Resolution parameter for Leiden clustering. If NULL, will be optimized.
 #' @param target_clusters Target number of clusters for Leiden optimization. Default is NULL.
@@ -446,6 +456,7 @@ ighvDistance <- function(germline_set, AA = FALSE) {
 #' @export
 igClust <- function(germline_distance,
                     method = c("hierarchical", "leiden"),
+                    distance_method = "decipher",
                     family_threshold = 75,
                     allele_cluster_threshold = 95,
                     cluster_method = "complete",
@@ -476,6 +487,7 @@ igClust <- function(germline_distance,
     ## Original hierarchical clustering implementation
     return(.igClust_hierarchical(
       germline_distance = germline_distance,
+      distance_method = distance_method,
       family_threshold = family_threshold,
       allele_cluster_threshold = allele_cluster_threshold,
       cluster_method = cluster_method
@@ -485,6 +497,7 @@ igClust <- function(germline_distance,
     return(.igClust_leiden(
       germline_distance = germline_distance,
       dist_obj = dist_obj,
+      distance_method = distance_method,
       family_threshold = family_threshold,
       cluster_method = cluster_method,
       resolution = resolution,
@@ -498,25 +511,44 @@ igClust <- function(germline_distance,
 
 ## Internal function for hierarchical clustering
 .igClust_hierarchical <- function(germline_distance,
+                                  distance_method = "decipher",
                                   family_threshold,
                                   allele_cluster_threshold,
                                   cluster_method) {
 
   ## check that thresholds are valid
-  if (any(c(family_threshold, allele_cluster_threshold) < 0 |
-          c(family_threshold, allele_cluster_threshold) > 100))
-    stop("One of the thresholds is not between 0-100.")
+  if (distance_method == "decipher") {
+    if (any(c(family_threshold, allele_cluster_threshold) < 0 |
+            c(family_threshold, allele_cluster_threshold) > 100))
+      stop("Thresholds must be between 0 and 100 for the 'decipher' distance method.")
+  } else {
+    if (any(c(family_threshold, allele_cluster_threshold) < 0))
+      stop("Thresholds must be non-negative.")
+  }
 
-  if (family_threshold > allele_cluster_threshold) {
-    message("The family threshold is higher than the allele cluster threshold. Switching between the thresholds")
-    tmp <- family_threshold
-    family_threshold <- allele_cluster_threshold
+  ## for decipher (similarity %): higher = stricter, so family (75) must be <= cluster (95)
+  ## for hamming/lv (mismatch counts): higher = looser, so family (e.g. 10) must be >= cluster (e.g. 2)
+  wrong_order <- if (distance_method == "decipher") {
+    family_threshold > allele_cluster_threshold
+  } else {
+    family_threshold < allele_cluster_threshold
+  }
+  if (wrong_order) {
+    message("Switching thresholds so that family is more inclusive than allele cluster.")
+    tmp                      <- family_threshold
+    family_threshold         <- allele_cluster_threshold
     allele_cluster_threshold <- tmp
   }
 
-  ## convert thresholds to distance scale (similarity to distance)
-  family_threshold_dist <- 1 - family_threshold / 100
-  allele_cluster_threshold_dist <- 1 - allele_cluster_threshold / 100
+  ## convert thresholds to the distance scale used by cutree
+  if (distance_method == "decipher") {
+    family_threshold_dist         <- 1 - family_threshold / 100
+    allele_cluster_threshold_dist <- 1 - allele_cluster_threshold / 100
+  } else {
+    ## hamming / lv: distance values are already raw counts
+    family_threshold_dist         <- family_threshold
+    allele_cluster_threshold_dist <- allele_cluster_threshold
+  }
 
   ## cluster the germline
   germline_cluster <- hclust(stats::as.dist(germline_distance), method = cluster_method)
@@ -554,13 +586,15 @@ igClust <- function(germline_distance,
     communityObject = NULL,
     graphObject = NULL,
     silhouetteScore = NA_real_,
-    resolutionParameter = NA_real_
+    resolutionParameter = NA_real_,
+    families_cut = families_cut
   )
 }
 
 ## Internal function for Leiden community detection
 .igClust_leiden <- function(germline_distance,
                             dist_obj,
+                            distance_method = "decipher",
                             family_threshold = 75,
                             cluster_method = "complete",
                             resolution,
@@ -613,7 +647,11 @@ igClust <- function(germline_distance,
   cluster_ids <- as.integer(membership)
 
   ## compute hierarchical families using the same distance matrix
-  family_threshold_dist <- 1 - family_threshold / 100
+  if (distance_method == "decipher") {
+    family_threshold_dist <- 1 - family_threshold / 100
+  } else {
+    family_threshold_dist <- family_threshold
+  }
   germline_cluster <- hclust(stats::as.dist(germline_distance), method = cluster_method)
   families_cut <- data.frame(
     "family" = dendextend::cutree(
@@ -644,7 +682,8 @@ igClust <- function(germline_distance,
     communityObject = if (exists("comm")) comm else NULL,
     graphObject = g,
     silhouetteScore = silhouette_score,
-    resolutionParameter = resolution
+    resolutionParameter = resolution,
+    families_cut = families_cut
   )
 }
 
@@ -1212,11 +1251,21 @@ inferAlleleClusters <- function(germline_set,
 
   if (clustering_method == "hierarchical") {
     ## check thresholds
-    if (any(c(family_threshold, allele_cluster_threshold) < 0 |
-            c(family_threshold, allele_cluster_threshold) > 100))
-      stop("Thresholds must be between 0-100.")
+    if (distance_method == "decipher") {
+      if (any(c(family_threshold, allele_cluster_threshold) < 0 |
+              c(family_threshold, allele_cluster_threshold) > 100))
+        stop("Thresholds must be between 0-100.")
+    } else {
+      if (any(c(family_threshold, allele_cluster_threshold) < 0))
+        stop("Thresholds must be non-negative.")
+    }
 
-    if (family_threshold > allele_cluster_threshold) {
+    wrong_order <- if (distance_method == "decipher") {
+      family_threshold > allele_cluster_threshold
+    } else {
+      family_threshold < allele_cluster_threshold
+    }
+    if (wrong_order) {
       if (!quiet) message("Switching family and allele cluster thresholds.")
       tmp <- family_threshold
       family_threshold <- allele_cluster_threshold
@@ -1227,6 +1276,7 @@ inferAlleleClusters <- function(germline_set,
     cluster_results <- igClust(
       germline_distance,
       method = "hierarchical",
+      distance_method = distance_method,
       family_threshold = family_threshold,
       allele_cluster_threshold = allele_cluster_threshold,
       cluster_method = cluster_method
@@ -1251,7 +1301,8 @@ inferAlleleClusters <- function(germline_set,
       hclustAlleleCluster = cluster_results$hclustAlleleCluster,
       clusteringMethod = "hierarchical",
       distanceMatrix = germline_distance,
-      locus = locus
+      locus = locus,
+      .familiesCut = cluster_results$families_cut
     )
 
   } else {
@@ -1259,6 +1310,7 @@ inferAlleleClusters <- function(germline_set,
     cluster_results <- igClust(
       germline_distance,
       method = "leiden",
+      distance_method = distance_method,
       family_threshold = family_threshold,
       cluster_method = cluster_method,
       resolution = resolution,
@@ -1292,7 +1344,8 @@ inferAlleleClusters <- function(germline_set,
       distanceMatrix = germline_distance,
       silhouetteScore = cluster_results$silhouetteScore,
       resolutionParameter = cluster_results$resolutionParameter,
-      locus = locus
+      locus = locus,
+      .familiesCut = cluster_results$families_cut
     )
   }
 
