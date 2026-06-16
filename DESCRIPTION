@@ -13,6 +13,8 @@ Description: Improves genotype inference and downstream Adaptive Immune Receptor
              The main tools are allele similarity clusters, and allele based genotype. The first tool is designed to reduce the ambiguity within the immunoglobulin heavy chain V alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes.
              The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population. See Peres et al. (2023) <doi:10.1093/nar/gkad603>.
 License: CC BY-SA 4.0
+URL: https://github.com/ayeletperes/piglet
+BugReports: https://github.com/ayeletperes/piglet/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)

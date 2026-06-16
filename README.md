@@ -29,10 +29,10 @@ To install the latest version via devtools:
 
 ```R
 library(devtools)
-install_bitbucket("yaarilab/piglet")
+install_github("ayeletperes/piglet")
 ```
 
-Note, installing from bitbucket does not generate the documentation.
+Note, installing from github does not generate the documentation.
 To generate them, first clone the repository and then build:
 
 ```R
@@ -52,4 +52,4 @@ For help, questions, or suggestions, please contact:
 
 ## Copying ##
 
-RAbHIT is free for use under the [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode)
+PIgLET is free for use under the [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode)

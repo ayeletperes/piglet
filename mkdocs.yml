@@ -1,7 +1,7 @@
 site_name: piglet
 site_url: https://piglet.readthedocs.io
-repo_url: https://bitbucket.org/yaarilab/piglet
-edit_uri: src/master/docs/
+repo_url: https://github.com/ayeletperes/piglet
+edit_uri: edit/master/docs/
 theme:
   name: readthedocs
   navigation_depth: 2
