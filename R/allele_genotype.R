@@ -595,7 +595,7 @@ inferGenotypeAllele <-
       genotype_dt <- genotype_dt[!grepl(",",get("genotyped_allele")),]    
     }
     
-    genotype_dt[,"multiple":=1/(stringi::stri_count_fixed(get("genotyped_allele"), ",")+1)]
+    genotype_dt[,"multiple":=1/((nchar(get("genotyped_allele")) - nchar(gsub(",", "", get("genotyped_allele"), fixed = TRUE)))+1)]
     genotype_dt[,"nrow":=1:.N]
     genotype_dt <- genotype_dt[, .("genotyped_allele" = unlist(strsplit(get("genotyped_allele"), ","))), by = mget(c("multiple", "nrow"))]
     genotype_dt[,"single_assignments":=sum(get("multiple")==1), by = .(get("genotyped_allele"))]

@@ -30,6 +30,8 @@ NULL
 #' @param silhouetteScore The silhouette score for community detection.
 #' @param resolutionParameter The resolution parameter used for Leiden clustering.
 #' @param locus The locus identifier, for example \code{"IGHV"}, \code{"IGHD"}, \code{"IGHJ"}.
+#' @param .familiesCut The family-level cut data stored with the clustering result,
+#'   or \code{NULL}.
 #'
 #' @return An object of class \code{"GermlineCluster"}.
 #'

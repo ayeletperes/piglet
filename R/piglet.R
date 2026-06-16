@@ -65,7 +65,6 @@
 #' @importFrom  Biostrings       DNAStringSet unmasked
 #' @importFrom  DECIPHER         DistanceMatrix
 #' @importFrom  RColorBrewer     brewer.pal.info brewer.pal
-#' @importFrom  zen4R            download_zenodo
 #' @importFrom  methods          setOldClass
 NULL
 

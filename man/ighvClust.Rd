@@ -14,9 +14,13 @@ ighvClust(
 \arguments{
 \item{germline_distance}{A germline set distance matrix created by \code{\link{igDistance}}.}
 
-\item{family_threshold}{The similarity threshold for family level. Default is 75.}
+\item{family_threshold}{The threshold for family-level grouping.
+For \code{distance_method = "decipher"}: similarity percentage (default 75).
+For \code{"hamming"} / \code{"lv"}: maximum number of mismatches (must be >= allele_cluster_threshold).}
 
-\item{allele_cluster_threshold}{The similarity threshold for allele cluster level (hierarchical only). Default is 95.}
+\item{allele_cluster_threshold}{The threshold for allele-cluster-level grouping (hierarchical only).
+For \code{distance_method = "decipher"}: similarity percentage (default 95).
+For \code{"hamming"} / \code{"lv"}: maximum number of mismatches (must be <= family_threshold).}
 
 \item{cluster_method}{The linkage method for hierarchical clustering (used for family assignment in both methods). Default is "complete".}
 }

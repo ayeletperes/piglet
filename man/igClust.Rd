@@ -7,6 +7,7 @@
 igClust(
   germline_distance,
   method = c("hierarchical", "leiden"),
+  distance_method = "decipher",
   family_threshold = 75,
   allele_cluster_threshold = 95,
   cluster_method = "complete",
@@ -22,9 +23,18 @@ igClust(
 
 \item{method}{Clustering method. One of "hierarchical" (default) or "leiden".}
 
-\item{family_threshold}{The similarity threshold for family level. Default is 75.}
+\item{distance_method}{The distance method used to compute \code{germline_distance}.
+One of \code{"decipher"} (default), \code{"hamming"}, or \code{"lv"}.
+For \code{"decipher"}, thresholds are similarity percentages in \code{[0, 100]};
+for \code{"hamming"} and \code{"lv"}, thresholds are raw integer mismatch counts.}
 
-\item{allele_cluster_threshold}{The similarity threshold for allele cluster level (hierarchical only). Default is 95.}
+\item{family_threshold}{The threshold for family-level grouping.
+For \code{distance_method = "decipher"}: similarity percentage (default 75).
+For \code{"hamming"} / \code{"lv"}: maximum number of mismatches (must be >= allele_cluster_threshold).}
+
+\item{allele_cluster_threshold}{The threshold for allele-cluster-level grouping (hierarchical only).
+For \code{distance_method = "decipher"}: similarity percentage (default 95).
+For \code{"hamming"} / \code{"lv"}: maximum number of mismatches (must be <= family_threshold).}
 
 \item{cluster_method}{The linkage method for hierarchical clustering (used for family assignment in both methods). Default is "complete".}
 

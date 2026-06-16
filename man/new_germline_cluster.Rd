@@ -16,7 +16,8 @@ new_germline_cluster(
   distanceMatrix = NULL,
   silhouetteScore = NA_real_,
   resolutionParameter = NA_real_,
-  locus = "IGHV"
+  locus = "IGHV",
+  .familiesCut = NULL
 )
 }
 \arguments{
@@ -45,6 +46,9 @@ or \code{"leiden"}.}
 \item{resolutionParameter}{The resolution parameter used for Leiden clustering.}
 
 \item{locus}{The locus identifier, for example \code{"IGHV"}, \code{"IGHD"}, \code{"IGHJ"}.}
+
+\item{.familiesCut}{The family-level cut data stored with the clustering result,
+or \code{NULL}.}
 }
 \value{
 An object of class \code{"GermlineCluster"}.

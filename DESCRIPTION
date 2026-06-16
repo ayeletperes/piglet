@@ -27,7 +27,6 @@ Imports:
     tigger (>= 1.0.0),
     methods (>= 3.4.4),
     rlang (>= 0.4.0),
-    zen4R (>= 0.7),
     RColorBrewer (>= 1.1.2),
     ggplot2 (>= 3.3.6),
     circlize (>= 0.4.15),
@@ -44,13 +43,10 @@ Suggests:
     rmarkdown,
     tidyr,
     htmltools,
-    stringi,
     bookdown,
-    ComplexHeatmap,
     dplyr,
     ggtree (>= 3.0.0),
-    testthat (>= 3.0.0),
-    parallel
+    testthat (>= 3.0.0)
 RoxygenNote: 7.3.3
 Collate:
     'Data.R'
