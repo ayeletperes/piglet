@@ -26,6 +26,14 @@ NEW FEATURES:
   at the hierarchical-clustering step before merging with allele-cluster
   assignments.
 
++ `inferGenotypeAllele()` and `inferGenotypeAllele_asc()` now compute the
+  repertoire depth **per locus** (IGH / IGK / IGL, derived from the allele
+  prefix) instead of using a single global depth. This allows heavy- and
+  light-chain calls in the same table (e.g. single-cell AIRR data) to each be
+  normalised against their own depth when computing allele fractions and
+  z-scores. Single-locus input is unaffected (it collapses to one group,
+  reproducing the previous global depth).
+
 Version 1.2.1:  Feb 2026
 -------------------------------------------------------------------------------
 

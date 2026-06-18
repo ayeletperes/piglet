@@ -626,9 +626,14 @@ inferGenotypeAllele <-
     }
     ## add base counts
     genotype_dt[is.na(get("count")), "count" := base_count]
-    genotype_dt[, "depth" := sum(get("count"))]
-    
-    ## get the z_score
+    ## repertoire depth per locus (e.g. IGH / IGK / IGL), so that heavy and light
+    ## chains present in the same table each get their own depth and z-score
+    ## instead of sharing a single global depth. Single-locus input collapses to
+    ## one group and reproduces the previous global behaviour.
+    genotype_dt[, "locus" := substr(get("genotyped_allele"), 1, 3)]
+    genotype_dt[, "depth" := sum(get("count")), by = "locus"]
+
+    ## get the z_score (uses the per-locus depth)
     genotype_dt[, "z_score" := z_score(get("count"), get("depth"), get("threshold"))]
     genotype_dt <- genotype_dt[, .SD, .SDcols = final_columns]
     names(genotype_dt)[2] <- "allele"
@@ -756,7 +761,11 @@ inferGenotypeAllele_asc <- function(data,
   
   # removing multiple gene assignments
   geno_V <- geno_V[!grepl(",", get("gene"))]
-  
+
+  # locus (e.g. IGH / IGK / IGL) for per-locus repertoire depth, so heavy and
+  # light chains in the same table are normalised against their own depth
+  geno_V[, "locus" := substr(get("gene"), 1, 3)]
+
   # clean the allele class
   geno_V[, "v_allele" :=
            gsub(
@@ -770,7 +779,7 @@ inferGenotypeAllele_asc <- function(data,
   if (single_assignment) {
     geno_V <- geno_V[!(grepl(",", get("v_allele")))]
     geno_V <- geno_V[!is.na(get("v_allele"))]
-    geno_V[, "n_row_sub" := .N]
+    geno_V[, "n_row_sub" := .N, by = "locus"]
     geno_V[, "frac" := 1]
     geno_V_fraction <-
       geno_V[, .("absolute_fraction" = round(sum(get("frac")) / unique(get("n_row_sub")), 8),
@@ -778,12 +787,14 @@ inferGenotypeAllele_asc <- function(data,
   } else{
     ### distribute the multiple assignments for non naive sequences
     geno_V <- geno_V[!is.na(get("v_allele"))]
-    geno_V[, "n_row_sub" := .N]
+    geno_V[, "n_row_sub" := .N, by = "locus"]
     geno_V[, "frac" := 1]
     geno_V <-
-      geno_V[, .("count" = sum(get("frac"))), by = mget(c("gene", "v_allele", "n_row_sub"))]
-    
-    n_row_sub <- unique(geno_V$n_row_sub)
+      geno_V[, .("count" = sum(get("frac"))), by = mget(c("gene", "v_allele", "n_row_sub", "locus"))]
+
+    ## per-locus depth lookup (gene -> n_row_sub); within a gene the locus, and
+    ## therefore the depth, is constant
+    n_row_sub_by_gene <- setNames(geno_V$n_row_sub, geno_V$gene)
     
     geno_V_fraction <- c()
     #### code from TIgGER inferGentoype
@@ -888,7 +899,7 @@ inferGenotypeAllele_asc <- function(data,
           "gene" = g,
           "v_allele" = names(allele_tot),
           "count" = allele_tot,
-          "n_row_sub" = n_row_sub
+          "n_row_sub" = n_row_sub_by_gene[[g]]
         )
       gene_table <- gene_table[get("count") != 0]
       
@@ -935,9 +946,16 @@ inferGenotypeAllele_asc <- function(data,
   geno_V_fraction[, "absolute_thresh" := allele_cluster_threshold[get("v_call")]]
   
   z_score <- function(Nai, N, Tai) (Nai - Tai*N) / sqrt(Tai*N*(1-Tai))
-  
+
+  ## per-locus repertoire depth for the confidence z-score, so heavy and light
+  ## chains are each normalised against their own depth rather than the global one
+  geno_V_fraction[, "locus" := substr(get("gene"), 1, 3)]
+  locus_depth <- geno_V[, .("depth" = unique(get("n_row_sub"))), by = "locus"]
+  depth_lookup <- setNames(locus_depth$depth, locus_depth$locus)
+  geno_V_fraction[, "n_row_sub" := depth_lookup[get("locus")]]
+
   geno_V_fraction <-
-    geno_V_fraction[, "genotype_confidence" := z_score(Nai=get("count"),N=n_row_sub,Tai=get("absolute_thresh"))]
+    geno_V_fraction[, "genotype_confidence" := z_score(Nai=get("count"),N=get("n_row_sub"),Tai=get("absolute_thresh"))]
   
   na_id <- which(is.na(geno_V_fraction$absolute_thresh))
   if (length(na_id) != 0)
