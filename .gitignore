@@ -54,3 +54,5 @@ inst/doc
 # Claude
 CLAUDE.local.md
 .claude/
+# MkDocs local build output
+site/
