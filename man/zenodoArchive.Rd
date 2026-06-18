@@ -16,7 +16,7 @@ zenodoArchive
 zenodoArchive
 }
 \examples{
-\donttest{
+\dontrun{
   zenodo_archive <- zenodoArchive$new(
      doi = "10.5281/zenodo.7401189"
   )

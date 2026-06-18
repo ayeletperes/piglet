@@ -7,6 +7,14 @@
 \description{
 Improves genotype inference and downstream Adaptive Immune Receptor Repertoire Sequence data analysis. Inference of allele similarity clusters, an alternative naming scheme and genotype inference for immunoglobulin heavy chain repertoires. The main tools are allele similarity clusters, and allele based genotype. The first tool is designed to reduce the ambiguity within the immunoglobulin heavy chain V alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes. The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population. See Peres et al. (2023) \doi{10.1093/nar/gkad603}.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/ayeletperes/piglet}
+  \item Report bugs at \url{https://github.com/ayeletperes/piglet/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Ayelet Peres \email{ayelet.peres@yale.edu}
 

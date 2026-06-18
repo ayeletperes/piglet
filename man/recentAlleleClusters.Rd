@@ -30,7 +30,7 @@ At the moment only available for human IGHV reference set.
 }
 \examples{
 
-\donttest{
+\dontrun{
 recentAlleleClusters(doi="10.5281/zenodo.7401189")
 }
 

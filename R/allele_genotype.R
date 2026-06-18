@@ -16,7 +16,7 @@ NULL
 #' @format \code{R6Class} object.
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #'   zenodo_archive <- zenodoArchive$new(
 #'      doi = "10.5281/zenodo.7401189"
 #'   )
@@ -255,7 +255,7 @@ zenodoArchive <- R6::R6Class(
 #'
 #' @examples
 #' 
-#' \donttest{
+#' \dontrun{
 #' recentAlleleClusters(doi="10.5281/zenodo.7401189")
 #' }
 #'
@@ -302,7 +302,7 @@ recentAlleleClusters <-
 #' 
 #' @examples
 #' 
-#' \donttest{
+#' \dontrun{
 #' asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 #'
 #' allele_cluster_table <- extractASCTable(archive_file = asc_archive)
