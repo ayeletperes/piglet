@@ -36,7 +36,7 @@ Use the **Task Guides** (how-tos):
   full ASC workflow from a germline reference set.
 - **[Infer an allele-based genotype](guides/infer-genotype.md)** — genotyping
   from AIRR-seq data.
-- **[Generate ASC for a custom reference](guides/biomed-asc.md)** — adapting the
+- **[Generating ASC for a BIOMED IGHV reference](vignettes/PIgLET_biomed_asc.md)** — adapting the
   ASC pipeline to a BIOMED/OGRDB-style reference.
 
 ## I want the function signatures

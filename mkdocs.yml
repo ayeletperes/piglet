@@ -63,7 +63,7 @@ nav:
       - getting-started/index.md
       - Installation: getting-started/installation.md
       - Quick start: getting-started/quick-start.md
-  - Lessons:
+  - Guides:
       - Allele Similarity Clusters: lessons/allele-similarity-clusters.md
       - Allele-based genotyping: lessons/allele-based-genotype.md
   - Core Concepts:
@@ -71,12 +71,12 @@ nav:
       - Package overview: concepts/package-overview.md
       - The GermlineCluster object: concepts/germline-cluster.md
       - Built-in data: concepts/built-in-data.md
-  - Task Guides:
+  - Tutorials:
       - guides/index.md
       - Build allele similarity clusters: guides/build-allele-clusters.md
       - Infer an allele-based genotype: guides/infer-genotype.md
-      - Generate ASC for a custom reference: guides/biomed-asc.md
-      - Full PIgLET vignette: vignettes/PIgLET-vignette.md
+      - 'PIgLET: Program for Ig clusters': vignettes/PIgLET-vignette.md
+      - Generating ASC for a BIOMED IGHV reference: vignettes/PIgLET_biomed_asc.md
   - API Reference:
       - Overview: reference/index.md
       - Allele Similarity Cluster:

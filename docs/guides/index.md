@@ -7,7 +7,7 @@ How-to guides for concrete tasks. Each assumes you have PIgLET
   workflow from a germline reference.
 - **[Infer an allele-based genotype](infer-genotype.md)** — genotyping from
   AIRR-seq data.
-- **[Generate ASC for a custom reference](biomed-asc.md)** — adapt the ASC
+- **[Generating ASC for a BIOMED IGHV reference](../vignettes/PIgLET_biomed_asc.md)** — adapt the ASC
   pipeline to a BIOMED/OGRDB-style reference.
 
 For a single combined walkthrough, see the full
