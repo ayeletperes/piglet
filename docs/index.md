@@ -1,75 +1,41 @@
-# PIgLET - Program for Ig clusters R package
-PIgLET is a suite of computational tools that improves genotype inference and downstream AIRR-seq data analysis. The package as two main tools. The first is Allele Clusters, this tool is designed to reduce the ambiguity within the IGHV alleles. The ambiguity is caused by duplicated or similar alleles which are shared among different genes. The second tool is an allele based genotype, that determined the presence of an allele based on a threshold derived from a naive population. 
+# PIgLET
 
+**P**rogram for **I**nferring Immuno**g**lobulin Allele Similarity C**l**usters
+and G**e**no**t**ypes.
 
-## Core Abilities ##
+PIgLET is an R/Rcpp package that improves genotype inference and downstream
+AIRR-seq (Adaptive Immune Receptor Repertoire) analysis of the immunoglobulin
+heavy chain V (IGHV) locus. It provides two main tools:
 
-**Allele Similarity Cluster** provides the functions that support the main tool of creating the allele similarity cluster form an IGHV germline set.
-**Allele based genotype** provides the functions to infer the IGHV genotype using the allele based method and the allele clusters thresholds.
+- **Allele Similarity Clusters** — reduce ambiguity among IGHV alleles caused by
+  duplicated or highly similar alleles shared across genes.
+- **Allele-based genotype** — determine the presence of an allele using a
+  threshold derived from a naive population.
 
-## Required Input ##
+## Start here
 
-For the allele similarity cluster, a reference set of IUIS/IMGT alleles. The sequences should be gapped.
+| If you want to… | Go to |
+| --- | --- |
+| Get up and running fast | **[Getting Started](getting-started/installation.md)** |
+| Understand the ideas | **[Lessons](lessons/allele-similarity-clusters.md)** |
+| Look up precise definitions | **[Core Concepts](concepts/package-overview.md)** |
+| Accomplish a specific task | **[Task Guides](guides/build-allele-clusters.md)** |
+| Find a function signature | **[API Reference](reference/index.md)** |
 
-For the genotype inference, an AIRR-seq format data set.
+Not sure? See **[Choose your path](learn.md)**.
 
-## Installation ##
+## Citation
 
-PIgLET is available for installation either from the development version.
+Peres et al. (2023), "Immunoglobulin Allele Similarity Clusters", *Nucleic Acids
+Research*, [doi:10.1093/nar/gkad603](https://doi.org/10.1093/nar/gkad603).
 
-### PIgLET repository installation ###
+## Contact
 
-To build from the source code, first install the build dependencies:  
+- [Ayelet Peres](mailto:ayelet.peres@yale.edu)
+- [Gur Yaari](mailto:gur.yaari@yale.edu)
+- [Issue tracker](https://github.com/ayeletperes/piglet/issues)
 
-```R
-install.packages(c("devtools", "roxygen2", "testthat", "knitr", "rmarkdown", "plotly"))
-```
+## License
 
-To install the latest version via devtools:
-
-```R
-library(devtools)
-install_bitbucket("yaarilab/piglet")
-```
-
-Note, installing from bitbucket does not generate the documentation.
-To generate them, first clone the repository and then build:
-
-```R
-library(devtools)
-install_deps()
-document()
-build()
-install()
-```
-
-## Contact ##
-
-For help, questions, or suggestions, please contact:
-
-* [Ayelet Peres](mailto:peresay@biu.ac.il)
-* [Gur Yaari](mailto:gur.yaari@biu.ac.il)
-* [Issue tracker](https://bitbucket.org/yaarilab/piglet/issues?status=new&status=open)
-
-## Copying ##
-
-RAbHIT is free for use under the [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode)
-
-
-# Dependencies
-
-**Depends:** FALSE  
-**Imports:** dplyr, Biostrings, DECIPHER, alakazam, dendextend, data.table, tigger, methods, rlang, splitstackshape, zen4R, RColorBrewer, ggplot2, circlize, R6, jsonlite, magrittr  
-**Suggests:** knitr, rmarkdown, stats, graphics, grDevices, htmltools, ComplexHeatmap, ggmsa, stringi, bookdown
-
-
-# Authors
-
-[Ayelet Peres](mailto:peresay@biu.ac.il) (aut, cre)  
-[William Lees](mailto:william@lees.org.uk) (aut)  
-[Gur Yaari](mailto:gur.yaari@biu.ac.il) (aut, cph)
-
-
-# License
-
-CC BY 4.0
+PIgLET is released under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

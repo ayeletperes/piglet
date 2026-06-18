@@ -1,44 +1,101 @@
-site_name: piglet
-site_url: https://piglet.readthedocs.io
+site_name: PIgLET
+site_description: Program for Inferring Immunoglobulin Allele Similarity Clusters and Genotypes
+site_url: https://ayeletperes.github.io/piglet/
 repo_url: https://github.com/ayeletperes/piglet
+repo_name: ayeletperes/piglet
 edit_uri: edit/master/docs/
+docs_dir: 'docs'
+
 theme:
-  name: readthedocs
-  navigation_depth: 2
-  collapse_navigation: False
-  titles_only: False
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
 markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
   - def_list
+  - footnotes
+  - tables
   - sane_lists
   - smarty
   - toc:
-      baselevel: 1
-      toc_depth: 1-4
-      permalink: True
-docs_dir: 'docs'
+      permalink: true
+      toc_depth: 1-3
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+
 nav:
-  - 'About':
-    - 'Introduction': index.md
-    - 'Package Overview': topics/piglet.md
-    - 'Release Notes': news.md
-  - 'Vignettes':
-    - 'PIgLET: Program for Ig clusters': vignettes/PIgLET-vignette.md
-  - 'Help Topics':
-      - 'Allele Similarity Cluste':
-        - topics/inferAlleleClusters.md
-        - topics/ighvClust.md
-        - topics/ighvDistance.md
-        - topics/generateReferenceSet.md
-        - topics/plotAlleleCluster.md
-        - topics/artificialFRW1Germline.md
-      - 'Allele based genotype':
-        - topics/inferGenotypeAllele.md
-        - topics/assignAlleleClusters.md
-        - topics/germlineASC.md
-        - topics/recentAlleleClusters.md
-        - topics/extractASCTable.md
-        - topics/zenodoArchive.md
-      - 'Data':
-        - topics/hv_functionality.md
-        - topics/HVGERM.md
-    
+  - Home: index.md
+  - Choose your path: learn.md
+  - Getting Started:
+      - getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Quick start: getting-started/quick-start.md
+  - Lessons:
+      - Allele Similarity Clusters: lessons/allele-similarity-clusters.md
+      - Allele-based genotyping: lessons/allele-based-genotype.md
+  - Core Concepts:
+      - concepts/index.md
+      - Package overview: concepts/package-overview.md
+      - The GermlineCluster object: concepts/germline-cluster.md
+      - Built-in data: concepts/built-in-data.md
+  - Task Guides:
+      - guides/index.md
+      - Build allele similarity clusters: guides/build-allele-clusters.md
+      - Infer an allele-based genotype: guides/infer-genotype.md
+      - Generate ASC for a custom reference: guides/biomed-asc.md
+      - Full PIgLET vignette: vignettes/PIgLET-vignette.md
+  - API Reference:
+      - Overview: reference/index.md
+      - Allele Similarity Cluster:
+          - inferAlleleClusters: topics/inferAlleleClusters.md
+          - ighvClust: topics/ighvClust.md
+          - ighvDistance: topics/ighvDistance.md
+          - generateReferenceSet: topics/generateReferenceSet.md
+          - plotAlleleCluster: topics/plotAlleleCluster.md
+          - artificialFRW1Germline: topics/artificialFRW1Germline.md
+          - alleleClusterNames: topics/alleleClusterNames.md
+          - GermlineCluster-class: topics/GermlineCluster-class.md
+      - Allele based genotype:
+          - inferGenotypeAllele: topics/inferGenotypeAllele.md
+          - assignAlleleClusters: topics/assignAlleleClusters.md
+          - germlineASC: topics/germlineASC.md
+          - recentAlleleClusters: topics/recentAlleleClusters.md
+          - extractASCTable: topics/extractASCTable.md
+          - zenodoArchive: topics/zenodoArchive.md
+      - Data:
+          - HVGERM: topics/HVGERM.md
+          - hv_functionality: topics/hv_functionality.md
+  - Release Notes: news.md
