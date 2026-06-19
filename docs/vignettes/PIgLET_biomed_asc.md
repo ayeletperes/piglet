@@ -1,8 +1,8 @@
+# Generating Allele Similarity Clusters (ASC) for BIOMED IGHV Reference
+
 # Overview
 
-This tutorial demonstrates how to generate Allele Similarity Clusters
-(ASC) for a BIOMED-style V reference using the OGRDB IGHV reference. You
-will:
+This tutorial demonstrates how to generate Allele Similarity Clusters (ASC) for a BIOMED-style V reference using the OGRDB IGHV reference. You will:
 
 - Infer ASC clusters
 
@@ -12,12 +12,15 @@ will:
 
 - Or load precomputed versions
 
-------------------------------------------------------------------------
+---
 
-1.  Load and Process the Reference Sets
+
+
+1. Load and Process the Reference Sets
 
 - Load the OGRDB reference
 - Mask the FWR1 region to match BIOMED-2 library
+
 
 ``` r
 url <- "https://bitbucket.org/yaarilab/piglet/raw/70b7d4491e25e7197e2a94bd890ce5b6e3b506a8/data-raw/HVGERM_OGRDB.fasta"
@@ -27,9 +30,11 @@ download.file(url, tmp_dest_file, mode = "wb")
 ref_ogrdb <- readIgFasta(tmp_dest_file)
 
 ref_ogrdb_frw1 <- piglet::artificialFRW1Germline(ref_ogrdb)
+
 ```
 
-2.  Infer Allele Similarity Clusters (ASC)
+2. Infer Allele Similarity Clusters (ASC)
+
 
 ``` r
 asc_frw1 <- inferAlleleClusters(ref_ogrdb_frw1)
@@ -37,7 +42,8 @@ allele_table_frw1 <- setDT(asc_frw1@alleleClusterTable)[, .(iuis_allele, new_all
 setnames(allele_table_frw1, c("allele", "asc_allele"))
 ```
 
-3.  Merge with Threshold Table from PIgLET
+3. Merge with Threshold Table from PIgLET
+
 
 ``` r
 allele_table_piglet <- fread("https://bitbucket.org/yaarilab/piglet/raw/70b7d4491e25e7197e2a94bd890ce5b6e3b506a8/data-raw/allele_threshold_table.tsv")
@@ -57,9 +63,11 @@ allele_table_frw1 <- rbind(
   allele_table_piglet[!grepl("V",allele),]
 )
 allele_table_frw1[,tag:=substr(allele, 4, 4)]
+
 ```
 
-4.  Load Precomputed Partial BIOMED Reference
+4. Load Precomputed Partial BIOMED Reference
+
 
 ``` r
 url <- "https://bitbucket.org/yaarilab/piglet/raw/70b7d4491e25e7197e2a94bd890ce5b6e3b506a8/data-raw/HVGERM_ogrdb_asc_partial.fasta"
@@ -71,7 +79,8 @@ asc_germline <- readIgFasta(tmp_dest_file)
 allele_table <- fread("https://bitbucket.org/yaarilab/piglet/raw/70b7d4491e25e7197e2a94bd890ce5b6e3b506a8/data-raw/allele_threshold_table_ogrdb_partial.tsv")
 ```
 
-5.  Convert Annotations to ASC format
+5. Convert Annotations to ASC format
+
 
 ``` r
 data <- tigger::AIRRDb
@@ -88,9 +97,11 @@ allele_table_split <- allele_table[, {
 allele_table_split[, I := NULL]
 
 asc_data <- assignAlleleClusters(data, allele_table_split, v_call = "v_call", from_col = "allele", to_col = "asc_allele")
+
 ```
 
-6.  Infer Genotypes
+6. Infer Genotypes
+
 
 ``` r
 
@@ -129,4 +140,6 @@ asc_genotype_biomed <- inferGenotypeAllele(
   asc_annotation = FALSE, # if you use iuis names then set to FALSE
   single_assignment = TRUE
 )
+
 ```
+

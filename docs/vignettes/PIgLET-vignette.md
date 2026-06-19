@@ -121,7 +121,7 @@ To create the clusters we will first load data from the package:
     IMGT in July 2022.
 
 
-```r
+``` r
 library(piglet)
 data(HVGERM)
 ```
@@ -130,7 +130,7 @@ data(HVGERM)
 information for each of the alleles. Download from IMGT in July 2022
 
 
-```r
+``` r
 data(hv_functionality)
 ```
 
@@ -139,7 +139,7 @@ alleles, alleles that do not start on the first 5' nucleotide, and those
 that are shorter than 318 bases.
 
 
-```r
+``` r
 germline <- HVGERM
 ## keep only functional alleles
 germline <- germline[hv_functionality$allele[hv_functionality$functional=="F"]]
@@ -152,7 +152,7 @@ germline <- germline[!grepl("NL", names(germline))]
 ```
 
 
-```r
+``` r
 germline <- HVGERM
 ## keep only functional alleles
 germline <- germline[hv_functionality$allele[hv_functionality$functional=="F"]]
@@ -171,7 +171,7 @@ Here, we will use the default similarity thresholds 75% for the family
 and 95% for the clusters.
 
 
-```r
+``` r
 asc <- inferAlleleClusters(
   germline_set = germline, 
   trim_3prime_side = 318, 
@@ -195,7 +195,7 @@ We can use the S4 plot method to plot the hierarchical clustering of the
 germline set as seen below in Fig. \@ref(fig:asc-plot).
 
 
-```r
+``` r
 plot(asc)
 ```
 
@@ -222,26 +222,15 @@ To demonstrate the use of the function, we can use the cleaned germline
 set from above (<a href="#lst-germlineset-code">block 1</a>). 
 In this case we will mask the FRW1 region, this will return the sequences with the Ns instead of DNA
 nucleotide. The function output a log of the process, this output can be
-repressed using the `quite=TRUE` flag.
+repressed using the `quiet=TRUE` flag.
 
 
-```r
+``` r
 germline_frw1 <- artificialFRW1Germline(germline, mask_primer = T)
 #> 282/286 germline sequences have passed
 #> Counts by primers: 
 #> VH1-FR1:53,VH2-FR1:25,VH3-FR1:122,VH4-FR1:69,VH5-FR1:10,VH6-FR1:3
 ```
-
-We will look at one sequence, `IGHV1-8*01` to see the masking (Fig. \@ref(fig:nuc-plot))
-
-
-```
-#> Scale for x is already present.
-#> Adding another scale for x, which will replace the existing scale.
-#> Coordinate system already present. Adding new coordinate system, which will replace the existing one.
-```
-
-![IGHV1-8*01 germline sequence. The allele's germline sequence before and after masking. The colors represents the different nucleotides.](figure/nuc-plot-1.png)
 
 We can use the artificial germline set to infer the ASC clusters in the
 same fashion as in section \@ref(sec-asc).
@@ -270,36 +259,26 @@ The ASC-based threshold, found in the manuscript and the IGHV reference book are
 To retrieve the archive files we can use the `recentAlleleClusters` function. The function can get a path value for locally saving the archive files with the `path` flag, if non is supplied then the function save the files in a temporary directory. The flag `get_file=TRUE`, will return the downloaded file full path.
 
 
-```r
+``` r
 zenodo_doi <- "10.5281/zenodo.7401189"
 asc_archive <-
   recentAlleleClusters(doi = zenodo_doi, get_file = TRUE)
-#> Files will be downloaded to tmp directory: /tmp/Rtmpn83kLa
 ```
 
 To extract the ASC threshold table we can use the `extractASCTable`
 function
 
 
-```r
+``` r
 allele_cluster_table <- extractASCTable(archive_file = asc_archive)
 ```
+
+
 
 The table is has identical ASC clusters to the table we created above
 (<a href="#lst-asc">block 2</a>).
 
 
-```
-#> # A tibble: 6 × 3
-#>   new_allele   imgt_allele.piglet imgt_allele.zenodo
-#>   <chr>        <chr>              <chr>             
-#> 1 IGHVF1-G1*01 IGHV3-72*01        IGHV3-72*01       
-#> 2 IGHVF1-G2*01 IGHV3-73*01        IGHV3-73*01       
-#> 3 IGHVF1-G2*02 IGHV3-73*02        IGHV3-73*02       
-#> 4 IGHVF1-G3*01 IGHV3-49*02        IGHV3-49*02       
-#> 5 IGHVF1-G3*02 IGHV3-49*01        IGHV3-49*01       
-#> 6 IGHVF1-G3*03 IGHV3-49*05        IGHV3-49*05
-```
 
 We can now extract the threshold from the Zenodo archive table and fill
 the table created using the PIgLET. We recommend that in case an allele
@@ -339,7 +318,7 @@ The data is b cell repertoire data from individual (PGP1) in AIRR
 format. The records were annotated with by IMGT/HighV-QUEST.
 
 
-```r
+``` r
 # loading TIgGER AIRR-seq b cell data
 data <- tigger::AIRRDb
 ```
@@ -352,17 +331,17 @@ the example data
 First we will collapse allele duplication in the ASC-table
 
 
-```r
+``` r
 allele_cluster_table <-
   allele_cluster_table %>% dplyr::group_by(new_allele, func_group, thresh) %>%
-  dplyr::summarise(imgt_allele = paste0(sort(unique(imgt_allele)), collapse = "/"),
+  dplyr::summarise(iuis_allele = paste0(sort(unique(iuis_allele)), collapse = "/"),
                    .groups = "keep")
 ```
 
 Now, we can transform the data
 
 
-```r
+``` r
 # storing original v_call values
 data$v_call_or <- data$v_call
 # assigning the ASC alleles
@@ -385,7 +364,7 @@ germline set, we can use the `germlineASC` to obtain it. We need to
 supply the function the ASC-table and an IGHV germline set.
 
 
-```r
+``` r
 # reforming the germline set
 asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
 ```
@@ -394,14 +373,14 @@ Once we have both the modified dataset and germline reference set, we
 can infer the genotype. The function returns the genotype table with the
 following columns
 
-| gene           | alleles             | imgt_alleles          | counts              | absolute_fraction     | absolute_threshold           | genotyped_alleles | genotype_imgt_alleles |
+| gene           | alleles             | iuis_alleles          | counts              | absolute_fraction     | absolute_threshold           | genotyped_alleles | genotype_iuis_alleles |
 |---------|---------|---------|---------|---------|---------|---------|---------|
-| allele cluster | the present alleles | the imgt nomenclature | the number of reads | the absolute fraction | the population driven allele | the alleles which | the imgt nomenclature |
+| allele cluster | the present alleles | the IUIS nomenclature | the number of reads | the absolute fraction | the population driven allele | the alleles which | the IUIS nomenclature |
 
 
-```r
+``` r
 # inferring the genotype
-asc_genotype <- inferGenotypeAllele(
+asc_genotype <- inferGenotypeAllele_asc(
   asc_data,
   alleleClusterTable = allele_cluster_table,
   germline_db = asc_germline,
@@ -409,22 +388,55 @@ asc_genotype <- inferGenotypeAllele(
 )
 
 head(asc_genotype)
-#>          gene     alleles                                                 imgt_alleles        counts                       absolute_fraction          absolute_threshold genotyped_alleles                                       genotyped_imgt_alleles
-#> 1: IGHVF5-G22          01                                                  IGHV1-24*01           105                               0.0221613                      0.0001                01                                                  IGHV1-24*01
-#> 2: IGHVF5-G23          01                                                IGHV1-69-2*01            31                               0.0065429                      0.0001                01                                                IGHV1-69-2*01
-#> 3: IGHVF5-G24       02,03                                      IGHV1-58*01,IGHV1-58*02         23,18                     0.0048544,0.0037991               0.0001,0.0001             02,03                                      IGHV1-58*01,IGHV1-58*02
-#> 4: IGHVF5-G26 15,07,10,01 IGHV1-69*01/IGHV1-69D*01,IGHV1-69*04,IGHV1-69*06,IGHV1-69*02 515,469,280,9 0.1086956,0.0989869,0.0590967,0.0018995 0.0010,0.0010,0.0010,0.0010       15,07,10,01 IGHV1-69*01/IGHV1-69D*01,IGHV1-69*04,IGHV1-69*06,IGHV1-69*02
-#> 5: IGHVF5-G27          02                                                   IGHV1-8*01           467                               0.0985648                      0.0001                02                                                   IGHV1-8*01
-#> 6: IGHVF5-G28          03                                                  IGHV1-46*01           624                               0.1317011                      0.0010                03                                                  IGHV1-46*01
+#>          gene     alleles
+#>        <char>      <char>
+#> 1: IGHVF5-G22          01
+#> 2: IGHVF5-G23          01
+#> 3: IGHVF5-G24       02,03
+#> 4: IGHVF5-G26 15,07,10,01
+#> 5: IGHVF5-G27          02
+#> 6: IGHVF5-G28          03
+#>                                                    iuis_alleles        counts
+#>                                                          <char>        <char>
+#> 1:                                                  IGHV1-24*01           105
+#> 2:                                                IGHV1-69-2*01            31
+#> 3:                                      IGHV1-58*01,IGHV1-58*02         23,18
+#> 4: IGHV1-69D*01/IGHV1-69*01,IGHV1-69*04,IGHV1-69*06,IGHV1-69*02 515,469,280,9
+#> 5:                                                   IGHV1-8*01           467
+#> 6:                                                  IGHV1-46*01           624
+#>                          absolute_fraction          absolute_threshold
+#>                                     <char>                      <char>
+#> 1:                               0.0221613                      0.0001
+#> 2:                               0.0065429                      0.0001
+#> 3:                     0.0048544,0.0037991               0.0001,0.0001
+#> 4: 0.1086956,0.0989869,0.0590967,0.0018995 0.0010,0.0010,0.0010,0.0010
+#> 5:                               0.0985648                      0.0001
+#> 6:                               0.1317011                      0.0010
+#>                  genotype_confidence genotyped_alleles
+#>                               <char>            <char>
+#> 1:                          151.8621                01
+#> 2:                           44.3503                01
+#> 3:                   32.7274,25.4631             02,03
+#> 4: 234.5379,213.3943,126.5220,1.9590       15,07,10,01
+#> 5:                          677.7979                02
+#> 6:                          284.6388                03
+#>                                          genotyped_iuis_alleles
+#>                                                          <char>
+#> 1:                                                  IGHV1-24*01
+#> 2:                                                IGHV1-69-2*01
+#> 3:                                      IGHV1-58*01,IGHV1-58*02
+#> 4: IGHV1-69D*01/IGHV1-69*01,IGHV1-69*04,IGHV1-69*06,IGHV1-69*02
+#> 5:                                                   IGHV1-8*01
+#> 6:                                                  IGHV1-46*01
 ```
 
 For plotting the genotype with TIgGER `plotGenotype`, we need to do a
 small modification to our genotype table
 
 
-```r
+``` r
 # get the genotype alleles
-alleles <- unlist(strsplit(asc_genotype$genotyped_imgt_alleles, ","))
+alleles <- unlist(strsplit(asc_genotype$genotyped_iuis_alleles, ","))
 # get the genes
 genes <- gsub("[*][0-9]+", "", alleles)
 # extract the alleles
@@ -437,14 +449,14 @@ genotype <- data.frame(alleles = alleles, gene = genes)
 tigger::plotGenotype(genotype = genotype)
 ```
 
-![plot of chunk PIgLET-vignette-10](figure/PIgLET-vignette-10-1.png)
+![plot of chunk PIgLET-vignette-11](figure/PIgLET-vignette-11-1.png)
 
 # Contact
 
 For help, questions, or suggestions, please contact:
 
-* [Ayelet Peres](mailto:peresay@biu.ac.il)
-* [Gur Yaari](mailto:gur.yaari@biu.ac.il)
+* [Ayelet Peres](mailto:ayelet.peres@yale.edu)
+* [Gur Yaari](mailto:gur.yaari@yale.edu)
 * [Issue tracker](https://bitbucket.org/yaarilab/piglet/issues?status=new&status=open&status=submitted&is_spam=!spam)
 
 # References

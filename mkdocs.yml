@@ -79,23 +79,45 @@ nav:
       - Generating ASC for a BIOMED IGHV reference: vignettes/PIgLET_biomed_asc.md
   - API Reference:
       - Overview: reference/index.md
-      - Allele Similarity Cluster:
+      - Allele Similarity Clusters:
           - inferAlleleClusters: topics/inferAlleleClusters.md
+          - igClust: topics/igClust.md
+          - igDistance: topics/igDistance.md
           - ighvClust: topics/ighvClust.md
           - ighvDistance: topics/ighvDistance.md
           - generateReferenceSet: topics/generateReferenceSet.md
-          - plotAlleleCluster: topics/plotAlleleCluster.md
           - artificialFRW1Germline: topics/artificialFRW1Germline.md
           - alleleClusterNames: topics/alleleClusterNames.md
-          - GermlineCluster-class: topics/GermlineCluster-class.md
+          - The GermlineCluster object: topics/GermlineCluster-class.md
+          - new_germline_cluster: topics/new_germline_cluster.md
+      - Community detection:
+          - detect_communities_leiden: topics/detect_communities_leiden.md
+          - optimize_resolution: topics/optimize_resolution.md
+          - distance_to_graph: topics/distance_to_graph.md
+      - Visualization:
+          - plotTruncatedTree: topics/plotTruncatedTree.md
+          - plotAlleleCluster: topics/plotAlleleCluster.md
+          - plotCommunityNetwork: topics/plotCommunityNetwork.md
+          - plotSilhouetteOptimization: topics/plotSilhouetteOptimization.md
+          - plotClusterComparison: topics/plotClusterComparison.md
       - Allele based genotype:
           - inferGenotypeAllele: topics/inferGenotypeAllele.md
+          - inferGenotypeAllele_asc: topics/inferGenotypeAllele_asc.md
           - assignAlleleClusters: topics/assignAlleleClusters.md
           - germlineASC: topics/germlineASC.md
           - recentAlleleClusters: topics/recentAlleleClusters.md
           - extractASCTable: topics/extractASCTable.md
           - zenodoArchive: topics/zenodoArchive.md
+      - SNP & sequence utilities:
+          - allele_diff: topics/allele_diff.md
+          - allele_diff_strings: topics/allele_diff_strings.md
+          - allele_diff_indices: topics/allele_diff_indices.md
+          - allele_diff_indices_parallel: topics/allele_diff_indices_parallel.md
+          - allele_diff_indices_parallel2: topics/allele_diff_indices_parallel2.md
+          - insert_gaps2_vec: topics/insert_gaps2_vec.md
       - Data:
           - HVGERM: topics/HVGERM.md
           - hv_functionality: topics/hv_functionality.md
+          - allele_cluster_table: topics/allele_cluster_table.md
+          - allele_threshold_table: topics/allele_threshold_table.md
   - Release Notes: news.md

@@ -1,31 +1,34 @@
-**plotAlleleCluster** - *Plotting the dendrogram of the clusters*
+**plot.GermlineCluster** - *Plot method for GermlineCluster*
 
 Description
 --------------------
 
-Plotting the dendrogram of the clusters
+Plot method for GermlineCluster
 
 
 Usage
 --------------------
 ```
-plotAlleleCluster(x, y = NULL, cex = 1, seed = 9999)
+"plot"(x, y = NULL, cex = 1, seed = 9999, ...)
 ```
 
 Arguments
 -------------------
 
 x
-:   The GermlineCluster object. See [inferAlleleClusters](inferAlleleClusters.md)
+:   GermlineCluster object
 
 y
-:   NULL. not in use.
+:   Not used
 
 cex
 :   Controls the size of the allele label. Default is 1.
 
 seed
 :   Set a seed number for drawing the dendrogram. Default 9999.
+
+...
+:   Additional arguments passed to plotting functions
 
 
 

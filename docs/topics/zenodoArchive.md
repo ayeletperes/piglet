@@ -15,13 +15,13 @@ zenodoArchive
 Format
 -------------------
 
-`[R6Class](http://www.rdocumentation.org/packages/R6/topics/R6Class)` object.
+`R6Class` object.
 
 
 Value
 -------------------
 
-Object of `[R6Class](http://www.rdocumentation.org/packages/R6/topics/R6Class)` for modelling an zenodoArchive for ASC cluster files
+Object of `R6Class` for modelling an zenodoArchive for ASC cluster files
 
 
 Public fields
@@ -276,7 +276,7 @@ zenodo_archive <- zenodoArchive$new(
 # zenodo_archive$download_zenodo_files()
 ```
 
-**Error**: <text>:14:0: unexpected end of input
+**Error in parse(text = input)**: <text>:14:0: unexpected end of input
 12: # # downloading the first file from the latest archive version
 13: # zenodo_archive$download_zenodo_files()
    ^

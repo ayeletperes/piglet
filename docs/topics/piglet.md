@@ -1,4 +1,4 @@
-**piglet** - *The Program for Ig clusters (PIgLET) package*
+# The Program for Ig clusters (PIgLET) package
 
 Description
 --------------------
@@ -53,7 +53,6 @@ References
 
 
 1. ##
-
 
 
 

@@ -19,7 +19,7 @@ allele_cluster_table
 :   The allele cluster table.
 
 germline
-:   An IGHV germline set with matching names to the "imgt_allele" column in the allele_cluster_table.
+:   An IGHV germline set with matching names to the "iuis_allele" column in the allele_cluster_table.
 
 
 
@@ -35,23 +35,21 @@ Examples
 -------------------
 
 ```R
-### Not run:
-asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
+# preferably obtain the latest ASC cluster table
+# asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRUE)
 
-```
-
-*Files will be downloaded to tmp directory: /tmp/Rtmpn83kLa**doi supplied is not an 'all versions doi'
-for viewing all of the archive records change the doi to:10.5281/zenodo.7401189*
-```R
-# 
 # allele_cluster_table <- extractASCTable(archive_file = asc_archive)
-# 
-# data(HVGERM)
-# 
-# asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
+
+data(HVGERM)
+
+# example allele similarity cluster table
+data(allele_cluster_table)
+
+asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
+
 ```
 
-
+*Warning*:Column 'imgt_allele' has been renamed to 'iuis_allele'. Please update your alleleClusterTable.
 
 
 

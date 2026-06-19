@@ -14,8 +14,8 @@ Usage
 recentAlleleClusters(
 doi = "10.5281/zenodo.7401189",
 path,
-get_file = F,
-quite = F
+get_file = FALSE,
+quite = FALSE
 )
 ```
 
@@ -50,9 +50,10 @@ Examples
 ```R
 ### Not run:
 recentAlleleClusters(doi="10.5281/zenodo.7401189")
+
 ```
 
-*Files will be downloaded to tmp directory: /tmp/Rtmpn83kLa*
+*Files will be downloaded to tmp directory: /tmp/RtmpqhJJA9*
 
 
 

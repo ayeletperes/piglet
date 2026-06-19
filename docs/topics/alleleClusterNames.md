@@ -9,7 +9,14 @@ For a given cluster the function collapse similar sequences and renames the sequ
 Usage
 --------------------
 ```
-alleleClusterNames(cluster, allele.cluster.table, germ.dist, chain, segment)
+alleleClusterNames(
+cluster,
+allele.cluster.table,
+germ.dist,
+chain,
+segment,
+family_prefix = TRUE
+)
 ```
 
 Arguments
@@ -29,6 +36,9 @@ chain
 
 segment
 :   A character with the segment identifier: IGHV/IGHD/IGHJ.... (Currently only IGHV is supported)
+
+family_prefix
+:   Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1*01). If FALSE, omit the "F" (e.g. IGHV1-G1*01).
 
 
 

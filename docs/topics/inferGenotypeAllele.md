@@ -1,11 +1,12 @@
-**inferGenotypeAllele** - *Allele similarity cluster based genotype inference*
+**inferGenotypeAllele** - *Allele based genotype inference*
 
 Description
 --------------------
 
 `inferGenotypeAllele` infer an individual's genotype based on the allele-base method.
 The method utilize the allele specific threshold to determine the presence of an allele in the genotype.
-More specifically, the absolute frequency of each allele is calculated and checked against the threshold.
+More specifically, based on the allele frequency, repertoire depth, and the specific allele threshold, a confidence level (Z score) is calculated
+for the presence of the allele in the genotype. The user can select the confidence level for the genotype inference.
 
 
 Usage
@@ -13,12 +14,16 @@ Usage
 ```
 inferGenotypeAllele(
 data,
-alleleClusterTable,
-v_call = "v_call",
+allele_threshold_table = NULL,
+call = "v_call",
+asc_annotation = FALSE,
 single_assignment = FALSE,
+translate_to_asc = FALSE,
 germline_db = NA,
 find_unmutated = FALSE,
-seq = "sequence_alignment"
+seq = "sequence_alignment",
+default_allele_threshold = 1e-04,
+quiet = TRUE
 )
 ```
 
@@ -26,16 +31,22 @@ Arguments
 -------------------
 
 data
-:   data.frame in AIRR format, containing V allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
+:   data.frame in AIRR format, containing allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
 
-alleleClusterTable
-:   A data.frame of the allele similarity clusters thresholds.
+allele_threshold_table
+:   A data.frame of the alleles and their thresholds.
 
-v_call
-:   name of the V allele call column. Default is `v_call`
+call
+:   name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is `v_call`
+
+asc_annotation
+:   Logical (FALSE by default). Are the allele calls annotated with the allele similarity clusters.
 
 single_assignment
 :   if TRUE, the method only considers sequence with single assignment for the genotype inference.
+
+translate_to_asc
+:   For V allele calls, collapse identical allele for the genotype inference. Default is FALSE.
 
 germline_db
 :   named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
@@ -46,45 +57,27 @@ find_unmutated
 seq
 :   name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
 
+default_allele_threshold
+:   The default allele threshold for the genotype inference, in case the allele threshold is not in the `allele_threshold_table`. Default is 1e-04.
+
+quiet
+:   Logical (TRUE by default). Do you want to suppress informative messages
+
 
 
 
 Value
 -------------------
 
-A a data.frame with the inferred V genotype. The table contains the following columns:<table><tr><td>
-gene </td>
-<td> alleles </td>
-<td> imgt_alleles </td>
-<td> counts </td>
-<td> absolute_fraction </td>
-<td> absolute_threshold </td>
-<td> genotyped_alleles </td>
-</tr><tr><td> genotype_imgt_alleles </td>
-<td>
-allele cluster </td>
-<td> the present alleles </td>
-<td> the imgt nomenclature </td>
-<td> the number of reads </td>
-<td> the absolute fraction </td>
-<td> the population driven allele </td>
-</tr><tr><td> the alleles which </td>
-<td> the imgt nomenclature </td>
-<td>
-</td>
-<td> in the repertoire </td>
-<td> of the alleles </td>
-<td> for each alleles </td>
-<td> of the alleles </td>
-</tr><tr><td> thresholds for genotype presence </td>
-<td> entered the genotype </td>
-<td> of the alleles </td>
-<td>
-gene </td>
-<td> alleles </td>
-<td> imgt_alleles </td>
-<td> counts </td>
-</tr></table>
+A a data.frame with the inferred V genotype. The table contains the following columns:
+
++  allele: The alleles in the `allele_threshold_table`.
++  counts: The number of reads for each alleles.
++  depth: The total number of reads in the genotype (Sum of counts).
++  threshold: The population driven allele thresholds for genotype presence.
++  z_score: The confidence level for the presence of the allele in the genotype.
++  asc_allele: If `translate_to_asc` is true, the asc allele value from allele_threshold_table.
+
 
 
 Details
@@ -100,28 +93,38 @@ Examples
 -------------------
 
 ```R
-### Not run:
 # loading TIgGER AIRR-seq b cell data
-# data <- tigger::AIRRDb
-# 
-# # getting the archive
-# asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7401239", get_file = TRUE)
-# 
-# # extracting the allele cluster table
-# allele_cluster_table <- extractASCTable(archive_file = asc_archive)
-# 
-# data(HVGERM)
-# 
-# # reforming the germline set
-# asc_germline <- germlineASC(allele_cluster_table, germline = HVGERM)
-# 
-# # assigning the ASC alleles
-# asc_data <- assignAlleleClusters(data, allele_cluster_table)
-# 
-# # inferring the genotype
-# asc_genotype <- inferGenotypeAllele(asc_data,
-# alleleClusterTable = allele_cluster_table,
-# germline_db = asc_germline, find_unmutated=T)
+data <- tigger::AIRRDb
+
+# allele threshold table
+data(allele_threshold_table)
+
+data(HVGERM)
+
+# inferring the genotype
+genotype <- inferGenotypeAllele(
+data = data,
+allele_threshold_table = allele_threshold_table,
+germline_db = HVGERM, find_unmutated=TRUE)
+
+# filter alleles with z_score >= 0 
+
+head(genotype[genotype$z_score >= 0,])
+
+```
+
+
+```
+Key: <allele>
+       gene      allele count    depth threshold   z_score
+     <char>      <char> <num>    <num>     <num>     <num>
+1: IGHV1-18 IGHV1-18*01  1005 4738.942     1e-03  459.7163
+2:  IGHV1-2  IGHV1-2*02   664 4738.942     1e-03  302.9940
+3:  IGHV1-2  IGHV1-2*04   302 4738.942     1e-04  438.0321
+4: IGHV1-24 IGHV1-24*01   105 4738.942     1e-04  151.8468
+5:  IGHV1-3  IGHV1-3*01   226 4738.942     1e-05 1037.9557
+6: IGHV1-46 IGHV1-46*01   624 4738.942     1e-03  284.6101
+
 ```
 
 

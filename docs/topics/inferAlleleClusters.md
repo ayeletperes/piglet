@@ -3,7 +3,8 @@
 Description
 --------------------
 
-A wrapper function to infer the allele clusters. See details for cluster inference
+A wrapper function to infer the allele clusters. Supports both hierarchical
+clustering (default) and Leiden community detection.
 
 
 Usage
@@ -11,10 +12,21 @@ Usage
 ```
 inferAlleleClusters(
 germline_set,
+locus = NULL,
+clustering_method = c("hierarchical", "leiden"),
+distance_method = c("decipher", "hamming", "lv"),
 trim_3prime_side = 318,
 mask_5prime_side = 0,
 family_threshold = 75,
-allele_cluster_threshold = 95
+allele_cluster_threshold = 95,
+cluster_method = "complete",
+resolution = NULL,
+target_clusters = NULL,
+optimize_silhouette = TRUE,
+ncores = 1,
+aa_set = FALSE,
+quiet = FALSE,
+family_prefix = TRUE
 )
 ```
 
@@ -22,19 +34,53 @@ Arguments
 -------------------
 
 germline_set
-:   Either a character vector of strings representing Ig sequence alleles, or a path to to the germline set file (must be gapped by IMGT scheme for optimal results).
+:   A character vector of Ig sequence alleles (must be gapped by IMGT scheme for optimal results).
+
+locus
+:   The locus type. One of "IGHV", "IGKV", "IGLV", "IGHD", "IGHJ", "IGKJ", "IGLJ".
+Default is NULL (auto-detected from sequence names).
+
+clustering_method
+:   Clustering method. One of "hierarchical" (default) or "leiden".
+
+distance_method
+:   Distance calculation method. One of "decipher" (default), "hamming", or "lv".
 
 trim_3prime_side
-:   To which nucleotide position to trim the sequences. Default is 318; NULL will take the entire sequence length.
+:   Position to trim sequences from 3' end. Default is 318; NULL uses full length.
 
 mask_5prime_side
-:   Mimic short sequence libraries, gets the length of nucleotides to mask from the 5' side, the staring position. Default is 0.
+:   Length to mask from 5' side. Default is 0.
 
 family_threshold
-:   The similarity threshold for the family level. Default is 75.
+:   Similarity threshold for family level. Default is 75.
 
 allele_cluster_threshold
-:   The similarity threshold for the allele cluster level. Default is 95.
+:   Similarity threshold for allele cluster level (hierarchical only). Default is 95.
+
+cluster_method
+:   The linkage method for hierarchical clustering (used for family assignment in both methods). Default is "complete".
+
+resolution
+:   Resolution parameter for Leiden clustering. Default is NULL (auto-optimized).
+
+target_clusters
+:   Target number of clusters for Leiden optimization. Default is NULL.
+
+optimize_silhouette
+:   Optimize resolution using silhouette score (Leiden only). Default is TRUE.
+
+ncores
+:   Number of cores for parallel processing (Leiden only). Default is 1.
+
+aa_set
+:   Logical. Is the sequence set amino acids? Default is FALSE.
+
+quiet
+:   Logical. Suppress messages. Default is FALSE.
+
+family_prefix
+:   Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1*01). If FALSE, omit the "F" (e.g. IGHV1-G1*01).
 
 
 
@@ -42,51 +88,35 @@ allele_cluster_threshold
 Value
 -------------------
 
-An object of type [GermlineCluster](GermlineCluster-class.md) that includes the following slots:
+An object of class [GermlineCluster](GermlineCluster.md) containing:
+
++  germlineSet: Modified germline set (3' trimming and 5' masking)
++  alleleClusterSet: Renamed germline set with ASC names
++  alleleClusterTable: data.frame of allele similarity clusters
++  threshold: List of threshold parameters
++  hclustAlleleCluster: hclust object (both methods)
++  clusteringMethod: Method used ("hierarchical" or "leiden")
++  communityObject: Community object (Leiden method)
++  graphObject: igraph object (Leiden method)
++  silhouetteScore: Silhouette score (Leiden method)
++  resolutionParameter: Resolution used (Leiden method)
++  locus: Locus identifier
+
 
 
 Details
 -------------------
 
-The distance between pairs of the alleles germline set sequences is calculated, then the alleles are clustered based on two similarity thresholds.
-One for the family cluster and the other for the allele cluster. Then the new allele cluster names are generated and the germline set sequences are renamed and duplicated alleles are removed.
+The distance between pairs of allele sequences is calculated, then the alleles are clustered.
+For hierarchical clustering, two similarity thresholds define family and allele clusters.
+For Leiden clustering, community detection identifies clusters at a specified resolution.
 
-The allele cluster names are by the following scheme:
+The allele cluster names follow this scheme:
 IGHVF1-G1*01 - IGH = chain, V = region, F1 = family cluster numbering,
-G1 - allele cluster numbering, and 01 = allele numbering (given by clustering order, no connection to the expression)
+G1 = allele cluster numbering, 01 = allele numbering (by clustering order)
 
-To plot the allele clusters dendrogram use the `plot` function on the [GermlineCluster](GermlineCluster-class.md) object
-
-
-Slots
--------------------
-
-
-
-`germlineSet`
-:   
-+  A character vector with the modified germline set (3' trimming and 5' masking).
-
-
-`alleleClusterSet`
-:   
-+  A character vector of renamed input germline set to the ASC name scheme (Without 3' and 5' modifications).
-
-
-`alleleClusterTable`
-:   
-+  A data.frame of the allele similarity cluster with the new names and the default thresholds.
-
-
-`threshold`
-:   
-+  A list of the input family and allele cluster similarity thresholds.
-
-
-`hclustAlleleCluster`
-:   
-+  An hclust object of the germline set hierarchical clustering,
-
+For V segments, the "decipher" distance method is recommended.
+For D and J segments with variable lengths, "lv" (Levenshtein) is more appropriate.
 
 
 
@@ -94,26 +124,37 @@ Examples
 -------------------
 
 ```R
-### Not run:
 # load the initial germline set
-# 
-# data(HVGERM)
-# 
-# germline <- HVGERM
-# 
-# asc <- inferAlleleClusters(germline)
-# 
-# ## plotting the clusters
-# 
-# plot(asc)
+
+data(HVGERM)
+
+germline <- HVGERM[!grepl("^[.]", HVGERM)]
+
+# Hierarchical clustering (default)
+asc <- inferAlleleClusters(germline)
+
+# Leiden community detection
+asc_leiden <- inferAlleleClusters(germline[1:50],
+clustering_method = "leiden",
+target_clusters = 10)
+
 ```
 
+*Optimizing resolution using silhouette score...*
+```R
+
+## plotting the clusters
+plot(asc)
+
+```
+
+![4](inferAlleleClusters-4.png)
 
 
 See also
 -------------------
 
-By using the plot function on the returned object, a colorful visualization of the allele clusters dendrogram and threshold is received
+`[igDistance](igDistance.md)`, `[igClust](igClust.md)`, `[plot.GermlineCluster](plot.GermlineCluster.md)`
 
 
 

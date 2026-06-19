@@ -1,24 +1,25 @@
-**ighvDistance** - *Germline set alleles distance*
+**ighvDistance** - *Germline set alleles distance (deprecated)*
 
 Description
 --------------------
 
-Calculates the distance between pairs of alleles based on their aligned germline sequences.
-The function assume the germline set sequence are at an even length.
-If not the function will pad the sequences with to the longest sequence length with Ns.
+This function is deprecated. Use `[igDistance](igDistance.md)` instead.
 
 
 Usage
 --------------------
 ```
-ighvDistance(germline_set)
+ighvDistance(germline_set, AA = FALSE)
 ```
 
 Arguments
 -------------------
 
 germline_set
-:   A character list of the IMGT aligned IGHV allele sequences. See details for curating options.
+:   A character list of aligned IGHV allele sequences.
+
+AA
+:   Logical (FALSE by default). If to calculate the distance based on amino acid sequences.
 
 
 
@@ -26,16 +27,15 @@ germline_set
 Value
 -------------------
 
-A `matrix` of the computed distances between the alleles pairs.
+A matrix of computed distances between allele pairs.
 
 
-Details
+
+
+See also
 -------------------
 
-The aligned IMGT IGHV allele germline set can be download from the IMGT site [https://www.imgt.org/](https://www.imgt.org/) under the section genedb.
-
-
-
+`[igDistance](igDistance.md)` for the current implementation
 
 
 
