@@ -34,6 +34,13 @@ NEW FEATURES:
   z-scores. Single-locus input is unaffected (it collapses to one group,
   reproducing the previous global depth).
 
+BUG FIXES:
+
++ `inferGenotypeAllele_asc(single_assignment = TRUE)` previously failed with
+  "object 'gene' not found" because the per-gene aggregation did not name its
+  grouping columns; it now runs correctly (and benefits from the per-locus
+  depth above).
+
 Version 1.2.1:  Feb 2026
 -------------------------------------------------------------------------------
 

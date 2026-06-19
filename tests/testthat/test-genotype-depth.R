@@ -68,3 +68,55 @@ test_that("inferGenotypeAllele_asc normalises fractions per locus", {
   expect_equal(unname(frac["IGHV1-2"]), 0.8)
   expect_equal(unname(frac["IGHV3-7"]), 0.2)
 })
+
+test_that("inferGenotypeAllele groups depth per locus when translate_to_asc = TRUE", {
+  att <- data.table::data.table(
+    allele     = c("IGHV1-2*01", "IGHV3-7*01", "IGKV1-5*01", "IGKV3-20*01"),
+    asc_allele = c("IGHV1-2*01", "IGHV3-7*01", "IGKV1-5*01", "IGKV3-20*01"),
+    threshold  = rep(1e-04, 4)
+  )
+
+  geno <- inferGenotypeAllele(mixed_data, allele_threshold_table = att,
+                              translate_to_asc = TRUE, find_unmutated = FALSE)
+
+  expect_equal(unique(geno$depth[grepl("^IGH", geno$allele)]), 100)
+  expect_equal(unique(geno$depth[grepl("^IGK", geno$allele)]), 40)
+})
+
+test_that("inferGenotypeAllele_asc is per-locus with single_assignment = TRUE", {
+  act <- data.frame(
+    new_allele  = c("IGHV1-2*01", "IGHV3-7*01", "IGKV1-5*01", "IGKV3-20*01"),
+    func_group  = c("IGHV1-2", "IGHV3-7", "IGKV1-5", "IGKV3-20"),
+    iuis_allele = c("IGHV1-2*01", "IGHV3-7*01", "IGKV1-5*01", "IGKV3-20*01"),
+    thresh      = rep(1e-04, 4),
+    stringsAsFactors = FALSE
+  )
+
+  asc <- inferGenotypeAllele_asc(mixed_data, alleleClusterTable = act,
+                                 single_assignment = TRUE, find_unmutated = FALSE)
+
+  frac <- setNames(as.numeric(asc$absolute_fraction), asc$gene)
+  expect_equal(unname(frac["IGKV1-5"]), 0.75)  # 30/40, not 30/140
+  expect_equal(unname(frac["IGHV1-2"]), 0.8)   # 80/100
+})
+
+test_that("inferGenotypeAllele_asc confidence z-score uses the per-locus depth", {
+  act <- data.frame(
+    new_allele  = c("IGHV1-2*01", "IGHV3-7*01", "IGKV1-5*01", "IGKV3-20*01"),
+    func_group  = c("IGHV1-2", "IGHV3-7", "IGKV1-5", "IGKV3-20"),
+    iuis_allele = c("IGHV1-2*01", "IGHV3-7*01", "IGKV1-5*01", "IGKV3-20*01"),
+    thresh      = rep(1e-04, 4),
+    stringsAsFactors = FALSE
+  )
+
+  asc <- inferGenotypeAllele_asc(mixed_data, alleleClusterTable = act,
+                                 find_unmutated = FALSE)
+
+  zf <- function(Nai, N, Tai) (Nai - Tai * N) / sqrt(Tai * N * (1 - Tai))
+  conf <- setNames(as.numeric(asc$genotype_confidence), asc$gene)
+
+  # IGK confidence must use the light-chain depth (40), not the global 140.
+  expect_equal(unname(conf["IGKV1-5"]), zf(30, 40, 1e-04), tolerance = 1e-3)
+  expect_false(isTRUE(all.equal(unname(conf["IGKV1-5"]), zf(30, 140, 1e-04),
+                                tolerance = 1e-3)))
+})

@@ -783,7 +783,7 @@ inferGenotypeAllele_asc <- function(data,
     geno_V[, "frac" := 1]
     geno_V_fraction <-
       geno_V[, .("absolute_fraction" = round(sum(get("frac")) / unique(get("n_row_sub")), 8),
-                 "count" = sum(get("frac"))), by = list(get("gene"), get("v_allele"))]
+                 "count" = sum(get("frac"))), by = mget(c("gene", "v_allele"))]
   } else{
     ### distribute the multiple assignments for non naive sequences
     geno_V <- geno_V[!is.na(get("v_allele"))]
