@@ -32,6 +32,7 @@ Imports:
     RColorBrewer (>= 1.1.2),
     ggplot2 (>= 3.3.6),
     circlize (>= 0.4.15),
+    gridExtra (>= 2.3),
     R6 (>= 2.5.1),
     jsonlite (>= 1.8.3),
     Rcpp (>= 0.11.0),

@@ -732,3 +732,220 @@ plotClusterComparison <- function(hierarchical_result,
 
   return(p)
 }
+
+# ------------------------------------------------------------------------------
+
+# VDJbase allele color palette (from yaarilab/vdjbasevis allelePalette), so that
+# PIgLET genotype plots use the same allele colors as VDJbase.
+.ALLELE_PALETTE <- c(
+  "01" = "#f5bc6e", "02" = "#9d69f4", "03" = "#598200", "04" = "#e375fd",
+  "05" = "#01a452", "06" = "#ff6ed5", "07" = "#60de8a", "08" = "#e3006d",
+  "09" = "#0edec9", "10" = "#c43e00", "11" = "#0197f3", "12" = "#ffa629",
+  "13" = "#7c82ff", "14" = "#8dd979", "15" = "#9a0f79", "16" = "#008844",
+  "17" = "#ff64aa", "18" = "#ff5d68", "19" = "#ff88ce"
+)
+# extra distinct colors for allele numbers beyond the curated 01-19 set
+.ALLELE_PALETTE_EXTRA <- c(
+  "#00633c", "#355d06", "#009f8b", "#ff7d4e", "#02a8ec", "#7d4408",
+  "#89c8ff", "#ff897a", "#58d8e0", "#ff8793", "#82d89e", "#803a6a"
+)
+
+#' Allele color palette
+#'
+#' \code{allelePalette} returns a named vector of colors for a set of alleles,
+#' reusing the VDJbase allele color scheme (see the \code{vdjbasevis} package) for
+#' the curated allele numbers and generating additional, visually distinct colors
+#' when there are more alleles than the curated palette covers. This lets genotype
+#' plots scale to an arbitrary number of alleles while staying consistent with
+#' VDJbase for the common ones.
+#'
+#' @param alleles a vector of allele identifiers, typically allele numbers such as
+#'   \code{"01"}, \code{"02"}. A novel-allele suffix after \code{"_"} shares the
+#'   color of its base allele.
+#'
+#' @return a named character vector mapping each unique allele to a hex color.
+#'
+#' @details The curated colors are taken from \code{vdjbasevis::allelePalette}
+#'   (alleles \code{01}-\code{19}). Alleles beyond that first draw from a pool of
+#'   additional distinct colors and then, if still short, from evenly spaced hues
+#'   generated in HCL space.
+#'
+#' @examples
+#' allelePalette(c("01", "02", "06"))
+#' # also covers many alleles without running out of colors
+#' length(allelePalette(sprintf("%02d", 1:40)))
+#'
+#' @export
+allelePalette <- function(alleles) {
+  alleles <- unique(as.character(alleles))
+  base <- sub("_.*$", "", alleles)
+  ubase <- unique(base)
+  # order numeric alleles ascending, then any non-numeric, for stable assignment
+  num <- suppressWarnings(as.numeric(ubase))
+  ubase <- ubase[order(is.na(num), num, ubase)]
+
+  cols <- stats::setNames(rep(NA_character_, length(ubase)), ubase)
+  known <- ubase %in% names(.ALLELE_PALETTE)
+  cols[known] <- .ALLELE_PALETTE[ubase[known]]
+
+  n_missing <- sum(!known)
+  if (n_missing > 0) {
+    extra <- setdiff(.ALLELE_PALETTE_EXTRA, cols[known])
+    if (n_missing > length(extra)) {
+      n_gen <- n_missing - length(extra)
+      extra <- c(extra, grDevices::hcl(h = seq(15, 375, length.out = n_gen + 1)[-1],
+                                       c = 100, l = 65))
+    }
+    cols[!known] <- extra[seq_len(n_missing)]
+  }
+
+  out <- unname(cols[base])
+  stats::setNames(out, alleles)
+}
+
+# ------------------------------------------------------------------------------
+
+#' Plot a PIgLET genotype with a per-allele confidence panel
+#'
+#' \code{plotGenotypeAllele} draws a genotype bar plot in the style of
+#' \code{tigger::plotGenotype}, with an aligned confidence panel. Unlike TIgGER,
+#' which carries a single confidence value per gene, PIgLET assigns a z-score to
+#' each allele; the confidence panel therefore mirrors the allele bars and colors
+#' each allele segment by its own z-score.
+#'
+#' @param genotype    a genotype table from \link{genotypeToTigger}, or a raw
+#'                     genotype from \link{inferGenotypeAllele} /
+#'                     \link{inferGenotypeAllele_asc} (converted automatically via
+#'                     \link{genotypeToTigger}).
+#' @param level       row key when converting a raw genotype: \code{"gene"}
+#'                     (default) or \code{"asc"}. Ignored when \code{genotype} is
+#'                     already a converted table.
+#' @param z_threshold z-score threshold used to select the genotyped alleles when
+#'                     converting a raw genotype. Default 0.
+#' @param gene_sort   gene ordering, passed to \code{alakazam::sortGenes}:
+#'                     \code{"name"} (default) or \code{"position"}.
+#' @param text_size   point size of the plotted text.
+#' @param silent      if \code{TRUE} return the grob without drawing it.
+#' @param ...         additional arguments passed to \code{ggplot2::theme}.
+#'
+#' @return A \code{gridExtra} grob combining the allele panel and the per-allele
+#'   z-score confidence panel (returned invisibly).
+#'
+#' @details Only the genotyped alleles (those with \code{z_score >= z_threshold})
+#'   are shown. Each gene/ASC row is split into equal segments, one per genotyped
+#'   allele; the left panel colors the segments by allele identity and the right
+#'   panel colors the same segments by their z-score on a continuous blue scale.
+#'
+#' @seealso \link{genotypeToTigger}, \link{inferGenotypeAllele},
+#'   \link{inferGenotypeAllele_asc}
+#'
+#' @examples
+#' \dontrun{
+#' data <- tigger::AIRRDb
+#' data(allele_threshold_table)
+#' data(HVGERM)
+#' genotype <- inferGenotypeAllele(data, allele_threshold_table = allele_threshold_table,
+#'                                 germline_db = HVGERM, find_unmutated = TRUE)
+#' plotGenotypeAllele(genotype)
+#' }
+#'
+#' @export
+plotGenotypeAllele <- function(genotype,
+                               level = c("gene", "asc"),
+                               z_threshold = 0,
+                               gene_sort = c("name", "position"),
+                               text_size = 12,
+                               silent = FALSE,
+                               ...) {
+  level <- match.arg(level)
+  gene_sort <- match.arg(gene_sort)
+
+  # Accept either a genotypeToTigger() table or a raw genotype (auto-convert).
+  if (all(c("gene", "alleles", "z_score", "genotyped_alleles") %in% names(genotype))) {
+    tab <- data.table::as.data.table(genotype)
+  } else {
+    tab <- genotypeToTigger(genotype, level = level, z_threshold = z_threshold)
+  }
+
+  # One row per genotyped allele, carrying its z-score.
+  long <- tab[, {
+    al <- strsplit(get("alleles"), ",")[[1]]
+    zz <- as.numeric(strsplit(get("z_score"), ",")[[1]])
+    gt <- strsplit(get("genotyped_alleles"), ",")[[1]]
+    keep <- al %in% gt
+    list(allele = al[keep], z = zz[keep])
+  }, by = "gene"]
+
+  if (nrow(long) == 0L) {
+    stop("No genotyped alleles to plot (none pass z_threshold = ", z_threshold, ").")
+  }
+
+  # Gene order (reuse alakazam's sorter), reversed so the first gene is on top.
+  gene_levels <- rev(alakazam::sortGenes(unique(as.character(long[["gene"]])),
+                                         method = gene_sort))
+  long[, "gene" := factor(get("gene"), levels = gene_levels)]
+  long[, "allele" := factor(get("allele"), levels = sort(unique(get("allele"))))]
+  long[, "seg" := 1]   # equal-height segment per allele (geom_col + position fill)
+  data.table::setorderv(long, c("gene", "allele"))
+
+  base_theme <- ggplot2::theme_bw() +
+    ggplot2::theme(axis.ticks = ggplot2::element_blank(),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   text = ggplot2::element_text(size = text_size),
+                   strip.background = ggplot2::element_blank(),
+                   strip.text = ggplot2::element_text(face = "bold"))
+
+  # Allele panel: equal segments per gene, colored by allele identity.
+  p <- ggplot2::ggplot(long, ggplot2::aes(x = !!rlang::sym("gene"),
+                                          y = !!rlang::sym("seg"),
+                                          fill = !!rlang::sym("allele"),
+                                          group = !!rlang::sym("allele"))) +
+    base_theme +
+    ggplot2::theme(axis.text.x = ggplot2::element_blank()) +
+    ggplot2::geom_col(position = "fill") +
+    ggplot2::coord_flip() + ggplot2::xlab("Gene") + ggplot2::ylab("") +
+    ggplot2::scale_fill_manual(name = "Allele",
+                               values = allelePalette(levels(long[["allele"]])))
+
+  # Confidence panel: same segments, colored by per-allele z-score.
+  blues <- c("#F7FBFF", "#DEEBF7", "#C6DBEF", "#9ECAE1", "#6BAED6",
+             "#4292C6", "#2171B5", "#08519C", "#08306B")
+  pk <- ggplot2::ggplot(long, ggplot2::aes(x = !!rlang::sym("gene"),
+                                           y = !!rlang::sym("seg"),
+                                           fill = !!rlang::sym("z"),
+                                           group = !!rlang::sym("allele"))) +
+    base_theme +
+    ggplot2::theme(axis.text = ggplot2::element_blank()) +
+    ggplot2::geom_col(position = "fill") +
+    ggplot2::coord_flip() + ggplot2::xlab("") + ggplot2::ylab("") +
+    ggplot2::scale_fill_gradientn(name = "z-score", colours = blues)
+
+  p <- p + do.call(ggplot2::theme, list(...))
+  pk <- pk + do.call(ggplot2::theme, list(...))
+
+  # Pull the legend grobs out so the panels can be arranged without their
+  # fixed-width legends stealing panel space.
+  get_legend_grob <- function(x) {
+    g <- ggplot2::ggplotGrob(x)
+    idx <- which(grepl("guide-box", g$layout$name))
+    for (i in idx) if (!inherits(g$grobs[[i]], "zeroGrob")) return(g$grobs[[i]])
+    g$grobs[[idx[1]]]
+  }
+  leg_allele <- get_legend_grob(p)
+  leg_conf <- get_legend_grob(pk)
+
+  # Align the gene rows of both legend-less panels and arrange side by side,
+  # with the two legends stacked in their own column.
+  g1 <- ggplot2::ggplotGrob(p + ggplot2::theme(legend.position = "none"))
+  g2 <- ggplot2::ggplotGrob(pk + ggplot2::theme(legend.position = "none"))
+  g2$heights <- g1$heights
+  panels <- gridExtra::arrangeGrob(g1, g2, ncol = 2, widths = c(0.85, 0.15))
+  legends <- gridExtra::arrangeGrob(leg_allele, leg_conf, ncol = 1)
+  combined <- gridExtra::arrangeGrob(panels, legends, ncol = 2, widths = c(0.85, 0.15))
+
+  if (!silent) {
+    gridExtra::grid.arrange(combined)
+  }
+  invisible(combined)
+}

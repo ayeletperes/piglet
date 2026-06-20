@@ -34,6 +34,20 @@ NEW FEATURES:
   z-scores. Single-locus input is unaffected (it collapses to one group,
   reproducing the previous global depth).
 
++ New `genotypeToTigger()` converts the output of `inferGenotypeAllele()` or
+  `inferGenotypeAllele_asc()` into the per-gene TIgGER/VDJbase genotype table
+  layout (`gene`, `alleles`, `counts`, `total`, `z_score`, `genotyped_alleles`).
+  The input type is detected automatically, the row key is selectable with
+  `level = c("gene", "asc")`, and the set of `genotyped_alleles` is determined by
+  a z-score threshold (`z_threshold`, default 0). An optional `file` argument
+  writes the table as a tab-separated file.
+
++ New `plotGenotypeAllele()` plots a genotype in the style of
+  `tigger::plotGenotype()`, with an aligned confidence panel. Because PIgLET
+  assigns a z-score per allele (rather than one value per gene), the confidence
+  panel mirrors the allele bars and colors each allele segment by its own
+  z-score. Accepts either a `genotypeToTigger()` table or a raw genotype.
+
 BUG FIXES:
 
 + `inferGenotypeAllele_asc(single_assignment = TRUE)` previously failed with

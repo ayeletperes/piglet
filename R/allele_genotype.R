@@ -1020,6 +1020,159 @@ inferGenotypeAllele_asc <- function(data,
   #   }
   # }
   # rownames(geno) <- NULL
-  
+
   return(genoV)
+}
+
+# ------------------------------------------------------------------------------
+
+#' Convert a PIgLET genotype to a TIgGER/VDJbase genotype table
+#'
+#' \code{genotypeToTigger} reshapes the output of \link{inferGenotypeAllele} or
+#' \link{inferGenotypeAllele_asc} into the per-gene table layout used by TIgGER
+#' and VDJbase. The set of genotyped alleles is determined from the allele
+#' z-score and a z-score threshold.
+#'
+#' @param genotype    a genotype \code{data.frame} produced by
+#'                     \link{inferGenotypeAllele} (one row per allele, with a
+#'                     \code{z_score} column) or by \link{inferGenotypeAllele_asc}
+#'                     (one row per gene, with a \code{genotype_confidence}
+#'                     column). The input type is detected automatically.
+#' @param level        the row key for the output table. \code{"gene"} (default)
+#'                     keys by V gene; \code{"asc"} keys by the allele similarity
+#'                     cluster. \code{"asc"} requires the genotype to carry ASC
+#'                     information (i.e. \link{inferGenotypeAllele_asc} output, or
+#'                     \link{inferGenotypeAllele} run with \code{asc_annotation}
+#'                     or \code{translate_to_asc}).
+#' @param z_threshold  the z-score threshold for calling an allele present in the
+#'                     genotype. Alleles with \code{z_score >= z_threshold} are
+#'                     listed in \code{genotyped_alleles}. Default is 0.
+#' @param file         optional path. When supplied, the table is also written as
+#'                     a tab-separated file with \code{data.table::fwrite}.
+#'
+#' @return
+#' A \code{data.table} with one row per gene (or ASC cluster), and columns:
+#' \itemize{
+#'   \item \code{gene} - the V gene or ASC cluster.
+#'   \item \code{alleles} - the candidate allele numbers, comma-separated and
+#'         ordered by descending count.
+#'   \item \code{counts} - the read counts, comma-separated, matching \code{alleles}.
+#'   \item \code{total} - the total read count for the gene.
+#'   \item \code{depth} - the per-locus repertoire depth used as the denominator
+#'         of the z-score.
+#'   \item \code{threshold} - the per-allele presence thresholds, comma-separated,
+#'         matching \code{alleles}.
+#'   \item \code{z_score} - the per-allele z-scores, comma-separated, matching \code{alleles}.
+#'   \item \code{genotyped_alleles} - the allele numbers with \code{z_score >= z_threshold},
+#'         comma-separated.
+#' }
+#'
+#' @seealso \link{inferGenotypeAllele} and \link{inferGenotypeAllele_asc} for
+#' producing the input genotype.
+#'
+#' @examples
+#'
+#' # loading TIgGER AIRR-seq b cell data
+#' data <- tigger::AIRRDb
+#'
+#' data(allele_threshold_table)
+#' data(HVGERM)
+#'
+#' genotype <- inferGenotypeAllele(
+#'   data = data,
+#'   allele_threshold_table = allele_threshold_table,
+#'   germline_db = HVGERM, find_unmutated = TRUE)
+#'
+#' # convert to the TIgGER/VDJbase table layout
+#' geno_table <- genotypeToTigger(genotype)
+#' head(geno_table)
+#'
+#' @export
+genotypeToTigger <- function(genotype,
+                             level = c("gene", "asc"),
+                             z_threshold = 0,
+                             file = NULL) {
+  . = NULL
+  level <- match.arg(level)
+  genotype <- data.table::as.data.table(genotype)
+  cols <- names(genotype)
+
+  # extract the allele-number suffix from a (possibly full) allele name:
+  # "IGHV1-2*04" -> "04"; a bare "04" is returned unchanged.
+  allele_suffix <- function(x) {
+    suffix <- vapply(strsplit(as.character(x), "[*]"), function(p) p[length(p)],
+                     character(1))
+    gsub("^([0-9]+).*$", "\\1", suffix)
+  }
+
+  # Normalise either input into a common long table:
+  #   key_gene, key_asc, allele (suffix), count, depth, threshold, z
+  # depth is the per-locus repertoire depth used in the z-score; threshold is the
+  # per-allele presence threshold. Both are surfaced so the decision is readable.
+  if (all(c("allele", "z_score") %in% cols)) {
+    # inferGenotypeAllele() long output (one row per allele)
+    long <- data.table::data.table(
+      key_gene  = genotype[["gene"]],
+      key_asc   = if ("asc_allele" %in% cols) genotype[["asc_allele"]] else NA_character_,
+      allele    = allele_suffix(genotype[["allele"]]),
+      count     = as.numeric(genotype[["count"]]),
+      depth     = as.numeric(genotype[["depth"]]),
+      threshold = as.numeric(genotype[["threshold"]]),
+      z         = as.numeric(genotype[["z_score"]])
+    )
+  } else if (all(c("alleles", "genotype_confidence") %in% cols)) {
+    # inferGenotypeAllele_asc() wide output (one row per gene; comma-joined).
+    # depth is recovered from count / absolute_fraction (the per-locus depth).
+    long <- genotype[, {
+      al  <- strsplit(get("alleles"), ",")[[1]]
+      cn  <- as.numeric(strsplit(get("counts"), ",")[[1]])
+      zz  <- as.numeric(strsplit(get("genotype_confidence"), ",")[[1]])
+      thr <- as.numeric(strsplit(get("absolute_threshold"), ",")[[1]])
+      frc <- as.numeric(strsplit(get("absolute_fraction"), ",")[[1]])
+      iu  <- strsplit(get("iuis_alleles"), ",")[[1]]
+      list(key_gene  = alakazam::getGene(iu, first = FALSE, collapse = TRUE,
+                                         strip_d = FALSE),
+           key_asc   = get("gene"),
+           allele    = allele_suffix(al),
+           count     = cn,
+           depth     = round(cn / frc),
+           threshold = thr,
+           z         = zz)
+    }, by = seq_len(nrow(genotype))]
+    long[, "seq_len" := NULL]
+  } else {
+    stop("Unrecognised genotype input: expected a 'z_score'/'allele' table from ",
+         "inferGenotypeAllele() or an 'alleles'/'genotype_confidence' table from ",
+         "inferGenotypeAllele_asc().")
+  }
+
+  key_col <- if (level == "gene") "key_gene" else "key_asc"
+  if (level == "asc" && all(is.na(long[["key_asc"]]))) {
+    stop("level = 'asc' requires ASC information in the genotype. Use ",
+         "inferGenotypeAllele_asc(), run inferGenotypeAllele() with ",
+         "asc_annotation/translate_to_asc, or call with level = 'gene'.")
+  }
+  long[, "key" := get(key_col)]
+
+  # order alleles within a gene by descending count (TIgGER convention)
+  data.table::setorderv(long, c("key", "count"), c(1L, -1L))
+
+  out <- long[, .(
+    "alleles"           = paste(get("allele"), collapse = ","),
+    "counts"            = paste(get("count"), collapse = ","),
+    "total"             = sum(get("count")),
+    # depth is per-locus (constant within a gene); take it from the highest-count
+    # allele, which after the sort is the first row and the most reliable.
+    "depth"             = get("depth")[1],
+    "threshold"         = paste(get("threshold"), collapse = ","),
+    "z_score"           = paste(round(get("z"), 3), collapse = ","),
+    "genotyped_alleles" = paste(get("allele")[get("z") >= z_threshold], collapse = ",")
+  ), by = "key"]
+  data.table::setnames(out, "key", "gene")
+
+  if (!is.null(file)) {
+    data.table::fwrite(out, file = file, sep = "\t")
+  }
+
+  out[]
 }
