@@ -41,9 +41,11 @@ test_that("allelePalette matches VDJbase colors and generates many distinct colo
   expect_length(unique(many), 40)
   expect_false(any(is.na(many)))
 
-  # novel alleles share the base allele color
+  # novel alleles share the base allele color, drawn semi-transparent
   nov <- allelePalette(c("01", "01_G123A"))
-  expect_equal(unname(nov["01_G123A"]), unname(nov["01"]))
+  expect_match(nov[["01_G123A"]], "^#[0-9A-Fa-f]{8}$")          # base + alpha
+  expect_equal(toupper(substr(nov[["01_G123A"]], 1, 7)),
+               toupper(nov[["01"]]))
 })
 
 test_that("plotGenotypeAllele errors when no allele passes the z threshold", {

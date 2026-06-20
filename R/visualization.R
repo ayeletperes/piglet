@@ -799,8 +799,21 @@ allelePalette <- function(alleles) {
     cols[!known] <- extra[seq_len(n_missing)]
   }
 
-  out <- unname(cols[base])
-  stats::setNames(out, alleles)
+  out <- stats::setNames(unname(cols[base]), alleles)
+
+  # Novel alleles (those carrying a "_" tag) share their base allele's color but
+  # are drawn semi-transparent, graded when a base has several novels, mirroring
+  # vdjbasevis::allelePalette.
+  base_out <- sub("_.*$", "", names(out))
+  is_novel <- grepl("_", names(out))
+  for (b in unique(base_out[is_novel])) {
+    nv <- names(out)[is_novel & base_out == b]
+    alphas <- seq(0.7, 0.3, length.out = length(nv))
+    out[nv] <- vapply(seq_along(nv),
+                      function(i) grDevices::adjustcolor(out[[nv[i]]], alpha.f = alphas[i]),
+                      character(1))
+  }
+  out
 }
 
 # ------------------------------------------------------------------------------

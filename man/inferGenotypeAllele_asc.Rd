@@ -10,6 +10,7 @@ inferGenotypeAllele_asc(
   v_call = "v_call",
   single_assignment = FALSE,
   germline_db = NA,
+  novel = NA,
   find_unmutated = FALSE,
   seq = "sequence_alignment",
   confidence_level = NULL,
@@ -26,6 +27,8 @@ inferGenotypeAllele_asc(
 \item{single_assignment}{if TRUE, the method only considers sequence with single assignment for the genotype inference.}
 
 \item{germline_db}{named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.}
+
+\item{novel}{an optional \code{data.frame} of novel alleles, as returned by \code{tigger::findNovelAlleles} (columns \code{germline_call}, \code{polymorphism_call}, \code{novel_imgt}). When supplied, the novel germline sequences are added to \code{germline_db} and the novel alleles become genotype candidates. A novel allele inherits the threshold of its base allele (or the default when the base is absent). Default \code{NA} (no novel alleles).}
 
 \item{find_unmutated}{if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.}
 

@@ -42,6 +42,17 @@ NEW FEATURES:
   a z-score threshold (`z_threshold`, default 0). An optional `file` argument
   writes the table as a tab-separated file.
 
++ `inferGenotypeAllele()` and `inferGenotypeAllele_asc()` gain a `novel`
+  argument accepting a `tigger::findNovelAlleles()` table. Novel germline
+  sequences are added to `germline_db` and the novel alleles become genotype
+  candidates (as in `tigger::inferGenotypeBayesian`); each novel allele inherits
+  the threshold of its base allele. `genotypeToTigger()` keeps the novel suffix
+  and `allelePalette()` renders novels as a semi-transparent shade of the base
+  allele's color.
+
++ New `allelePalette()` returns VDJbase-style allele colors and generates
+  additional distinct colors when there are more alleles than the curated set.
+
 + New `plotGenotypeAllele()` plots a genotype in the style of
   `tigger::plotGenotype()`, with an aligned confidence panel. Because PIgLET
   assigns a z-score per allele (rather than one value per gene), the confidence

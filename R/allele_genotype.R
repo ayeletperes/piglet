@@ -468,6 +468,7 @@ assignAlleleClusters <- function(
 #' @param translate_to_asc         For V allele calls, collapse identical allele for the genotype inference. Default is FALSE.
 #' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
 #' @param germline_db              named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
+#' @param novel                    an optional `data.frame` of novel alleles, as returned by `tigger::findNovelAlleles` (columns `germline_call`, `polymorphism_call`, `novel_imgt`). When supplied, the novel germline sequences are added to `germline_db` and the novel alleles become genotype candidates. A novel allele inherits the threshold of its base allele (or the default when the base is absent). Default `NA` (no novel alleles).
 #' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
 #' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
 #' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `allele_threshold_table`. Default is 1e-04.
@@ -524,6 +525,7 @@ inferGenotypeAllele <-
            single_assignment = FALSE,
            translate_to_asc = FALSE,
            germline_db = NA,
+           novel = NA,
            find_unmutated = FALSE,
            seq = "sequence_alignment",
            default_allele_threshold = 1e-04,
@@ -538,8 +540,13 @@ inferGenotypeAllele <-
       allele_calls <- data[[call]]
     }
     
-    unique_calls <- unique(unlist(allele_calls))
     allele_calls <- sapply(allele_calls, function(x) paste0(x, collapse = ","))
+    ## incorporate novel alleles (tigger::findNovelAlleles output) if supplied:
+    ## adds novel germlines and makes the novel allele a genotype candidate.
+    nv <- incorporate_novel(allele_calls, germline_db, novel)
+    allele_calls <- nv$allele_calls
+    germline_db <- nv$germline_db
+    unique_calls <- unique(unlist(strsplit(allele_calls, ",")))
     segment <- unique(substr(unique_calls,4,4))
     ## check that the allele calls are in the supplied allele_threshold_table
     if(is.null(allele_threshold_table)){
@@ -560,13 +567,20 @@ inferGenotypeAllele <-
     match <- unique_calls %in% allele_threshold_table[[asc_col]]
     if (!all(match)) {
       for(allele in unique_calls[!match]) {
-        if(!quiet) warning(paste0("The allele call ", allele, " is not in the allele threshold table. Using the default threshold: ", default_allele_threshold))
-        allele_threshold_table <- rbind(allele_threshold_table, 
+        ## a novel allele (e.g. IGHV1-69*01_A45T) inherits the threshold of its
+        ## base allele (IGHV1-69*01); otherwise fall back to the default.
+        base <- base_allele(allele)
+        thr <- default_allele_threshold
+        if (base != allele && base %in% allele_threshold_table[[asc_col]]) {
+          thr <- allele_threshold_table[get(asc_col) == base][["threshold"]][1]
+        }
+        if(!quiet) warning(paste0("The allele call ", allele, " is not in the allele threshold table. Using the threshold: ", thr))
+        allele_threshold_table <- rbind(allele_threshold_table,
                                     data.frame(
                                       "tag" = substr(allele,4,4),
                                       "allele" = allele,
                                       "asc_allele" = allele,
-                                      "threshold" = default_allele_threshold
+                                      "threshold" = thr
                                       ))
       }
     }
@@ -653,6 +667,7 @@ inferGenotypeAllele <-
 #' @param v_call                   name of the V allele call column. Default is `v_call`
 #' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
 #' @param germline_db              named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
+#' @param novel                    an optional `data.frame` of novel alleles, as returned by `tigger::findNovelAlleles` (columns `germline_call`, `polymorphism_call`, `novel_imgt`). When supplied, the novel germline sequences are added to `germline_db` and the novel alleles become genotype candidates. A novel allele inherits the threshold of its base allele (or the default when the base is absent). Default `NA` (no novel alleles).
 #' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
 #' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
 #' @param confidence_level         The confidence level on which to filter the inferred genotype alleles. Default is NULL, meaning filtering only based on allele threshold.
@@ -710,6 +725,7 @@ inferGenotypeAllele_asc <- function(data,
          v_call = "v_call",
          single_assignment = FALSE,
          germline_db = NA,
+         novel = NA,
          find_unmutated = FALSE,
          seq = "sequence_alignment",
          confidence_level = NULL,
@@ -718,22 +734,38 @@ inferGenotypeAllele_asc <- function(data,
 
   alleleClusterTable <- .compat_allele_table(alleleClusterTable)
   allele_calls = clean_allele_calls(data[[v_call]])
-  
+  allele_calls <- sapply(allele_calls, function(x) paste0(x, collapse = ","))
+  ## incorporate novel alleles (tigger::findNovelAlleles output) if supplied
+  nv <- incorporate_novel(allele_calls, germline_db, novel)
+  allele_calls <- nv$allele_calls
+  germline_db <- nv$germline_db
+
   ## check that the allele calls are in the supplied alleleClusterTable
-  unique_calls <- unique(unlist(allele_calls))
+  unique_calls <- unique(unlist(strsplit(allele_calls, ",")))
   match <- unique_calls %in% alleleClusterTable$new_allele
   if (!all(match)) {
-    
+
     for(allele in unique_calls[!match]) {
-      warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the default threshold: ", default_allele_threshold))
-      
+      ## a novel allele inherits its base allele's cluster/threshold when the
+      ## base is present; otherwise it forms its own group at the default.
+      base <- base_allele(allele)
+      if (base != allele && base %in% alleleClusterTable$new_allele) {
+        base_row <- alleleClusterTable[alleleClusterTable$new_allele == base, ][1, ]
+        thr <- base_row$thresh
+        fg  <- base_row$func_group
+      } else {
+        thr <- default_allele_threshold
+        fg  <- strsplit(allele, '[*]')[[1]][1]
+      }
+      warning(paste0("The allele call ", allele, " is not in the alleleClusterTable. Using the threshold: ", thr))
+
       alleleClusterTable <- rbind(alleleClusterTable,
                                   data.frame(new_allele = allele,
-                                             func_group = strsplit(allele,'[*]')[[1]][1],
+                                             func_group = fg,
                                              iuis_allele = allele,
-                                             thresh = default_allele_threshold))
+                                             thresh = thr))
     }
-    
+
   }
   
   ## check unmutated
@@ -1097,12 +1129,13 @@ genotypeToTigger <- function(genotype,
   genotype <- data.table::as.data.table(genotype)
   cols <- names(genotype)
 
-  # extract the allele-number suffix from a (possibly full) allele name:
-  # "IGHV1-2*04" -> "04"; a bare "04" is returned unchanged.
+  # extract the allele-number suffix from a (possibly full) allele name, keeping
+  # any novel-allele tag: "IGHV1-2*04" -> "04"; "IGHV1-2*04_G123A" -> "04_G123A";
+  # a bare "04" is returned unchanged.
   allele_suffix <- function(x) {
     suffix <- vapply(strsplit(as.character(x), "[*]"), function(p) p[length(p)],
                      character(1))
-    gsub("^([0-9]+).*$", "\\1", suffix)
+    sub("^([0-9]+(_[[:alnum:].]+)?).*$", "\\1", suffix)
   }
 
   # Normalise either input into a common long table:
