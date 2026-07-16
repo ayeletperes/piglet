@@ -36,6 +36,65 @@ NEW FEATURES:
   z-scores. Single-locus input is unaffected (it collapses to one group,
   reproducing the previous global depth).
 
++ New `genotypeToTigger()` converts the output of `inferGenotypeAllele()` or
+  `inferGenotypeAllele_asc()` into the per-gene TIgGER/VDJbase genotype table
+  layout (`gene`, `alleles`, `counts`, `total`, `z_score`, `genotyped_alleles`).
+  The input type is detected automatically, the row key is selectable with
+  `level = c("gene", "asc")`, and the set of `genotyped_alleles` is determined by
+  a z-score threshold (`z_threshold`, default 0). An optional `file` argument
+  writes the table as a tab-separated file.
+
++ `inferGenotypeAllele()` and `inferGenotypeAllele_asc()` gain a `novel`
+  argument accepting a `tigger::findNovelAlleles()` table. Novel germline
+  sequences are added to `germline_db` and the novel alleles become genotype
+  candidates (as in `tigger::inferGenotypeBayesian`); each novel allele inherits
+  the threshold of its base allele. `genotypeToTigger()` keeps the novel suffix
+  and `allelePalette()` renders novels as a semi-transparent shade of the base
+  allele's color.
+
++ New `allelePalette()` returns VDJbase-style allele colors and generates
+  additional distinct colors when there are more alleles than the curated set.
+
++ New `plotGenotypeAllele()` plots a genotype in the style of
+  `tigger::plotGenotype()`, with an aligned confidence panel. Because PIgLET
+  assigns a z-score per allele (rather than one value per gene), the confidence
+  panel mirrors the allele bars and colors each allele segment by its own
+  z-score. Accepts either a `genotypeToTigger()` table or a raw genotype.
+
+BUG FIXES:
+
++ `inferGenotypeAllele_asc(single_assignment = TRUE)` previously failed with
+  "object 'gene' not found" because the per-gene aggregation did not name its
+  grouping columns; it now runs correctly (and benefits from the per-locus
+  depth above).
+
+Version 1.4.0:  July 2026
+-------------------------------------------------------------------------------
+
+NEW FEATURES:
+
++ `inferGenotypeAllele()` gains a `depth_adjusted_threshold` argument (default
+  `FALSE`). When `TRUE`, each allele's presence threshold is raised to a
+  depth-aware floor `max(Tai, default_allele_threshold, 1/N)`, where `Tai` is the
+  allele threshold and `N` the per-locus repertoire depth, so shallow repertoires
+  cannot clear an unrealistically low threshold.
+
++ `inferGenotypeAllele()` gains a `z_score_threshold` argument (default `0`) and
+  returns a new logical column `in_genotype` flagging alleles with
+  `z_score >= z_score_threshold`. This is a flag only; no rows are dropped.
+
++ `inferGenotypeAllele()` now returns a logical `observed` column marking alleles
+  actually seen in the data (in single or multiple assignment). Alleles never
+  seen carry only a smoothing pseudo-count (which still contributes to the
+  per-locus depth) and are marked `FALSE`. `genotypeToTigger()` now excludes
+  these unseen alleles so the genotype table is not inflated with alleles absent
+  from the data.
+
++ `inferGenotypeAllele(find_unmutated = TRUE)` now warns and skips the
+  unmutated-call step when the call column is a D or J segment. Unmutated-call
+  detection assumes the V-region IMGT alignment (comparison anchored at
+  position 1); D and J segments are heavily trimmed, so it is biased there.
+
 Version 1.2.1:  Feb 2026
 -------------------------------------------------------------------------------
 

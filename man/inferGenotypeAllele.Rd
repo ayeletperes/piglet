@@ -16,6 +16,8 @@ inferGenotypeAllele(
   find_unmutated = FALSE,
   seq = "sequence_alignment",
   default_allele_threshold = 1e-04,
+  depth_adjusted_threshold = FALSE,
+  z_score_threshold = 0,
   quiet = TRUE
 )
 }
@@ -36,11 +38,15 @@ inferGenotypeAllele(
 
 \item{novel}{an optional \code{data.frame} of novel alleles, as returned by \code{tigger::findNovelAlleles} (columns \code{germline_call}, \code{polymorphism_call}, \code{novel_imgt}). When supplied, the novel germline sequences are added to \code{germline_db} and the novel alleles become genotype candidates. A novel allele inherits the threshold of its base allele (or the default when the base is absent). Default \code{NA} (no novel alleles).}
 
-\item{find_unmutated}{if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.}
+\item{find_unmutated}{if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples. Only meaningful for V calls: D and J segments are heavily trimmed, so unmutated-call detection is biased and is skipped (with a warning) when the call column is a D or J segment.}
 
 \item{seq}{name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.}
 
 \item{default_allele_threshold}{The default allele threshold for the genotype inference, in case the allele threshold is not in the \code{allele_threshold_table}. Default is 1e-04.}
+
+\item{depth_adjusted_threshold}{Logical (FALSE by default). If TRUE, each allele's presence threshold is raised to a depth-aware floor \code{max(Tai, default_allele_threshold, 1/N)}, where \code{Tai} is the allele threshold and \code{N} is the per-locus repertoire depth. This prevents shallow repertoires from clearing an unrealistically low threshold.}
+
+\item{z_score_threshold}{Numeric (0 by default). Alleles with \code{z_score >= z_score_threshold} are flagged as present in the returned \code{in_genotype} column. This is a flag only; no rows are dropped.}
 
 \item{quiet}{Logical (TRUE by default). Do you want to suppress informative messages}
 }
@@ -52,6 +58,8 @@ A a data.frame with the inferred V genotype. The table contains the following co
 \item depth: The total number of reads in the genotype (Sum of counts).
 \item threshold: The population driven allele thresholds for genotype presence.
 \item z_score: The confidence level for the presence of the allele in the genotype.
+\item observed: Logical, whether the allele was seen in the data (in single or multiple assignment). Alleles that were never seen carry a smoothing pseudo-count and are marked FALSE.
+\item in_genotype: Logical, whether the allele passes \code{z_score_threshold} (\code{z_score >= z_score_threshold}).
 \item asc_allele: If \code{translate_to_asc} is true, the asc allele value from allele_threshold_table.
 }
 }

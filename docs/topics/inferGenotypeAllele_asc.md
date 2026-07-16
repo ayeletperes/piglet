@@ -17,6 +17,7 @@ alleleClusterTable,
 v_call = "v_call",
 single_assignment = FALSE,
 germline_db = NA,
+novel = NA,
 find_unmutated = FALSE,
 seq = "sequence_alignment",
 confidence_level = NULL,
@@ -41,6 +42,9 @@ single_assignment
 
 germline_db
 :   named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
+
+novel
+:   an optional `data.frame` of novel alleles, as returned by `tigger::findNovelAlleles` (columns `germline_call`, `polymorphism_call`, `novel_imgt`). When supplied, the novel germline sequences are added to `germline_db` and the novel alleles become genotype candidates. A novel allele inherits the threshold of its base allele (or the default when the base is absent). Default `NA` (no novel alleles).
 
 find_unmutated
 :   if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.

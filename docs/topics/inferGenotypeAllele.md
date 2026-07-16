@@ -20,9 +20,12 @@ asc_annotation = FALSE,
 single_assignment = FALSE,
 translate_to_asc = FALSE,
 germline_db = NA,
+novel = NA,
 find_unmutated = FALSE,
 seq = "sequence_alignment",
 default_allele_threshold = 1e-04,
+depth_adjusted_threshold = FALSE,
+z_score_threshold = 0,
 quiet = TRUE
 )
 ```
@@ -51,14 +54,23 @@ translate_to_asc
 germline_db
 :   named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
 
+novel
+:   an optional `data.frame` of novel alleles, as returned by `tigger::findNovelAlleles` (columns `germline_call`, `polymorphism_call`, `novel_imgt`). When supplied, the novel germline sequences are added to `germline_db` and the novel alleles become genotype candidates. A novel allele inherits the threshold of its base allele (or the default when the base is absent). Default `NA` (no novel alleles).
+
 find_unmutated
-:   if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
+:   if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples. Only meaningful for V calls: D and J segments are heavily trimmed, so unmutated-call detection is biased and is skipped (with a warning) when the call column is a D or J segment.
 
 seq
 :   name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
 
 default_allele_threshold
 :   The default allele threshold for the genotype inference, in case the allele threshold is not in the `allele_threshold_table`. Default is 1e-04.
+
+depth_adjusted_threshold
+:   Logical (FALSE by default). If TRUE, each allele's presence threshold is raised to a depth-aware floor `max(Tai, default_allele_threshold, 1/N)`, where `Tai` is the allele threshold and `N` is the per-locus repertoire depth. This prevents shallow repertoires from clearing an unrealistically low threshold.
+
+z_score_threshold
+:   Numeric (0 by default). Alleles with `z_score >= z_score_threshold` are flagged as present in the returned `in_genotype` column. This is a flag only; no rows are dropped.
 
 quiet
 :   Logical (TRUE by default). Do you want to suppress informative messages
@@ -76,6 +88,8 @@ A a data.frame with the inferred V genotype. The table contains the following co
 +  depth: The total number of reads in the genotype (Sum of counts).
 +  threshold: The population driven allele thresholds for genotype presence.
 +  z_score: The confidence level for the presence of the allele in the genotype.
++  observed: Logical, whether the allele was seen in the data (in single or multiple assignment). Alleles that were never seen carry a smoothing pseudo-count and are marked FALSE.
++  in_genotype: Logical, whether the allele passes `z_score_threshold` (`z_score >= z_score_threshold`).
 +  asc_allele: If `translate_to_asc` is true, the asc allele value from allele_threshold_table.
 
 

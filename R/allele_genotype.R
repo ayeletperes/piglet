@@ -469,9 +469,11 @@ assignAlleleClusters <- function(
 #' @param single_assignment        if TRUE, the method only considers sequence with single assignment for the genotype inference.
 #' @param germline_db              named vector of sequences containing the germline sequences named in V allele calls and the alleleClusterTable. Only required if find_unmutated is TRUE.
 #' @param novel                    an optional `data.frame` of novel alleles, as returned by `tigger::findNovelAlleles` (columns `germline_call`, `polymorphism_call`, `novel_imgt`). When supplied, the novel germline sequences are added to `germline_db` and the novel alleles become genotype candidates. A novel allele inherits the threshold of its base allele (or the default when the base is absent). Default `NA` (no novel alleles).
-#' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples.
+#' @param find_unmutated           if TRUE, use germline_db to find which samples are unmutated. Not needed if V allele calls only represent unmutated samples. Only meaningful for V calls: D and J segments are heavily trimmed, so unmutated-call detection is biased and is skipped (with a warning) when the call column is a D or J segment.
 #' @param seq                      name of the column in data with the aligned, IMGT-numbered, V(D)J nucleotide sequence. Default is sequence_alignment.
 #' @param default_allele_threshold The default allele threshold for the genotype inference, in case the allele threshold is not in the `allele_threshold_table`. Default is 1e-04.
+#' @param depth_adjusted_threshold Logical (FALSE by default). If TRUE, each allele's presence threshold is raised to a depth-aware floor `max(Tai, default_allele_threshold, 1/N)`, where `Tai` is the allele threshold and `N` is the per-locus repertoire depth. This prevents shallow repertoires from clearing an unrealistically low threshold.
+#' @param z_score_threshold        Numeric (0 by default). Alleles with `z_score >= z_score_threshold` are flagged as present in the returned `in_genotype` column. This is a flag only; no rows are dropped.
 #' @param quiet                    Logical (TRUE by default). Do you want to suppress informative messages
 #' @return
 #' A a data.frame with the inferred V genotype. The table contains the following columns:
@@ -481,6 +483,8 @@ assignAlleleClusters <- function(
 #' - depth: The total number of reads in the genotype (Sum of counts).
 #' - threshold: The population driven allele thresholds for genotype presence.
 #' - z_score: The confidence level for the presence of the allele in the genotype.
+#' - observed: Logical, whether the allele was seen in the data (in single or multiple assignment). Alleles that were never seen carry a smoothing pseudo-count and are marked FALSE.
+#' - in_genotype: Logical, whether the allele passes `z_score_threshold` (`z_score >= z_score_threshold`).
 #' - asc_allele: If `translate_to_asc` is true, the asc allele value from allele_threshold_table.
 #'
 #' @details
@@ -529,6 +533,8 @@ inferGenotypeAllele <-
            find_unmutated = FALSE,
            seq = "sequence_alignment",
            default_allele_threshold = 1e-04,
+           depth_adjusted_threshold = FALSE,
+           z_score_threshold = 0,
            quiet = TRUE) {
     . = NULL
     .. = NULL
@@ -591,14 +597,23 @@ inferGenotypeAllele <-
     
     ## check unmutated
     if (find_unmutated) {
-      if (is.na(germline_db[1])) {
-        stop("germline_db needed if find_unmutated is TRUE")
-      }
-      allele_calls <-
-        tigger::findUnmutatedCalls(allele_calls, as.character(data[[seq]]),
-                                   germline_db)
-      if (length(allele_calls) == 0) {
-        stop("No unmutated sequences found! Set 'find_unmutated' to 'FALSE'.")
+      ## unmutated-call detection assumes the V-region IMGT alignment (comparison
+      ## anchored at position 1). D and J segments are heavily trimmed, so this is
+      ## biased and meaningless for them - skip it (with a warning) when the call
+      ## column is a D or J segment.
+      if (any(segment %in% c("D", "J"))) {
+        warning("find_unmutated is only meaningful for V calls; D/J segments are ",
+                "heavily trimmed, so unmutated-call detection is skipped to avoid bias.")
+      } else {
+        if (is.na(germline_db[1])) {
+          stop("germline_db needed if find_unmutated is TRUE")
+        }
+        allele_calls <-
+          tigger::findUnmutatedCalls(allele_calls, as.character(data[[seq]]),
+                                     germline_db)
+        if (length(allele_calls) == 0) {
+          stop("No unmutated sequences found! Set 'find_unmutated' to 'FALSE'.")
+        }
       }
     }
     
@@ -621,6 +636,12 @@ inferGenotypeAllele <-
     genotype_dt[,"fraction":=get("multiple")*get("multiple_assignments_wheight")]
     genotype_dt <- genotype_dt[,.("count" = sum(get("fraction"))), by = mget(c("genotyped_allele"))]
     genotype_dt <- merge(allele_threshold_table, genotype_dt, by = c("genotyped_allele"), all.x = T, all.y=F)
+    ## mark alleles that were actually seen in the data (single or multiple
+    ## assignment). Alleles that were never seen have NA count at this point and
+    ## get a smoothing pseudo-count (base_count) below; they are flagged FALSE so
+    ## downstream tables (genotypeToTigger) can exclude this non-existent data
+    ## while the pseudo-count still contributes to the per-locus depth.
+    genotype_dt[, "observed" := !is.na(get("count"))]
     genotype_dt[,"gene" := alakazam::getGene(
       get("genotyped_allele"),
       first = F,
@@ -628,15 +649,16 @@ inferGenotypeAllele <-
       strip_d = F
     )]
     ## if translate_to_asc, then collapse similar alleles by asc.
-    final_columns <- c("gene","genotyped_allele", "count", "depth", "threshold", "z_score")
+    final_columns <- c("gene","genotyped_allele", "count", "depth", "threshold", "z_score", "observed", "in_genotype")
     if(translate_to_asc){
       genotype_dt <- genotype_dt[,.(
         "gene" = paste0(unique(get("gene")),collapse = "/"),
         "genotyped_allele" = paste0(get("genotyped_allele"),collapse = "/"),
         "count" = sum(get("count"), na.rm = T),
-        "threshold" = min(get("threshold"))
+        "threshold" = min(get("threshold")),
+        "observed" = any(get("observed"))
       ), by =.(get("asc_allele"))]
-      final_columns <- c("gene","genotyped_allele", "count", "depth", "threshold", "z_score")
+      final_columns <- c("gene","genotyped_allele", "count", "depth", "threshold", "z_score", "observed", "in_genotype")
     }
     ## add base counts
     genotype_dt[is.na(get("count")), "count" := base_count]
@@ -647,8 +669,17 @@ inferGenotypeAllele <-
     genotype_dt[, "locus" := substr(get("genotyped_allele"), 1, 3)]
     genotype_dt[, "depth" := sum(get("count")), by = "locus"]
 
-    ## get the z_score (uses the per-locus depth)
+    ## depth-adjusted threshold: raise each allele's threshold to a depth-aware
+    ## floor max(Tai, default_allele_threshold, 1/N), where N is the per-locus
+    ## repertoire depth. default_allele_threshold defaults to 1e-04 (= 1/10000).
+    if (depth_adjusted_threshold) {
+      genotype_dt[, "threshold" := pmax(get("threshold"), default_allele_threshold, 1/get("depth"))]
+    }
+
+    ## get the z_score (uses the per-locus depth and the possibly-adjusted threshold)
     genotype_dt[, "z_score" := z_score(get("count"), get("depth"), get("threshold"))]
+    ## flag alleles that pass the z-score threshold (flag only; no rows dropped)
+    genotype_dt[, "in_genotype" := get("z_score") >= z_score_threshold]
     genotype_dt <- genotype_dt[, .SD, .SDcols = final_columns]
     names(genotype_dt)[2] <- "allele"
     return(genotype_dt)
@@ -1143,7 +1174,10 @@ genotypeToTigger <- function(genotype,
   # depth is the per-locus repertoire depth used in the z-score; threshold is the
   # per-allele presence threshold. Both are surfaced so the decision is readable.
   if (all(c("allele", "z_score") %in% cols)) {
-    # inferGenotypeAllele() long output (one row per allele)
+    # inferGenotypeAllele() long output (one row per allele). The `observed` flag
+    # (when present) marks alleles actually seen in the data; alleles carrying only
+    # a smoothing pseudo-count are excluded so the table isn't inflated with
+    # non-existent data. Older tables without the flag keep every allele.
     long <- data.table::data.table(
       key_gene  = genotype[["gene"]],
       key_asc   = if ("asc_allele" %in% cols) genotype[["asc_allele"]] else NA_character_,
@@ -1151,8 +1185,10 @@ genotypeToTigger <- function(genotype,
       count     = as.numeric(genotype[["count"]]),
       depth     = as.numeric(genotype[["depth"]]),
       threshold = as.numeric(genotype[["threshold"]]),
-      z         = as.numeric(genotype[["z_score"]])
+      z         = as.numeric(genotype[["z_score"]]),
+      observed  = if ("observed" %in% cols) as.logical(genotype[["observed"]]) else TRUE
     )
+    long <- long[get("observed") == TRUE]
   } else if (all(c("alleles", "genotype_confidence") %in% cols)) {
     # inferGenotypeAllele_asc() wide output (one row per gene; comma-joined).
     # depth is recovered from count / absolute_fraction (the per-locus depth).

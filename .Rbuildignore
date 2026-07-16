@@ -17,3 +17,7 @@
 ^LICENSE$
 ^LICENSE.md$
 
+^CRAN-SUBMISSION$
+^cran-comments\.md$
+^requirements-docs\.txt$
+^site$

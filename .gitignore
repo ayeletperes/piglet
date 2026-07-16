@@ -60,3 +60,7 @@ site/
 # stray base-graphics artifact from tests
 Rplots.pdf
 **/Rplots.pdf
+
+# CRAN submission artifacts
+cran-comments.md
+CRAN-SUBMISSION

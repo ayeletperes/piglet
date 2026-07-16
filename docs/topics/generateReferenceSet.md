@@ -15,7 +15,8 @@ germline_distance,
 germline_set,
 alleleClusterTable,
 trim_3prime_side = NULL,
-family_prefix = TRUE
+family_prefix = TRUE,
+retain_subgroup = FALSE
 )
 ```
 
@@ -36,6 +37,9 @@ trim_3prime_side
 
 family_prefix
 :   Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1*01). If FALSE, omit the "F" (e.g. IGHV1-G1*01).
+
+retain_subgroup
+:   Logical. If TRUE, retain the original IMGT subgroup in the ASC name instead of renumbering by the family clustering (e.g. IGKV1-12*01 stays in subgroup IGKV1-G..). When TRUE, `family_prefix` is ignored. Default FALSE.
 
 
 

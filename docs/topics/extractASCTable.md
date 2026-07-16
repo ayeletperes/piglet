@@ -50,7 +50,7 @@ asc_archive <- recentAlleleClusters(doi="10.5281/zenodo.7429773", get_file = TRU
 
 ```
 
-*Files will be downloaded to tmp directory: /tmp/RtmpqhJJA9**doi supplied is not an 'all versions doi'
+*Files will be downloaded to tmp directory: /tmp/RtmpBskSLm**doi supplied is not an 'all versions doi'
 for viewing all of the archive records change the doi to:10.5281/zenodo.7401189*
 ```R
 # 

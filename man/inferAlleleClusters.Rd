@@ -20,7 +20,8 @@ inferAlleleClusters(
   ncores = 1,
   aa_set = FALSE,
   quiet = FALSE,
-  family_prefix = TRUE
+  family_prefix = TRUE,
+  retain_subgroup = FALSE
 )
 }
 \arguments{
@@ -56,6 +57,8 @@ Default is NULL (auto-detected from sequence names).}
 \item{quiet}{Logical. Suppress messages. Default is FALSE.}
 
 \item{family_prefix}{Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1\emph{01). If FALSE, omit the "F" (e.g. IGHV1-G1}01).}
+
+\item{retain_subgroup}{Logical. If TRUE, retain the original IMGT subgroup in the ASC name instead of renumbering the family by the clustering (e.g. IGKV1-12*01 stays in subgroup IGKV1-G..). When TRUE, \code{family_prefix} is ignored. Default FALSE.}
 }
 \value{
 An object of class \link{GermlineCluster} containing:

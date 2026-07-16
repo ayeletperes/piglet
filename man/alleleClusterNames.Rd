@@ -10,7 +10,8 @@ alleleClusterNames(
   germ.dist,
   chain,
   segment,
-  family_prefix = TRUE
+  family_prefix = TRUE,
+  retain_subgroup = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ alleleClusterNames(
 \item{segment}{A character with the segment identifier: IGHV/IGHD/IGHJ.... (Currently only IGHV is supported)}
 
 \item{family_prefix}{Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1\emph{01). If FALSE, omit the "F" (e.g. IGHV1-G1}01).}
+
+\item{retain_subgroup}{Logical. If TRUE, retain the original IMGT subgroup in the ASC name instead of renumbering by the family clustering (e.g. IGKV1-12*01 stays in subgroup IGKV1-G..). When TRUE, \code{family_prefix} is ignored. Default FALSE.}
 }
 \value{
 A data.frame with the clusters renamed alleles based on the ASC scheme.

@@ -103,6 +103,9 @@ nav:
       - Allele based genotype:
           - inferGenotypeAllele: topics/inferGenotypeAllele.md
           - inferGenotypeAllele_asc: topics/inferGenotypeAllele_asc.md
+          - genotypeToTigger: topics/genotypeToTigger.md
+          - plotGenotypeAllele: topics/plotGenotypeAllele.md
+          - allelePalette: topics/allelePalette.md
           - assignAlleleClusters: topics/assignAlleleClusters.md
           - germlineASC: topics/germlineASC.md
           - recentAlleleClusters: topics/recentAlleleClusters.md

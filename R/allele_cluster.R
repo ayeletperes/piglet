@@ -727,6 +727,7 @@ ighvClust <- function(germline_distance,
 #' @param    chain                 A character with the chain identifier: IGH/IGL/IGK/TRB/TRA... (Currently only IGH is supported)
 #' @param    segment               A character with the segment identifier: IGHV/IGHD/IGHJ.... (Currently only IGHV is supported)
 #' @param    family_prefix         Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1*01). If FALSE, omit the "F" (e.g. IGHV1-G1*01).
+#' @param    retain_subgroup       Logical. If TRUE, retain the original IMGT subgroup in the ASC name instead of renumbering by the family clustering (e.g. IGKV1-12*01 stays in subgroup IGKV1-G..). When TRUE, \code{family_prefix} is ignored. Default FALSE.
 #'
 #' @return
 #'
@@ -737,21 +738,36 @@ alleleClusterNames <- function(cluster,
                                germ.dist,
                                chain,
                                segment,
-                               family_prefix = TRUE) {
+                               family_prefix = TRUE,
+                               retain_subgroup = FALSE) {
   # Extract cluster values
   family_cluster <- cluster[[1]]
   allele_cluster <- cluster[[2]]
   f_prefix <- if (family_prefix) "F" else ""
-  
+
   # Filter allele cluster table
   allele.cluster.table <-
     allele.cluster.table[allele.cluster.table$family == family_cluster &
                            allele.cluster.table$allele_cluster == allele_cluster,]
-  
+
+  ## Determine the family token used in the ASC name.
+  ## - default: the clustering-derived family number (optionally "F"-prefixed).
+  ## - retain_subgroup: the original IMGT subgroup of the cluster's alleles, so
+  ##   e.g. IGKV1-12*01 keeps the "1" subgroup (IGKV1-G..) instead of being
+  ##   renumbered by the family clustering.
+  if (retain_subgroup) {
+    subgroups <- alakazam::getFamily(allele.cluster.table$iuis_allele,
+                                     first = TRUE, strip_d = TRUE)
+    subgroup_num <- gsub(paste0("^", segment), "", subgroups)
+    family_label <- names(sort(table(subgroup_num), decreasing = TRUE))[1]
+  } else {
+    family_label <- paste0(f_prefix, family_cluster)
+  }
+
   # Check the number of alleles
   if (nrow(allele.cluster.table) == 1) {
     allele.cluster.table$new_allele <-
-      paste0(segment, f_prefix, family_cluster, "-G", allele_cluster, "*01")
+      paste0(segment, family_label, "-G", allele_cluster, "*01")
     allele.cluster.table$removed_duplicated <- FALSE
     return(allele.cluster.table)
   }
@@ -771,8 +787,7 @@ alleleClusterNames <- function(cluster,
     n <- nrow(allele.cluster.table)
     allele.cluster.table$new_allele <-
       paste0(segment,
-             f_prefix,
-             family_cluster,
+             family_label,
              "-G",
              allele_cluster,
              "*",
@@ -816,8 +831,7 @@ alleleClusterNames <- function(cluster,
       a <- keep_alleles_list[i]
       allele.cluster.table$new_allele[allele.cluster.table$iuis_allele == a] <-
         paste0(segment,
-               f_prefix,
-               family_cluster,
+               family_label,
                "-G",
                allele_cluster,
                "*",
@@ -852,6 +866,7 @@ alleleClusterNames <- function(cluster,
 #' @param    alleleClusterTable    A data.frame of the alleles and their clusters created by \link{ighvClust}.
 #' @param    trim_3prime_side      If a 3' position trim is supplied, duplicated sequences will be checked for differential positions past the trim position. Default NULL; NULL will not activate the check. see @details
 #' @param    family_prefix         Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1*01). If FALSE, omit the "F" (e.g. IGHV1-G1*01).
+#' @param    retain_subgroup       Logical. If TRUE, retain the original IMGT subgroup in the ASC name instead of renumbering by the family clustering (e.g. IGKV1-12*01 stays in subgroup IGKV1-G..). When TRUE, \code{family_prefix} is ignored. Default FALSE.
 #'
 #' @details
 #' Each allele is named by this scheme:
@@ -877,7 +892,8 @@ generateReferenceSet <-
            germline_set,
            alleleClusterTable,
            trim_3prime_side = NULL,
-           family_prefix = TRUE) {
+           family_prefix = TRUE,
+           retain_subgroup = FALSE) {
     # check the parameters
     ### check the class of the distance matrix
 
@@ -916,7 +932,8 @@ generateReferenceSet <-
       germ.dist = germline_distance,
       chain = chain,
       segment = segment,
-      family_prefix = family_prefix
+      family_prefix = family_prefix,
+      retain_subgroup = retain_subgroup
     )
     
     alleleClusterTable.tmp <-
@@ -1146,6 +1163,7 @@ artificialFRW1Germline <-
 #' @param aa_set Logical. Is the sequence set amino acids? Default is FALSE.
 #' @param quiet Logical. Suppress messages. Default is FALSE.
 #' @param family_prefix Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1*01). If FALSE, omit the "F" (e.g. IGHV1-G1*01).
+#' @param retain_subgroup Logical. If TRUE, retain the original IMGT subgroup in the ASC name instead of renumbering the family by the clustering (e.g. IGKV1-12*01 stays in subgroup IGKV1-G..). When TRUE, \code{family_prefix} is ignored. Default FALSE.
 #'
 #' @details
 #' The distance between pairs of allele sequences is calculated, then the alleles are clustered.
@@ -1211,7 +1229,8 @@ inferAlleleClusters <- function(germline_set,
                                 ncores = 1,
                                 aa_set = FALSE,
                                 quiet = FALSE,
-                                family_prefix = TRUE) {
+                                family_prefix = TRUE,
+                                retain_subgroup = FALSE) {
 
   clustering_method <- match.arg(clustering_method)
   distance_method <- match.arg(distance_method)
@@ -1289,7 +1308,8 @@ inferAlleleClusters <- function(germline_set,
       germline_set = germline_set_copy,
       alleleClusterTable = cluster_results$alleleClusterTable,
       trim_3prime_side = trim_3prime_side,
-      family_prefix = family_prefix
+      family_prefix = family_prefix,
+      retain_subgroup = retain_subgroup
     )
 
     results <- new_germline_cluster(
@@ -1327,7 +1347,8 @@ inferAlleleClusters <- function(germline_set,
       germline_set = germline_set_copy,
       alleleClusterTable = cluster_results$alleleClusterTable,
       trim_3prime_side = trim_3prime_side,
-      family_prefix = family_prefix
+      family_prefix = family_prefix,
+      retain_subgroup = retain_subgroup
     )
 
     results <- new_germline_cluster(
@@ -1425,7 +1446,7 @@ plotAlleleCluster <- function(x,
       # potential groups
       full_groups <-
         as.numeric(strsplit(gsub(
-          paste0(segment, "F[0-9]+-G"), "", full_allele
+          paste0(segment, "F?[0-9]+-G"), "", full_allele
         ), "[*]")[[1]][1])
       
       group.df$Group[i] <- as.numeric(full_groups)
