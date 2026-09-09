@@ -59,6 +59,7 @@ Collate:
     'allele_cluster.R'
     'utils.R'
     'allele_genotype.R'
+    'asc_incremental.R'
     'asc_regroup.R'
     'community_detection.R'
     'piglet-package.R'
