@@ -188,7 +188,7 @@ runGeneUsageQTL <- function(data, dosage, variants, segments, positions = NULL,
   if (!is.null(members)) {
     # Distance to the nearest member gene, not to the mean of the members.
     assoc[, "distance_to_asc" := {
-      m <- members$mid[members$asc == .BY$asc]
+      m <- members$mid[members$asc == get("asc")[1L]]
       if (!length(m)) NA_real_ else vapply(get("pos"), function(p) min(abs(p - m)), 1)
     }, by = "asc"]
   }
