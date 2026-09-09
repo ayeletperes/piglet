@@ -8,7 +8,7 @@ qtlClump(assoc, dosage, r2 = 0.8)
 }
 \arguments{
 \item{assoc}{A \code{data.table} of significant associations carrying at least
-\code{variant} and \code{p_value}. Reordered by \code{p_value} in place.}
+\code{variant} and \code{p_value}. Reordered in place.}
 
 \item{dosage}{Numeric matrix of genotype dosages, variants in rows, subjects in
 columns, covering every variant in \code{assoc}. Missing calls are mean-imputed
@@ -24,4 +24,14 @@ The subset of \code{assoc} that are leads, in increasing p-value order.
 Takes the strongest signal, absorbs everything correlated with it above \code{r2},
 and repeats. What comes back is one row per independent signal rather than one row per
 significant variant, which is the number to quote.
+}
+\details{
+\strong{Ties are broken on the variant name, not on the p-value alone.} Variants in
+perfect linkage disequilibrium give the same fit to the last bit that the arithmetic
+carries, and their p-values then differ by around 1e-13 purely from the order of
+operations in the matrix product. Sorting on the p-value alone lets that noise decide
+which variant is named as the lead, and the lead variant name is what reaches a figure
+and a database label. So the sort is on the p-value and then the name, which is still
+an arbitrary choice between variants no data distinguishes, but the same arbitrary
+choice every run. A lead should be read as one representative of its linkage group.
 }

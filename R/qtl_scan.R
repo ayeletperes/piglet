@@ -170,8 +170,17 @@ qtlLDGroups <- function(dosage, contig) {
 #' and repeats. What comes back is one row per independent signal rather than one row per
 #' significant variant, which is the number to quote.
 #'
+#' \strong{Ties are broken on the variant name, not on the p-value alone.} Variants in
+#' perfect linkage disequilibrium give the same fit to the last bit that the arithmetic
+#' carries, and their p-values then differ by around 1e-13 purely from the order of
+#' operations in the matrix product. Sorting on the p-value alone lets that noise decide
+#' which variant is named as the lead, and the lead variant name is what reaches a figure
+#' and a database label. So the sort is on the p-value and then the name, which is still
+#' an arbitrary choice between variants no data distinguishes, but the same arbitrary
+#' choice every run. A lead should be read as one representative of its linkage group.
+#'
 #' @param assoc A \code{data.table} of significant associations carrying at least
-#'   \code{variant} and \code{p_value}. Reordered by \code{p_value} in place.
+#'   \code{variant} and \code{p_value}. Reordered in place.
 #' @param dosage Numeric matrix of genotype dosages, variants in rows, subjects in
 #'   columns, covering every variant in \code{assoc}. Missing calls are mean-imputed
 #'   within the variant for the correlation only.
@@ -182,7 +191,7 @@ qtlLDGroups <- function(dosage, contig) {
 #' @export
 qtlClump <- function(assoc, dosage, r2 = 0.8) {
   if (!nrow(assoc)) return(assoc)
-  data.table::setorderv(assoc, "p_value")
+  data.table::setorderv(assoc, c("p_value", "variant"))
   sub <- dosage[unique(assoc$variant), , drop = FALSE]
   mu <- rowMeans(sub, na.rm = TRUE)
   na_idx <- which(is.na(sub), arr.ind = TRUE)
