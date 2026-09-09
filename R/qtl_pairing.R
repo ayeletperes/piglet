@@ -92,10 +92,31 @@ pairingTable <- function(data, anchor, partner, subject = "subject", pseudocount
   p[]
 }
 
-# The response matrix for one anchor: subjects by partner gene, of enrichment. Partner
-# genes seen in too few subjects are dropped before complete cases are taken, so one
-# rare partner cannot cost the whole anchor its subjects.
-.qtl_pairing_phenotype <- function(pairs, anchor, subjects, min_complete_fraction, min_subjects) {
+#' The response matrix for one anchor gene
+#'
+#' Subjects by partner gene, of enrichment: the multivariate response
+#' \code{\link{pairingScan}} tests each variant against. Exported because the follow-up
+#' analyses that characterise a hit need the same matrix the scan saw, and rebuilding it
+#' slightly differently is how a follow-up stops describing the thing it followed up.
+#'
+#' Partner genes observed in too few subjects are dropped \emph{before} complete cases are
+#' taken, so one rare partner cannot cost the anchor its whole subject set. Returns
+#' \code{NULL} when fewer than two partners or fewer than \code{min_subjects} subjects
+#' survive, which is the signal to skip this anchor rather than an error.
+#'
+#' @param pairs A \code{data.table} from \code{\link{pairingTable}}.
+#' @param anchor The anchor gene to build the response for.
+#' @param subjects Subjects to keep, normally \code{colnames(dosage)}.
+#' @param min_complete_fraction Minimum fraction of subjects in which a partner gene must
+#'   be observed. Default 0.9.
+#' @param min_subjects Minimum complete-case subjects. Default 60.
+#'
+#' @return A numeric matrix, subjects in rows (named) and partner genes in columns, or
+#'   \code{NULL}.
+#' @seealso \code{\link{pairingScan}}
+#' @export
+pairingPhenotype <- function(pairs, anchor, subjects, min_complete_fraction = 0.9,
+                             min_subjects = 60L) {
   sub <- pairs[pairs$anchor_gene == anchor]
   w <- data.table::dcast(sub, subject ~ partner_gene, value.var = "enrichment")
   m <- as.matrix(w[, -1L])
@@ -161,7 +182,7 @@ pairingScan <- function(pairs, dosage, conditional, anchors = NULL,
   if (is.null(anchors)) anchors <- sort(unique(pairs$anchor_gene))
 
   out <- lapply(anchors, function(a) {
-    pheno <- .qtl_pairing_phenotype(pairs, a, subjects, min_complete_fraction, min_subjects)
+    pheno <- pairingPhenotype(pairs, a, subjects, min_complete_fraction, min_subjects)
     if (is.null(pheno)) return(NULL)
     d <- dosage[, match(rownames(pheno), subjects), drop = FALSE]
     r <- qtlScanMultivariate(pheno, d, min_subjects)
@@ -225,7 +246,7 @@ pairingCellTests <- function(pairs, dosage, omnibus, conditional, alpha = 0.05,
   subjects <- colnames(dosage)
   anchors <- sort(unique(pairs$anchor_gene))
   fits <- lapply(anchors, function(a) {
-    pheno <- .qtl_pairing_phenotype(pairs, a, subjects, min_complete_fraction, min_subjects)
+    pheno <- pairingPhenotype(pairs, a, subjects, min_complete_fraction, min_subjects)
     if (is.null(pheno)) return(NULL)
     d <- dosage[rownames(dosage) %in% keep_variants,
                 match(rownames(pheno), subjects), drop = FALSE]
