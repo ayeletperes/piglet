@@ -65,6 +65,7 @@ Collate:
     'piglet-package.R'
     'qtl_pairing.R'
     'qtl_scan.R'
+    'qtl_usage.R'
     'utils-pipe.R'
     'visualization.R'
 LazyData: true
