@@ -234,6 +234,27 @@ qtlSmallestGenotypeClass <- function(dosage) {
   stats::setNames(out, rownames(dosage))
 }
 
+# Pillai's trace for one variant against a multivariate response, the single-vector form
+# of what qtlScanMultivariate does for a whole matrix. Needed on its own by the follow-ups
+# that refit a single lead: leave-one-out, the heterogeneity test, within-ancestry
+# replication.
+.qtl_pillai <- function(pheno, dosage_vector) {
+  n <- nrow(pheno)
+  y <- sweep(pheno, 2L, colMeans(pheno))
+  y <- y[, apply(y, 2L, function(v) is.finite(stats::sd(v)) && stats::sd(v) > 0), drop = FALSE]
+  p <- ncol(y)
+  if (p < 1L || n < p + 3L) return(c(pillai = NA_real_, f = NA_real_, p = NA_real_))
+  s_inv <- tryCatch(solve(crossprod(y)), error = function(e) NULL)
+  if (is.null(s_inv)) return(c(pillai = NA_real_, f = NA_real_, p = NA_real_))
+  g <- dosage_vector - mean(dosage_vector)
+  if (sum(g^2) == 0) return(c(pillai = NA_real_, f = NA_real_, p = NA_real_))
+  u <- crossprod(y, g)
+  v <- drop(crossprod(u, s_inv %*% u)) / sum(g^2)
+  if (!is.finite(v) || v <= 0 || v >= 1) return(c(pillai = NA_real_, f = NA_real_, p = NA_real_))
+  f <- ((n - p - 1) / p) * (v / (1 - v))
+  c(pillai = v, f = f, p = stats::pf(f, p, n - p - 1, lower.tail = FALSE))
+}
+
 # Phenotype means in the lowest and highest observed genotype class, for every variant by
 # response pair at once. The per-allele slope is fitted on the model scale; this is the
 # raw difference to read it against. An indicator matrix per class turns the whole

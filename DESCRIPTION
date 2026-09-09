@@ -64,6 +64,7 @@ Collate:
     'community_detection.R'
     'piglet-package.R'
     'qtl_pairing.R'
+    'qtl_pairing_leads.R'
     'qtl_scan.R'
     'qtl_usage.R'
     'utils-pipe.R'
