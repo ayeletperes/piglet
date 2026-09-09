@@ -59,9 +59,11 @@ Collate:
     'allele_cluster.R'
     'utils.R'
     'allele_genotype.R'
+    'asc_iuis_labels.R'
     'asc_regroup.R'
     'community_detection.R'
     'piglet-package.R'
+    'qtl_scan.R'
     'utils-pipe.R'
     'visualization.R'
 LazyData: true

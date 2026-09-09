@@ -60,6 +60,13 @@ The label is not produced by the clustering; supply it on the table (the IMGT ge
 in \code{imgt_allele}, and any other genes that share the allele in
 \code{duplicated}). A gene is taken as the part of a label before \code{*}, so
 allele suffixes and mutation tags (\code{IGHD1-20*01_a7g}) are ignored.
+
+Genes are grouped within a locus. A gene name is unique only inside its locus, so a
+label stripped of its prefix (\code{"J1"} rather than \code{"IGHJ1"}) would otherwise
+put IGHJ1, IGKJ1 and IGLJ1 in one bin. The locus is read from the label where it still
+carries one and from \code{group_col} otherwise; if neither supplies it, the grouping
+falls back to plain gene names and warns. \code{action = "split"} is unaffected, since
+its output is prefixed by the ASC group.
 }
 \examples{
 tb <- data.frame(
