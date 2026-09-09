@@ -222,7 +222,7 @@ runGeneUsageQTL <- function(data, dosage, variants, segments, positions = NULL,
                    assoc[, list(min_p = min(get("p_value")),
                                 n_significant = sum(get("significant")),
                                 n_significant_groups = data.table::uniqueN(
-                                  ld[match(get("variant")[get("significant")], rownames(dosage))])),
+                                  ld[get("variant")[get("significant")]])),
                          by = "asc"],
                    by = "asc", all.x = TRUE)
   per_asc <- merge(per_asc,
@@ -230,7 +230,7 @@ runGeneUsageQTL <- function(data, dosage, variants, segments, positions = NULL,
                                 subjects_nonzero = sum(get("count") > 0L)), by = "asc"],
                    by = "asc", all.x = TRUE)
 
-  sig_ld <- ld[match(sig$variant, rownames(dosage))]
+  sig_ld <- ld[sig$variant]
   list(phenotype = usage,
        associations = assoc[],
        leads = leads[],
@@ -299,7 +299,7 @@ runPairingQTL <- function(data, dosage, variants, anchor, partner, conditional,
   } else {
     sig
   }
-  sig_ld <- ld[match(sig$variant, rownames(dosage))]
+  sig_ld <- ld[sig$variant]
   message(sprintf("runPairingQTL [%s]: %d anchors, %d associations, %d significant over %d independent groups, %d leads.",
                   conditional, data.table::uniqueN(assoc$anchor_gene), nrow(assoc),
                   nrow(sig), data.table::uniqueN(sig_ld), nrow(leads)))

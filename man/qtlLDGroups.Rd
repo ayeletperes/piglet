@@ -13,9 +13,9 @@ columns. Missing calls are mean-imputed within the variant for the comparison on
 \item{contig}{Character vector, one contig per row of \code{dosage}.}
 }
 \value{
-A character vector, one group key per row of \code{dosage}. The key is opaque:
-use it to group and count, not to read. Variants with no variance each get their own
-group rather than collapsing together.
+A character vector named by variant, one group key per row of \code{dosage}.
+The key is opaque: use it to group and count, not to read. Variants with no variance
+each get their own group rather than collapsing together.
 }
 \description{
 Two variants carry the same information when their standardised dosage vectors match

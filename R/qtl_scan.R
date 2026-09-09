@@ -143,9 +143,9 @@ qtlScanMultivariate <- function(pheno, dosage, min_n = 60L) {
 #'   columns. Missing calls are mean-imputed within the variant for the comparison only.
 #' @param contig Character vector, one contig per row of \code{dosage}.
 #'
-#' @return A character vector, one group key per row of \code{dosage}. The key is opaque:
-#'   use it to group and count, not to read. Variants with no variance each get their own
-#'   group rather than collapsing together.
+#' @return A character vector named by variant, one group key per row of \code{dosage}.
+#'   The key is opaque: use it to group and count, not to read. Variants with no variance
+#'   each get their own group rather than collapsing together.
 #' @export
 qtlLDGroups <- function(dosage, contig) {
   if (length(contig) != nrow(dosage)) {
@@ -161,7 +161,7 @@ qtlLDGroups <- function(dosage, contig) {
   z <- round((z - mu) / pmax(sdev, .Machine$double.eps), 8L)
   key <- pmin(apply(z, 1L, paste, collapse = ","), apply(-z, 1L, paste, collapse = ","))
   key[flat] <- paste0("const_", seq_len(sum(flat)))
-  paste(contig, key, sep = "::")
+  stats::setNames(paste(contig, key, sep = "::"), rownames(dosage))
 }
 
 #' Independent lead variants by greedy clumping
