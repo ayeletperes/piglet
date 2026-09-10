@@ -34,6 +34,18 @@ Response columns with zero variance are dropped within each missingness group, a
 group is skipped when fewer than two response columns survive or when \code{n} is too
 small for the covariance to be estimable (\code{n < p + 3}).
 }
+\examples{
+set.seed(1)
+subjects <- sprintf("s\%02d", 1:80)
+dosage <- rbind(v_hit  = rep(c(0, 1, 2), length.out = 80),
+                v_null = rep(c(0, 0, 1, 2), length.out = 80))
+colnames(dosage) <- subjects
+pheno <- matrix(rnorm(80 * 4), 80, 4,
+                dimnames = list(subjects, paste0("partner", 1:4)))
+pheno[, 1] <- pheno[, 1] + 0.8 * dosage["v_hit", ]
+
+qtlScanMultivariate(pheno, dosage, min_n = 60)
+}
 \seealso{
 \code{\link{pairingScan}}, which uses this for the conditional pairing scan
 }

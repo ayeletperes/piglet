@@ -49,6 +49,21 @@ set behind it moves. What identifies a group is the set of member allele sequenc
 returned in \code{identity}; join on that, or compare it to detect that an upstream
 reference changed underneath a downstream table.
 }
+\examples{
+husa <- data.frame(
+  allele      = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-CO5H*01"),
+  chain       = "IGH",
+  gene_type   = c("IGHV", "IGHV", "IGHD"),
+  seq         = c("ACGTACGT", "ACGTACGA", "GGTTGGTT"),
+  iuis_allele = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-20*01"))
+
+voc <- ascIUISVocabulary(husa)
+voc$labels
+
+# What each label stands for. The label is a display string that moves when the
+# reference set moves; these member alleles are what identify the group.
+voc$identity
+}
 \seealso{
 \code{\link{annotateRepertoireIUIS}}, \code{\link{regroupASCByLabel}}
 }

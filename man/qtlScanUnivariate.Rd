@@ -44,6 +44,21 @@ dosage matrix, as \code{\link{runGeneUsageQTL}} does. Filtering associations on 
 p-value alone preferentially removes the underpowered rows, which leaves what survives
 looking better powered than it is.
 }
+\examples{
+set.seed(1)
+subjects <- sprintf("s\%02d", 1:80)
+dosage <- rbind(v_hit  = rep(c(0, 1, 2), length.out = 80),
+                v_null = rep(c(0, 0, 1, 2), length.out = 80))
+colnames(dosage) <- subjects
+pheno <- cbind(gene_a = 0.7 * dosage["v_hit", ] + rnorm(80),
+               gene_b = rnorm(80))
+rownames(pheno) <- subjects
+
+qtlScanUnivariate(pheno, dosage, min_n = 60)
+
+# Read a p-value with the smallest genotype class beside it, never alone.
+qtlSmallestGenotypeClass(dosage)
+}
 \seealso{
 \code{\link{qtlScanMultivariate}} for a multivariate response,
 \code{\link{qtlSmallestGenotypeClass}}, \code{\link{runGeneUsageQTL}}

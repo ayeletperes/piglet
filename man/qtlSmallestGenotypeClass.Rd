@@ -25,3 +25,11 @@ Classes with no subject are not counted, so a variant seen only as 0 and 1 repor
 smaller of those two rather than zero. Computed for the whole matrix at once; index
 the result by variant name rather than calling this per variant.
 }
+\examples{
+dosage <- rbind(all_three = c(0, 0, 0, 1, 1, 2),
+                two_only  = c(0, 0, 0, 0, 1, 1))
+colnames(dosage) <- sprintf("s\%d", 1:6)
+
+# The empty class is not counted as zero: two_only reports 2, not 0.
+qtlSmallestGenotypeClass(dosage)
+}

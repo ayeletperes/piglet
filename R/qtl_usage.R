@@ -32,6 +32,19 @@
 #' @return A \code{data.table} with \code{subject}, \code{asc}, \code{count},
 #'   \code{total}, \code{segment}, \code{n_asc}, \code{usage} and \code{logit_usage}.
 #' @seealso \code{\link{runGeneUsageQTL}}
+#' @examples
+#' set.seed(1)
+#' rep_dt <- data.frame(
+#'   subject = rep(sprintf("s%02d", 1:70), each = 20),
+#'   v_gene  = sample(c("V1-2", "V3-23", "V4-34"), 1400, replace = TRUE),
+#'   j_gene  = sample(c("J4", "J6"), 1400, replace = TRUE))
+#'
+#' usage <- ascUsagePhenotype(rep_dt, segments = c(V = "v_gene", J = "j_gene"))
+#' head(usage)
+#'
+#' # Zero counts are kept on purpose: a variant that deletes a gene drives its
+#' # usage to zero, and that is the signal rather than missing data.
+#' sum(usage$count == 0)
 #' @export
 ascUsagePhenotype <- function(data, segments, subject = "subject",
                               min_subject_fraction = 0.1, pseudocount = 0.5) {
@@ -142,6 +155,28 @@ ascUsagePhenotype <- function(data, segments, subject = "subject",
 #' from this as exact.
 #'
 #' @seealso \code{\link{qtlScanUnivariate}}, \code{\link{runPairingQTL}}
+#' @examples
+#' set.seed(1)
+#' n <- 70L
+#' subjects <- sprintf("s%02d", seq_len(n))
+#' dosage <- rbind(v_hit  = rep(c(0, 1, 2), length.out = n),
+#'                 v_null = rep(c(0, 0, 1, 2), length.out = n))
+#' colnames(dosage) <- subjects
+#'
+#' genes <- c("V1-2", "V3-23", "V4-34")
+#' rep_dt <- do.call(rbind, lapply(seq_len(n), function(i) {
+#'   w <- c(1 + dosage["v_hit", i], 1, 1)   # dosage raises V1-2 usage
+#'   data.frame(subject = subjects[i],
+#'              v_gene = sample(genes, 40, replace = TRUE, prob = w / sum(w)))
+#' }))
+#'
+#' variants <- data.frame(variant = rownames(dosage), contig = "igh",
+#'                        pos = c(1000L, 50000L), maf = rowMeans(dosage) / 2)
+#'
+#' res <- runGeneUsageQTL(rep_dt, dosage, variants,
+#'                        segments = c(V = "v_gene"), min_subjects = 60)
+#' res$associations
+#' res$thresholds
 #' @export
 runGeneUsageQTL <- function(data, dosage, variants, segments, positions = NULL,
                             locus = NA_character_, subject = "subject",
@@ -262,6 +297,24 @@ runGeneUsageQTL <- function(data, dosage, variants, segments, positions = NULL,
 #'   and \code{thresholds}.
 #' @seealso \code{\link{pairingTable}}, \code{\link{pairingScan}},
 #'   \code{\link{pairingCellTests}}
+#' @examples
+#' set.seed(1)
+#' subjects <- sprintf("s%02d", 1:70)
+#' rep_dt <- data.frame(
+#'   subject = rep(subjects, each = 20),
+#'   d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+#'   j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+#'
+#' dosage <- matrix(rep(c(0, 1, 2), length.out = 70), nrow = 1,
+#'                  dimnames = list("v1", subjects))
+#' variants <- data.frame(variant = "v1", contig = "igh", pos = 1000L, maf = 0.33)
+#'
+#' # One anchoring per call. Running both and stacking them would double-report,
+#' # so the caller states which conditional each side estimates.
+#' jd <- runPairingQTL(rep_dt, dosage, variants,
+#'                     anchor = "j_gene", partner = "d_gene",
+#'                     conditional = "P(J|D)", min_subjects = 60)
+#' jd$associations
 #' @export
 runPairingQTL <- function(data, dosage, variants, anchor, partner, conditional,
                           subject = "subject", locus = NA_character_, pseudocount = 0.5,

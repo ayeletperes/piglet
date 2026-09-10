@@ -78,6 +78,20 @@
 #'   }
 #'
 #' @seealso \code{\link{annotateRepertoireIUIS}}, \code{\link{regroupASCByLabel}}
+#' @examples
+#' husa <- data.frame(
+#'   allele      = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-CO5H*01"),
+#'   chain       = "IGH",
+#'   gene_type   = c("IGHV", "IGHV", "IGHD"),
+#'   seq         = c("ACGTACGT", "ACGTACGA", "GGTTGGTT"),
+#'   iuis_allele = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-20*01"))
+#'
+#' voc <- ascIUISVocabulary(husa)
+#' voc$labels
+#'
+#' # What each label stands for. The label is a display string that moves when the
+#' # reference set moves; these member alleles are what identify the group.
+#' voc$identity
 #' @export
 ascIUISVocabulary <- function(husa) {
   husa <- data.table::as.data.table(husa)
@@ -240,6 +254,22 @@ ascIUISVocabulary <- function(husa) {
 #'
 #' @return \code{data} as a \code{data.table} with the \code{*_gene_iuis} columns added.
 #' @seealso \code{\link{ascIUISVocabulary}}
+#' @examples
+#' husa <- data.frame(
+#'   allele      = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-CO5H*01"),
+#'   chain       = "IGH",
+#'   gene_type   = c("IGHV", "IGHV", "IGHD"),
+#'   seq         = c("ACGTACGT", "ACGTACGA", "GGTTGGTT"),
+#'   iuis_allele = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-20*01"))
+#' voc <- ascIUISVocabulary(husa)
+#'
+#' rep_dt <- data.frame(
+#'   v_gene     = c("IGHV1-2", "IGHV1-2"),
+#'   d_gene     = c("IGHD1-CO5H", "IGHD1-CO5H"),
+#'   j_gene     = c("IGHJ4", "IGHJ4"),
+#'   d_call_new = c("IGHD1-CO5H*01", "IGHD1-CO5H*01"))
+#'
+#' annotateRepertoireIUIS(rep_dt, voc, chain = "IGH")
 #' @export
 annotateRepertoireIUIS <- function(data, vocabulary, chain,
                                    v_gene = "v_gene", j_gene = "j_gene", d_gene = "d_gene",

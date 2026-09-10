@@ -40,6 +40,20 @@
 #'
 #' @seealso \code{\link{qtlScanMultivariate}} for a multivariate response,
 #'   \code{\link{qtlSmallestGenotypeClass}}, \code{\link{runGeneUsageQTL}}
+#' @examples
+#' set.seed(1)
+#' subjects <- sprintf("s%02d", 1:80)
+#' dosage <- rbind(v_hit  = rep(c(0, 1, 2), length.out = 80),
+#'                 v_null = rep(c(0, 0, 1, 2), length.out = 80))
+#' colnames(dosage) <- subjects
+#' pheno <- cbind(gene_a = 0.7 * dosage["v_hit", ] + rnorm(80),
+#'                gene_b = rnorm(80))
+#' rownames(pheno) <- subjects
+#'
+#' qtlScanUnivariate(pheno, dosage, min_n = 60)
+#'
+#' # Read a p-value with the smallest genotype class beside it, never alone.
+#' qtlSmallestGenotypeClass(dosage)
 #' @export
 qtlScanUnivariate <- function(pheno, dosage, min_n = 60L) {
   .qtl_check_matrices(pheno, dosage)
@@ -95,6 +109,17 @@ qtlScanUnivariate <- function(pheno, dosage, min_n = 60L) {
 #'   columns retained), \code{pillai}, \code{f_stat} and \code{p_value}.
 #'
 #' @seealso \code{\link{pairingScan}}, which uses this for the conditional pairing scan
+#' @examples
+#' set.seed(1)
+#' subjects <- sprintf("s%02d", 1:80)
+#' dosage <- rbind(v_hit  = rep(c(0, 1, 2), length.out = 80),
+#'                 v_null = rep(c(0, 0, 1, 2), length.out = 80))
+#' colnames(dosage) <- subjects
+#' pheno <- matrix(rnorm(80 * 4), 80, 4,
+#'                 dimnames = list(subjects, paste0("partner", 1:4)))
+#' pheno[, 1] <- pheno[, 1] + 0.8 * dosage["v_hit", ]
+#'
+#' qtlScanMultivariate(pheno, dosage, min_n = 60)
 #' @export
 qtlScanMultivariate <- function(pheno, dosage, min_n = 60L) {
   .qtl_check_matrices(pheno, dosage)
@@ -146,6 +171,15 @@ qtlScanMultivariate <- function(pheno, dosage, min_n = 60L) {
 #' @return A character vector named by variant, one group key per row of \code{dosage}.
 #'   The key is opaque: use it to group and count, not to read. Variants with no variance
 #'   each get their own group rather than collapsing together.
+#' @examples
+#' dosage <- rbind(a      = c(0, 1, 2, 0, 1, 2),
+#'                 copy   = c(0, 1, 2, 0, 1, 2),   # identical
+#'                 mirror = c(2, 1, 0, 2, 1, 0),   # identical up to sign
+#'                 other  = c(0, 0, 1, 2, 2, 1))
+#' colnames(dosage) <- sprintf("s%d", 1:6)
+#'
+#' groups <- qtlLDGroups(dosage, rep("chr2", 4))
+#' length(unique(groups))   # three independent tests, not four
 #' @export
 qtlLDGroups <- function(dosage, contig) {
   if (length(contig) != nrow(dosage)) {
@@ -188,6 +222,18 @@ qtlLDGroups <- function(dosage, contig) {
 #'   already-taken lead.
 #'
 #' @return The subset of \code{assoc} that are leads, in increasing p-value order.
+#' @examples
+#' dosage <- rbind(lead   = c(0, 1, 2, 0, 1, 2, 1, 0),
+#'                 linked = c(0, 1, 2, 0, 1, 2, 1, 0),
+#'                 other  = c(0, 0, 1, 2, 2, 1, 0, 1))
+#' colnames(dosage) <- sprintf("s%d", 1:8)
+#'
+#' assoc <- data.table::data.table(
+#'   variant = c("lead", "linked", "other"),
+#'   p_value = c(1e-8, 2e-8, 1e-4))
+#'
+#' # `linked` is absorbed into `lead`; two independent signals remain.
+#' qtlClump(assoc, dosage, r2 = 0.8)
 #' @export
 qtlClump <- function(assoc, dosage, r2 = 0.8) {
   if (!nrow(assoc)) return(assoc)
@@ -224,10 +270,21 @@ qtlClump <- function(assoc, dosage, r2 = 0.8) {
 #'
 #' @return A named numeric vector, one entry per row of \code{dosage}, \code{NA} where no
 #'   class had a subject.
+#' @examples
+#' dosage <- rbind(all_three = c(0, 0, 0, 1, 1, 2),
+#'                 two_only  = c(0, 0, 0, 0, 1, 1))
+#' colnames(dosage) <- sprintf("s%d", 1:6)
+#'
+#' # The empty class is not counted as zero: two_only reports 2, not 0.
+#' qtlSmallestGenotypeClass(dosage)
 #' @export
 qtlSmallestGenotypeClass <- function(dosage) {
   g <- round(dosage)
-  n <- vapply(0:2, function(k) rowSums(g == k, na.rm = TRUE), numeric(nrow(g)))
+  # matrix() around the vapply because with a single variant vapply simplifies to a
+  # length-3 vector rather than a 1x3 matrix, and apply() below then has no dim to work
+  # on. One variant is the normal case when a caller inspects a single lead.
+  n <- matrix(vapply(0:2, function(k) rowSums(g == k, na.rm = TRUE), numeric(nrow(g))),
+              nrow = nrow(g))
   n[n == 0L] <- NA_real_
   out <- suppressWarnings(apply(n, 1L, min, na.rm = TRUE))
   out[!is.finite(out)] <- NA_real_
@@ -235,7 +292,10 @@ qtlSmallestGenotypeClass <- function(dosage) {
 }
 
 # Pillai's trace for one variant against a multivariate response, the single-vector form
-# of what qtlScanMultivariate does for a whole matrix. Needed on its own by the follow-ups
+# of what qtlScanMultivariate does for a whole matrix. The closed form is deliberately
+# written twice: delegating this to the vectorised version measured 2x slower on the
+# leave-one-out load it is used for. test-qtl.R pins the two together, because a formula
+# written twice is a formula that can be corrected once. Needed on its own by the follow-ups
 # that refit a single lead: leave-one-out, the heterogeneity test, within-ancestry
 # replication.
 .qtl_pillai <- function(pheno, dosage_vector) {
@@ -266,7 +326,9 @@ qtlSmallestGenotypeClass <- function(dosage) {
     storage.mode(x) <- "numeric"
     x
   })
-  n <- vapply(ind, rowSums, numeric(nrow(g)))
+  # See qtlSmallestGenotypeClass: vapply drops to a vector for a single variant, and
+  # max.col() below needs a matrix.
+  n <- matrix(vapply(ind, rowSums, numeric(nrow(g))), nrow = nrow(g))
   mean_k <- lapply(seq_along(ind), function(k) (ind[[k]] %*% pheno) / pmax(n[, k], 1))
   present <- n > 0L
   lo <- max.col(present, ties.method = "first")

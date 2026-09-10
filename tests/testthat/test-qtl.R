@@ -117,3 +117,46 @@ test_that("pairing enrichment is symmetric under swapping anchor and partner", {
   # The conditionals are not symmetric, and are the ones that flip.
   expect_equal(m$p_partner_given_anchor.x, m$p_anchor_given_partner.y, tolerance = 1e-12)
 })
+
+test_that("the scalar and vectorised Pillai agree", {
+  # The closed form is written twice in qtl_scan.R: vectorised over variants inside
+  # qtlScanMultivariate, and for a single variant in .qtl_pillai, which the per-lead
+  # follow-ups need. Keeping both is deliberate - delegating the scalar one to the
+  # vectorised one measured 2x slower on the leave-one-out load - but a formula written
+  # twice can be corrected once, and then pairingLeadCharacter's leave-one-out and
+  # heterogeneity p-values would silently stop agreeing with the omnibus they follow up.
+  set.seed(3)
+  n <- 90L
+  y <- matrix(stats::rnorm(n * 6L), n, 6L)
+  rownames(y) <- sprintf("s%03d", seq_len(n))
+  g <- rep(c(0, 1, 2), length.out = n)
+  d <- matrix(g, nrow = 1L, dimnames = list("v1", rownames(y)))
+
+  scalar <- piglet:::.qtl_pillai(y, g)
+  vectorised <- qtlScanMultivariate(y, d, min_n = 60L)
+
+  expect_equal(unname(scalar[["pillai"]]), vectorised$pillai, tolerance = 1e-12)
+  expect_equal(unname(scalar[["f"]]), vectorised$f_stat, tolerance = 1e-12)
+  expect_equal(unname(scalar[["p"]]), vectorised$p_value, tolerance = 1e-12)
+})
+
+test_that("a single-variant dosage matrix works", {
+  # vapply simplifies to a vector when there is one row, and apply() / max.col() below
+  # then have no dim to work on. One variant is the normal case when a caller inspects a
+  # single lead, and every pairing function goes through both of these.
+  d <- matrix(rep(c(0, 1, 2), length.out = 12L), nrow = 1L,
+              dimnames = list("v1", sprintf("s%02d", 1:12)))
+  expect_equal(unname(qtlSmallestGenotypeClass(d)), 4)
+
+  y <- matrix(stats::rnorm(12L * 3L), 12L, 3L,
+              dimnames = list(colnames(d), c("p1", "p2", "p3")))
+  cm <- piglet:::.qtl_class_means(y, d)
+  expect_equal(nrow(cm), 3L)             # one variant x three phenotypes
+  expect_false(anyNA(cm$n_low))
+
+  # and the two-variant result is unchanged
+  d2 <- rbind(a = rep(c(0, 1, 2), length.out = 12L),
+              b = rep(c(0, 0, 1, 2), length.out = 12L))
+  colnames(d2) <- colnames(d)
+  expect_equal(unname(qtlSmallestGenotypeClass(d2)), c(4, 3))
+})

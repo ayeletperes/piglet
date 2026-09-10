@@ -43,6 +43,23 @@ single gene and stays \code{NA}. V and J map straight from their ASC gene.
 Rows in and rows out are reported: a call that maps to nothing is left \code{NA} rather
 than dropped, and the count is messaged so a labelling gap cannot pass unnoticed.
 }
+\examples{
+husa <- data.frame(
+  allele      = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-CO5H*01"),
+  chain       = "IGH",
+  gene_type   = c("IGHV", "IGHV", "IGHD"),
+  seq         = c("ACGTACGT", "ACGTACGA", "GGTTGGTT"),
+  iuis_allele = c("IGHV1-2*01", "IGHV1-2*02", "IGHD1-20*01"))
+voc <- ascIUISVocabulary(husa)
+
+rep_dt <- data.frame(
+  v_gene     = c("IGHV1-2", "IGHV1-2"),
+  d_gene     = c("IGHD1-CO5H", "IGHD1-CO5H"),
+  j_gene     = c("IGHJ4", "IGHJ4"),
+  d_call_new = c("IGHD1-CO5H*01", "IGHD1-CO5H*01"))
+
+annotateRepertoireIUIS(rep_dt, voc, chain = "IGH")
+}
 \seealso{
 \code{\link{ascIUISVocabulary}}
 }

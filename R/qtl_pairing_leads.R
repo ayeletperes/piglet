@@ -77,6 +77,23 @@
 #'   columns and \code{verdict} merged on, and \code{per_partner}, one row per lead and
 #'   partner with slopes and effect sizes.
 #' @seealso \code{\link{runPairingQTL}}, \code{\link{pairingCellTests}}
+#' @examples
+#' set.seed(1)
+#' subjects <- sprintf("s%02d", 1:70)
+#' rep_dt <- data.frame(
+#'   subject = rep(subjects, each = 20),
+#'   d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+#'   j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+#' pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+#' dosage <- matrix(rep(c(0, 1, 2), length.out = 70), nrow = 1,
+#'                  dimnames = list("v1", subjects))
+#'
+#' leads <- pairingScan(pairs, dosage, conditional = "P(J|D)", min_subjects = 60)
+#' leads$threshold <- 0.05
+#'
+#' out <- pairingLeadCharacter(leads, pairs, dosage, min_subjects = 60)
+#' out$leads$verdict
+#' out$per_partner
 #' @export
 pairingLeadCharacter <- function(leads, pairs, dosage, positions = NULL, ancestry = NULL,
                                  replication_ancestry = "EUR", min_replication_n = 40L,

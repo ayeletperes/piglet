@@ -73,6 +73,25 @@ different multivariate tests over the same variants, and a function that ran bot
 returned them stacked would invite exactly the pooling that double-reports. Call it
 twice, with the \code{conditional} each side estimates.
 }
+\examples{
+set.seed(1)
+subjects <- sprintf("s\%02d", 1:70)
+rep_dt <- data.frame(
+  subject = rep(subjects, each = 20),
+  d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+  j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+
+dosage <- matrix(rep(c(0, 1, 2), length.out = 70), nrow = 1,
+                 dimnames = list("v1", subjects))
+variants <- data.frame(variant = "v1", contig = "igh", pos = 1000L, maf = 0.33)
+
+# One anchoring per call. Running both and stacking them would double-report,
+# so the caller states which conditional each side estimates.
+jd <- runPairingQTL(rep_dt, dosage, variants,
+                    anchor = "j_gene", partner = "d_gene",
+                    conditional = "P(J|D)", min_subjects = 60)
+jd$associations
+}
 \seealso{
 \code{\link{pairingTable}}, \code{\link{pairingScan}},
 \code{\link{pairingCellTests}}

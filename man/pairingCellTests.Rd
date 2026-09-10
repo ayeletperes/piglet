@@ -60,6 +60,22 @@ divides alpha by the row width, the family being that row's partner genes. Both 
 returned so a downstream table and a figure make the same call rather than each
 re-deriving it.
 }
+\examples{
+set.seed(1)
+subjects <- sprintf("s\%02d", 1:70)
+rep_dt <- data.frame(
+  subject = rep(subjects, each = 20),
+  d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+  j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+dosage <- matrix(rep(c(0, 1, 2), length.out = 70), nrow = 1,
+                 dimnames = list("v1", subjects))
+
+omnibus <- pairingScan(pairs, dosage, conditional = "P(J|D)", min_subjects = 60)
+omnibus$significant <- omnibus$p_value < 0.05
+
+pairingCellTests(pairs, dosage, omnibus, conditional = "P(J|D)", min_subjects = 60)
+}
 \seealso{
 \code{\link{pairingScan}}
 }

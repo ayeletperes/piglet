@@ -40,6 +40,19 @@ taken, so one rare partner cannot cost the anchor its whole subject set. Returns
 \code{NULL} when fewer than two partners or fewer than \code{min_subjects} subjects
 survive, which is the signal to skip this anchor rather than an error.
 }
+\examples{
+set.seed(1)
+subjects <- sprintf("s\%02d", 1:70)
+rep_dt <- data.frame(
+  subject = rep(subjects, each = 20),
+  d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+  j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+
+# Subjects by partner gene, of enrichment: what one anchor is scanned on.
+pheno <- pairingPhenotype(pairs, "J1", subjects, min_subjects = 60)
+dim(pheno)
+}
 \seealso{
 \code{\link{pairingScan}}
 }

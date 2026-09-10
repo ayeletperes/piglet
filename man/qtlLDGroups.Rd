@@ -28,3 +28,13 @@ Bonferroni threshold should be set from -- the number of variants tested oversta
 often by half. The contig prefix stops identical patterns at different loci from
 merging, so positions from different loci are never pooled.
 }
+\examples{
+dosage <- rbind(a      = c(0, 1, 2, 0, 1, 2),
+                copy   = c(0, 1, 2, 0, 1, 2),   # identical
+                mirror = c(2, 1, 0, 2, 1, 0),   # identical up to sign
+                other  = c(0, 0, 1, 2, 2, 1))
+colnames(dosage) <- sprintf("s\%d", 1:6)
+
+groups <- qtlLDGroups(dosage, rep("chr2", 4))
+length(unique(groups))   # three independent tests, not four
+}

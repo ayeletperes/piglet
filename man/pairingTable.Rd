@@ -61,6 +61,20 @@ segments survives removing the marginals, and the heavy-chain result above is a 
 to expect trouble rather than reassurance. Treat their output as a hypothesis.
 }
 
+\examples{
+set.seed(1)
+rep_dt <- data.frame(
+  subject = rep(sprintf("s\%02d", 1:70), each = 20),
+  d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+  j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+
+pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+head(pairs)
+
+# The enrichment is symmetric, so swapping the roles gives the mirrored table.
+# The omnibus that follows is not, which is why the two are separate scans.
+mirrored <- pairingTable(rep_dt, anchor = "d_gene", partner = "j_gene")
+}
 \seealso{
 \code{\link{pairingScan}}, \code{\link{pairingCellTests}}
 }

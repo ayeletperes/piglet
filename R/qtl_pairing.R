@@ -52,6 +52,19 @@
 #'   kept on the result as attributes.
 #'
 #' @seealso \code{\link{pairingScan}}, \code{\link{pairingCellTests}}
+#' @examples
+#' set.seed(1)
+#' rep_dt <- data.frame(
+#'   subject = rep(sprintf("s%02d", 1:70), each = 20),
+#'   d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+#'   j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+#'
+#' pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+#' head(pairs)
+#'
+#' # The enrichment is symmetric, so swapping the roles gives the mirrored table.
+#' # The omnibus that follows is not, which is why the two are separate scans.
+#' mirrored <- pairingTable(rep_dt, anchor = "d_gene", partner = "j_gene")
 #' @export
 pairingTable <- function(data, anchor, partner, subject = "subject", pseudocount = 0.5) {
   x <- data.table::as.data.table(data)
@@ -114,6 +127,18 @@ pairingTable <- function(data, anchor, partner, subject = "subject", pseudocount
 #' @return A numeric matrix, subjects in rows (named) and partner genes in columns, or
 #'   \code{NULL}.
 #' @seealso \code{\link{pairingScan}}
+#' @examples
+#' set.seed(1)
+#' subjects <- sprintf("s%02d", 1:70)
+#' rep_dt <- data.frame(
+#'   subject = rep(subjects, each = 20),
+#'   d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+#'   j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+#' pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+#'
+#' # Subjects by partner gene, of enrichment: what one anchor is scanned on.
+#' pheno <- pairingPhenotype(pairs, "J1", subjects, min_subjects = 60)
+#' dim(pheno)
 #' @export
 pairingPhenotype <- function(pairs, anchor, subjects, min_complete_fraction = 0.9,
                              min_subjects = 60L) {
@@ -168,6 +193,21 @@ pairingPhenotype <- function(pairs, anchor, subjects, min_complete_fraction = 0.
 #'   (\code{\link{qtlLDGroups}}), not the number tested.
 #'
 #' @seealso \code{\link{pairingTable}}, \code{\link{pairingCellTests}}
+#' @examples
+#' set.seed(1)
+#' subjects <- sprintf("s%02d", 1:70)
+#' rep_dt <- data.frame(
+#'   subject = rep(subjects, each = 20),
+#'   d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+#'   j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+#' pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+#'
+#' dosage <- matrix(rep(c(0, 1, 2), length.out = 70), nrow = 1,
+#'                  dimnames = list("v1", subjects))
+#'
+#' # `conditional` has no default: anchoring on J tests P(J|D), anchoring on D
+#' # tests P(D|J), and the two are separate scans over the same variants.
+#' pairingScan(pairs, dosage, conditional = "P(J|D)", min_subjects = 60)
 #' @export
 pairingScan <- function(pairs, dosage, conditional, anchors = NULL,
                         min_subjects = 60L, min_complete_fraction = 0.9,
@@ -231,6 +271,21 @@ pairingScan <- function(pairs, dosage, conditional, anchors = NULL,
 #'   \code{omnibus_p_value}, \code{omnibus_significant}, \code{min_genotype_group},
 #'   \code{marked} and \code{marked_strict}.
 #' @seealso \code{\link{pairingScan}}
+#' @examples
+#' set.seed(1)
+#' subjects <- sprintf("s%02d", 1:70)
+#' rep_dt <- data.frame(
+#'   subject = rep(subjects, each = 20),
+#'   d_gene  = sample(c("D1", "D2", "D3"), 1400, replace = TRUE),
+#'   j_gene  = sample(c("J1", "J2"), 1400, replace = TRUE))
+#' pairs <- pairingTable(rep_dt, anchor = "j_gene", partner = "d_gene")
+#' dosage <- matrix(rep(c(0, 1, 2), length.out = 70), nrow = 1,
+#'                  dimnames = list("v1", subjects))
+#'
+#' omnibus <- pairingScan(pairs, dosage, conditional = "P(J|D)", min_subjects = 60)
+#' omnibus$significant <- omnibus$p_value < 0.05
+#'
+#' pairingCellTests(pairs, dosage, omnibus, conditional = "P(J|D)", min_subjects = 60)
 #' @export
 pairingCellTests <- function(pairs, dosage, omnibus, conditional, alpha = 0.05,
                              min_subjects = 60L, min_complete_fraction = 0.9) {

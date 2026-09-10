@@ -45,6 +45,20 @@ the shares are taken, and the count kept is reported. \code{n_asc} is how many g
 the share was taken over and is part of the pseudocount, so \code{usage} cannot be
 recomputed from \code{count} and \code{total} without it.
 }
+\examples{
+set.seed(1)
+rep_dt <- data.frame(
+  subject = rep(sprintf("s\%02d", 1:70), each = 20),
+  v_gene  = sample(c("V1-2", "V3-23", "V4-34"), 1400, replace = TRUE),
+  j_gene  = sample(c("J4", "J6"), 1400, replace = TRUE))
+
+usage <- ascUsagePhenotype(rep_dt, segments = c(V = "v_gene", J = "j_gene"))
+head(usage)
+
+# Zero counts are kept on purpose: a variant that deletes a gene drives its
+# usage to zero, and that is the signal rather than missing data.
+sum(usage$count == 0)
+}
 \seealso{
 \code{\link{runGeneUsageQTL}}
 }

@@ -92,6 +92,29 @@ R-squared read off it is diluted and is an underestimate. Do not report an effec
 from this as exact.
 }
 
+\examples{
+set.seed(1)
+n <- 70L
+subjects <- sprintf("s\%02d", seq_len(n))
+dosage <- rbind(v_hit  = rep(c(0, 1, 2), length.out = n),
+                v_null = rep(c(0, 0, 1, 2), length.out = n))
+colnames(dosage) <- subjects
+
+genes <- c("V1-2", "V3-23", "V4-34")
+rep_dt <- do.call(rbind, lapply(seq_len(n), function(i) {
+  w <- c(1 + dosage["v_hit", i], 1, 1)   # dosage raises V1-2 usage
+  data.frame(subject = subjects[i],
+             v_gene = sample(genes, 40, replace = TRUE, prob = w / sum(w)))
+}))
+
+variants <- data.frame(variant = rownames(dosage), contig = "igh",
+                       pos = c(1000L, 50000L), maf = rowMeans(dosage) / 2)
+
+res <- runGeneUsageQTL(rep_dt, dosage, variants,
+                       segments = c(V = "v_gene"), min_subjects = 60)
+res$associations
+res$thresholds
+}
 \seealso{
 \code{\link{qtlScanUnivariate}}, \code{\link{runPairingQTL}}
 }

@@ -35,3 +35,16 @@ and a database label. So the sort is on the p-value and then the name, which is 
 an arbitrary choice between variants no data distinguishes, but the same arbitrary
 choice every run. A lead should be read as one representative of its linkage group.
 }
+\examples{
+dosage <- rbind(lead   = c(0, 1, 2, 0, 1, 2, 1, 0),
+                linked = c(0, 1, 2, 0, 1, 2, 1, 0),
+                other  = c(0, 0, 1, 2, 2, 1, 0, 1))
+colnames(dosage) <- sprintf("s\%d", 1:8)
+
+assoc <- data.table::data.table(
+  variant = c("lead", "linked", "other"),
+  p_value = c(1e-8, 2e-8, 1e-4))
+
+# `linked` is absorbed into `lead`; two independent signals remain.
+qtlClump(assoc, dosage, r2 = 0.8)
+}
