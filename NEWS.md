@@ -1,3 +1,37 @@
+Version 1.5.0.999 (development)
+-------------------------------------------------------------------------------
+
+NEW FEATURES:
+
++ Gene-usage QTL analysis, moved in from the analysis scripts it was developed in
+  so it can be reused and checked. `runGeneUsageQTL()` scans every variant against
+  every gene group's usage; `ascUsagePhenotype()` builds the phenotype it explains.
+  The scan primitives are exported separately: `qtlScanUnivariate()` (vectorised
+  OLS), `qtlScanMultivariate()` (closed-form Pillai), `qtlLDGroups()` (exact-LD
+  collapse), `qtlClump()` (independent leads) and `qtlSmallestGenotypeClass()`.
+
++ Conditional gene-pairing analysis, generalised to any anchor and partner segment
+  rather than only D and J: `pairingTable()`, `pairingPhenotype()`,
+  `pairingScan()`, `pairingCellTests()`, `pairingLeadCharacter()` and the
+  `runPairingQTL()` driver. `pairingScan()` requires `conditional` to be stated,
+  since the two anchorings are separate scans over the same variants and pooling
+  them double-reports. IGH D/J is the established use; light-chain V-J and heavy
+  V-D / V-J run through the same code and are documented as exploratory.
+
++ `ascIUISVocabulary()` builds the ASC subgroup to IUIS gene-group labels, and
+  `annotateRepertoireIUIS()` applies them to a repertoire. The vocabulary also
+  returns an identity table giving the member alleles behind each label and a hash
+  of their sequences, so a label that moves when its reference set moves can be
+  detected rather than silently re-joined.
+
+BUG FIXES:
+
++ Lead clumping broke ties on the p-value alone. Variants in perfect linkage
+  disequilibrium fit identically, so their p-values differ only by floating-point
+  noise from the order of operations, which then decided which variant was named
+  as the lead. Ties now break on the variant name: still arbitrary between
+  variants no data distinguishes, but the same choice every run.
+
 Version 1.4.0:  July 2026
 -------------------------------------------------------------------------------
 
