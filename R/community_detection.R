@@ -83,6 +83,12 @@ distance_to_graph <- function(distance_matrix) {
 #' @param g An igraph graph object with weighted edges
 #' @param resolution Resolution parameter for Leiden algorithm. Higher values
 #'   produce more communities. Default is 1.0.
+#' @param seed Random seed. \code{cluster_leiden} is randomised, so a run without
+#'   a fixed seed is not reproducible. Default 1.
+#' @param n_runs Number of seeded runs to draw before taking the modal partition.
+#'   1 (default) reproduces the previous single-run behaviour; 100 matches the
+#'   original \code{infer_asc_usofa.R} procedure.
+#' @param quiet If FALSE, report how concentrated the modal partition was.
 #'
 #' @return An igraph communities object
 #'
@@ -100,19 +106,41 @@ distance_to_graph <- function(distance_matrix) {
 #' comm <- detect_communities_leiden(g, resolution = 0.5)
 #'
 #' @export
-detect_communities_leiden <- function(g, resolution = 1.0) {
+detect_communities_leiden <- function(g, resolution = 1.0, seed = 1L,
+                                      n_runs = 1L, quiet = TRUE) {
   if (!igraph::is_igraph(g))
     stop("Input 'g' must be an igraph graph.")
 
   if (!"weight" %in% igraph::edge_attr_names(g))
     igraph::E(g)$weight <- 1
 
-  igraph::cluster_leiden(
-    g,
-    objective_function = "CPM",
-    resolution = resolution,
-    weights = igraph::E(g)$weight
-  )
+  one <- function(s) {
+    set.seed(s)
+    igraph::cluster_leiden(
+      g,
+      objective_function = "CPM",
+      resolution = resolution,
+      weights = igraph::E(g)$weight
+    )
+  }
+
+  if (n_runs <= 1L) return(one(seed))
+
+  ## Modal partition over n_runs seeds. cluster_leiden is randomised, so a single
+  ## run returns one of several near-identical optima: on the human IGHV set,
+  ## 10 seeds give 3 distinct partitions. Taking the most frequent partition makes
+  ## the result reproducible, and restores the behaviour of the original
+  ## infer_asc_usofa.R, which was lost when that script moved into this package.
+  runs <- lapply(seq_len(n_runs), function(i) one(seed + i - 1L))
+  keys <- vapply(runs, function(cm) {
+    m <- igraph::membership(cm)
+    paste0(names(m), "#", as.integer(m), collapse = ";")
+  }, character(1))
+  tb <- sort(table(keys), decreasing = TRUE)
+  if (!quiet)
+    message(sprintf("Leiden modal partition: %d of %d runs (%d distinct partitions).",
+                    tb[[1]], n_runs, length(tb)))
+  runs[[which(keys == names(tb)[1])[1]]]
 }
 
 # ------------------------------------------------------------------------------
@@ -142,7 +170,8 @@ detect_communities_leiden <- function(g, resolution = 1.0) {
                           range_min = 0,
                           range_max = 6,
                           max_steps = 20,
-                          method = "leiden") {
+                          method = "leiden",
+                          seed = 1L) {
 
   stopifnot(igraph::is_igraph(g), n_cluster >= 1, range_min <= range_max, max_steps >= 1)
 
@@ -182,9 +211,8 @@ detect_communities_leiden <- function(g, resolution = 1.0) {
 
     partition <- switch(
       method,
-      louvain = igraph::cluster_louvain(g, resolution = this_resolution, weights = igraph::E(g)$weight),
-      leiden = igraph::cluster_leiden(g, objective_function = "CPM",
-                                      resolution = this_resolution, weights = igraph::E(g)$weight),
+      louvain = { set.seed(seed); igraph::cluster_louvain(g, resolution = this_resolution, weights = igraph::E(g)$weight) },
+      leiden = detect_communities_leiden(g, resolution = this_resolution, seed = seed),
       stop("Error: Unsupported method. Choose 'louvain' or 'leiden'.")
     )
 
@@ -229,6 +257,10 @@ detect_communities_leiden <- function(g, resolution = 1.0) {
 #' @param resolution_range_high Fractional range above tuned resolution. Default is 0.5.
 #' @param max_steps Maximum steps for initial tuning. Default is 20.
 #' @param ncores Number of cores for parallel processing. Default is 1.
+#' @param seed Random seed for the Leiden runs. Default 1.
+#' @param n_runs Seeded runs per resolution before taking the modal partition.
+#'   Default 25, so the silhouette sweep scores stable partitions rather than
+#'   single random draws.
 #'
 #' @return A list containing:
 #' \itemize{
@@ -248,7 +280,9 @@ optimize_resolution <- function(g,
                                 resolution_range_low = 0.1,
                                 resolution_range_high = 0.5,
                                 max_steps = 20,
-                                ncores = 1) {
+                                ncores = 1,
+                                seed = 1L,
+                                n_runs = 25L) {
 
   stopifnot(igraph::is_igraph(g))
 
@@ -286,13 +320,10 @@ optimize_resolution <- function(g,
   )
 
   for (resolution in resolution_range) {
-    ## run Leiden at this resolution
-    part <- igraph::cluster_leiden(
-      g,
-      objective_function = "CPM",
-      resolution = resolution,
-      weights = igraph::E(g)$weight
-    )
+    ## run Leiden at this resolution, through the seeded/modal entry point so the
+    ## silhouette sweep compares stable partitions rather than single draws
+    part <- detect_communities_leiden(g, resolution = resolution,
+                                      seed = seed, n_runs = n_runs, quiet = TRUE)
 
     memb <- unlist(igraph::membership(part))
     n_clusters <- length(unique(memb))

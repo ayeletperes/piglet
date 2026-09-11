@@ -15,6 +15,8 @@ igClust(
   target_clusters = NULL,
   optimize_silhouette = TRUE,
   ncores = 1,
+  seed = 1L,
+  n_runs = 100L,
   quiet = FALSE
 )
 }
@@ -45,6 +47,12 @@ For \code{"hamming"} / \code{"lv"}: maximum number of mismatches (must be <= fam
 \item{optimize_silhouette}{Logical. Optimize resolution using silhouette score (Leiden only). Default is TRUE.}
 
 \item{ncores}{Number of cores for parallel processing (Leiden only). Default is 1.}
+
+\item{seed}{Random seed for Leiden community detection (Leiden only). Default 1.}
+
+\item{n_runs}{Seeded Leiden runs to draw before taking the modal partition
+(Leiden only). Default 100, matching the original infer_asc_usofa.R
+procedure. Set to 1 for the previous single-run behaviour.}
 
 \item{quiet}{Logical. Suppress messages. Default is FALSE.}
 }

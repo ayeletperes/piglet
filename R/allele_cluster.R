@@ -439,6 +439,10 @@ ighvDistance <- function(germline_set, AA = FALSE) {
 #' @param target_clusters Target number of clusters for Leiden optimization. Default is NULL.
 #' @param optimize_silhouette Logical. Optimize resolution using silhouette score (Leiden only). Default is TRUE.
 #' @param ncores Number of cores for parallel processing (Leiden only). Default is 1.
+#' @param seed Random seed for Leiden community detection (Leiden only). Default 1.
+#' @param n_runs Seeded Leiden runs to draw before taking the modal partition
+#'   (Leiden only). Default 100, matching the original infer_asc_usofa.R
+#'   procedure. Set to 1 for the previous single-run behaviour.
 #' @param quiet Logical. Suppress messages. Default is FALSE.
 #'
 #' @return
@@ -466,6 +470,8 @@ igClust <- function(germline_distance,
                     target_clusters = NULL,
                     optimize_silhouette = TRUE,
                     ncores = 1,
+                    seed = 1L,
+                    n_runs = 100L,
                     quiet = FALSE) {
 
   method <- match.arg(method)
@@ -506,6 +512,8 @@ igClust <- function(germline_distance,
       target_clusters = target_clusters,
       optimize_silhouette = optimize_silhouette,
       ncores = ncores,
+      seed = seed,
+      n_runs = n_runs,
       quiet = quiet
     ))
   }
@@ -597,6 +605,8 @@ igClust <- function(germline_distance,
 .igClust_leiden <- function(germline_distance,
                             dist_obj,
                             distance_method = "decipher",
+                            seed = 1L,
+                            n_runs = 100L,
                             family_threshold = 75,
                             cluster_method = "complete",
                             resolution,
@@ -633,13 +643,15 @@ igClust <- function(germline_distance,
     } else {
       ## use default resolution
       resolution <- 0.5
-      comm <- detect_communities_leiden(g, resolution = resolution)
+      comm <- detect_communities_leiden(g, resolution = resolution,
+                                        seed = seed, n_runs = n_runs, quiet = quiet)
       membership <- igraph::membership(comm)
       silhouette_score <- NA_real_
     }
   } else {
     ## use provided resolution
-    comm <- detect_communities_leiden(g, resolution = resolution)
+    comm <- detect_communities_leiden(g, resolution = resolution,
+                                      seed = seed, n_runs = n_runs, quiet = quiet)
     membership <- igraph::membership(comm)
     silhouette_score <- NA_real_
   }
@@ -1160,6 +1172,10 @@ artificialFRW1Germline <-
 #' @param target_clusters Target number of clusters for Leiden optimization. Default is NULL.
 #' @param optimize_silhouette Optimize resolution using silhouette score (Leiden only). Default is TRUE.
 #' @param ncores Number of cores for parallel processing (Leiden only). Default is 1.
+#' @param seed Random seed for Leiden community detection (Leiden only). Default 1.
+#' @param n_runs Seeded Leiden runs to draw before taking the modal partition
+#'   (Leiden only). Default 100, matching the original infer_asc_usofa.R
+#'   procedure. Set to 1 for the previous single-run behaviour.
 #' @param aa_set Logical. Is the sequence set amino acids? Default is FALSE.
 #' @param quiet Logical. Suppress messages. Default is FALSE.
 #' @param family_prefix Logical. If TRUE (default), prepend "F" to the family number in ASC names (e.g. IGHVF1-G1*01). If FALSE, omit the "F" (e.g. IGHV1-G1*01).
@@ -1227,6 +1243,8 @@ inferAlleleClusters <- function(germline_set,
                                 target_clusters = NULL,
                                 optimize_silhouette = TRUE,
                                 ncores = 1,
+                                seed = 1L,
+                                n_runs = 100L,
                                 aa_set = FALSE,
                                 quiet = FALSE,
                                 family_prefix = TRUE,
@@ -1339,6 +1357,8 @@ inferAlleleClusters <- function(germline_set,
       target_clusters = target_clusters,
       optimize_silhouette = optimize_silhouette,
       ncores = ncores,
+      seed = seed,
+      n_runs = n_runs,
       quiet = quiet
     )
 

@@ -10,7 +10,8 @@
   range_min = 0,
   range_max = 6,
   max_steps = 20,
-  method = "leiden"
+  method = "leiden",
+  seed = 1L
 )
 }
 \arguments{

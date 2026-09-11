@@ -18,6 +18,8 @@ inferAlleleClusters(
   target_clusters = NULL,
   optimize_silhouette = TRUE,
   ncores = 1,
+  seed = 1L,
+  n_runs = 100L,
   aa_set = FALSE,
   quiet = FALSE,
   family_prefix = TRUE,
@@ -51,6 +53,12 @@ Default is NULL (auto-detected from sequence names).}
 \item{optimize_silhouette}{Optimize resolution using silhouette score (Leiden only). Default is TRUE.}
 
 \item{ncores}{Number of cores for parallel processing (Leiden only). Default is 1.}
+
+\item{seed}{Random seed for Leiden community detection (Leiden only). Default 1.}
+
+\item{n_runs}{Seeded Leiden runs to draw before taking the modal partition
+(Leiden only). Default 100, matching the original infer_asc_usofa.R
+procedure. Set to 1 for the previous single-run behaviour.}
 
 \item{aa_set}{Logical. Is the sequence set amino acids? Default is FALSE.}
 

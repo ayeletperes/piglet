@@ -4,13 +4,28 @@
 \alias{detect_communities_leiden}
 \title{Leiden community detection}
 \usage{
-detect_communities_leiden(g, resolution = 1)
+detect_communities_leiden(
+  g,
+  resolution = 1,
+  seed = 1L,
+  n_runs = 1L,
+  quiet = TRUE
+)
 }
 \arguments{
 \item{g}{An igraph graph object with weighted edges}
 
 \item{resolution}{Resolution parameter for Leiden algorithm. Higher values
 produce more communities. Default is 1.0.}
+
+\item{seed}{Random seed. \code{cluster_leiden} is randomised, so a run without
+a fixed seed is not reproducible. Default 1.}
+
+\item{n_runs}{Number of seeded runs to draw before taking the modal partition.
+1 (default) reproduces the previous single-run behaviour; 100 matches the
+original \code{infer_asc_usofa.R} procedure.}
+
+\item{quiet}{If FALSE, report how concentrated the modal partition was.}
 }
 \value{
 An igraph communities object

@@ -11,7 +11,9 @@ optimize_resolution(
   resolution_range_low = 0.1,
   resolution_range_high = 0.5,
   max_steps = 20,
-  ncores = 1
+  ncores = 1,
+  seed = 1L,
+  n_runs = 25L
 )
 }
 \arguments{
@@ -28,6 +30,12 @@ optimize_resolution(
 \item{max_steps}{Maximum steps for initial tuning. Default is 20.}
 
 \item{ncores}{Number of cores for parallel processing. Default is 1.}
+
+\item{seed}{Random seed for the Leiden runs. Default 1.}
+
+\item{n_runs}{Seeded runs per resolution before taking the modal partition.
+Default 25, so the silhouette sweep scores stable partitions rather than
+single random draws.}
 }
 \value{
 A list containing:
