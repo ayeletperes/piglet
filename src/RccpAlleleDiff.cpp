@@ -6,14 +6,6 @@ using namespace Rcpp;
 #include <algorithm>
 #include <unordered_set>
 
-// Check for OpenMP support
-#ifdef _OPENMP
-#include <omp.h>
-#define PARALLEL_FOR _Pragma("omp parallel for")
-#else
-#define PARALLEL_FOR
-#pragma message("OpenMP not supported. Compilation will proceed without parallel execution.")
-#endif
 
 // ------------------------------------------------------------------------------
 // 1. allele_diff_strings
@@ -157,71 +149,3 @@ std::vector<int> allele_diff_indices(std::vector<std::string> germs,
  
  return idx_indices;
 }
-
-// ------------------------------------------------------------------------------
-// 3. allele_diff_indices_parallel
-//' Calculate SNPs or their count for each germline-input sequence pair with optional parallel execution.
-//'
-//' @param germs A vector of strings representing germline sequences.
-//' @param inputs A vector of strings representing input sequences.
-//' @param X The threshold index from which to return SNP indices or counts (default: 0).
-//' @param parallel A boolean flag to enable parallel processing (default: FALSE).
-//' @param return_count A boolean flag to return the count of mutations instead of their indices (default: FALSE).
-//' @return A list of integer vectors (if return_count = FALSE) or a vector of integers (if return_count = TRUE).
-//' 
-//' @name allele_diff_indices_parallel
-//' @export
-// [[Rcpp::export]]
-Rcpp::RObject allele_diff_indices_parallel(std::vector<std::string> germs, 
-                                          std::vector<std::string> inputs, 
-                                          int X = 0, 
-                                          bool parallel = false, 
-                                          bool return_count = false) {
- if (germs.size() != inputs.size()) {
-   Rcpp::stop("The size of germs and inputs must be the same.");
- }
- 
- const std::unordered_set<char> non_mismatch_chars = {'N', '.', '-'};
- size_t num_sequences = germs.size();
- 
- if (!parallel) {
-   if (return_count) {
-     std::vector<int> mutation_counts(num_sequences);
-     for (size_t i = 0; i < num_sequences; ++i) {
-       const std::string& germ = germs[i];
-       const std::string& input = inputs[i];
-       int count = 0;
-       for (size_t j = 0; j < germ.size(); ++j) {
-         if (j >= static_cast<size_t>(X) && germ[j] != input[j] && 
-             non_mismatch_chars.find(germ[j]) == non_mismatch_chars.end()) {
-           count++;
-         }
-       }
-       mutation_counts[i] = count;
-     }
-     return Rcpp::wrap(mutation_counts);
-   }
- }
- 
- if (parallel) {
-   std::vector<int> mutation_counts(num_sequences);
-   PARALLEL_FOR
-   for (size_t i = 0; i < num_sequences; ++i) {
-     const std::string& germ = germs[i];
-     const std::string& input = inputs[i];
-     int count = 0;
-     for (size_t j = 0; j < germ.size(); ++j) {
-       if (j >= static_cast<size_t>(X) && germ[j] != input[j] &&
-           non_mismatch_chars.find(germ[j]) == non_mismatch_chars.end()) {
-         count++;
-       }
-     }
-     mutation_counts[i] = count;
-   }
-   return Rcpp::wrap(mutation_counts);
- }
- 
- return Rcpp::wrap(R_NilValue);
-}
-
-

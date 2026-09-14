@@ -130,14 +130,14 @@ head(genotype[genotype$z_score >= 0,])
 
 ```
 Key: <allele>
-       gene      allele count    depth threshold   z_score
-     <char>      <char> <num>    <num>     <num>     <num>
-1: IGHV1-18 IGHV1-18*01  1005 4738.942     1e-03  459.7163
-2:  IGHV1-2  IGHV1-2*02   664 4738.942     1e-03  302.9940
-3:  IGHV1-2  IGHV1-2*04   302 4738.942     1e-04  438.0321
-4: IGHV1-24 IGHV1-24*01   105 4738.942     1e-04  151.8468
-5:  IGHV1-3  IGHV1-3*01   226 4738.942     1e-05 1037.9557
-6: IGHV1-46 IGHV1-46*01   624 4738.942     1e-03  284.6101
+       gene      allele count    depth threshold   z_score observed in_genotype
+     <char>      <char> <num>    <num>     <num>     <num>   <lgcl>      <lgcl>
+1: IGHV1-18 IGHV1-18*01  1005 4738.933     1e-03  459.7168     TRUE        TRUE
+2:  IGHV1-2  IGHV1-2*02   664 4738.933     1e-03  302.9943     TRUE        TRUE
+3:  IGHV1-2  IGHV1-2*04   302 4738.933     1e-04  438.0325     TRUE        TRUE
+4: IGHV1-24 IGHV1-24*01   105 4738.933     1e-04  151.8470     TRUE        TRUE
+5:  IGHV1-3  IGHV1-3*01   226 4738.933     1e-05 1037.9567     TRUE        TRUE
+6: IGHV1-46 IGHV1-46*01   624 4738.933     1e-03  284.6104     TRUE        TRUE
 
 ```
 

@@ -1,11 +1,11 @@
-**allele_diff_indices_parallel2** - *Calculate SNPs or their count for each germline-input sequence pair with optional parallel execution.*
+**allele_diff_indices_parallel2** - *Deprecated: use `[allele_diff_paired](allele_diff_paired.md)`*
 
 Description
 --------------------
 
-This function compares germline sequences (`germs`) and input sequences (`inputs`)
-and identifies single nucleotide polymorphisms (SNPs) or their counts, with optional parallel execution.
-The comparison ignores specified non-mismatch characters (e.g., gaps or ambiguous bases).
+Renamed. The old name said `parallel`, which was an argument rather than a
+behaviour and never had any effect (the package is not built with OpenMP), and
+`indices`, which is wrong whenever `return_count = TRUE`.
 
 
 Usage
@@ -28,19 +28,22 @@ germs
 :   A vector of strings representing germline sequences.
 
 inputs
-:   A vector of strings representing input sequences.
+:   A vector of strings representing input sequences, paired with
+`germs` element by element.
 
 X
-:   The threshold index from which to return SNP indices or counts (default: 0).
+:   The position from which mismatches are counted, zero-based (default 0).
 
 parallel
-:   A boolean flag to enable parallel processing (default: FALSE).
+:   Ignored. Accepted so existing calls keep working.
 
 return_count
-:   A boolean flag to return the count of mutations instead of their indices (default: FALSE).
+:   Return the number of mismatches per pair rather than their
+positions (default `FALSE`).
 
 non_mismatch_chars_nullable
-:   A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
+:   Characters ignored on either side when comparing
+(default `N`, `.`, `-`).
 
 
 
@@ -48,54 +51,21 @@ non_mismatch_chars_nullable
 Value
 -------------------
 
-A list of integer vectors (if `return_count = FALSE`) or a vector of integers (if `return_count = TRUE`).
+As `[allele_diff_paired](allele_diff_paired.md)`.
 
 
-
-Examples
+Details
 -------------------
 
-```R
-# Example usage
-germs <- c("ATCG", "ATCC")
-inputs <- c("ATTG", "ATTA")
-X <- 0
-
-# Return indices of SNPs
-result_indices <- allele_diff_indices_parallel2(germs, inputs, X, 
-parallel = TRUE, return_count = FALSE)
-print(result_indices)  # list(c(4), c(3, 4))
-
-```
+Results are unchanged: this is the same implementation under a clearer name.
 
 
-```
-[[1]]
-[1] 3
-
-[[2]]
-[1] 3 4
 
 
-```
+See also
+-------------------
 
-
-```R
-
-# Return counts of SNPs
-result_counts <- allele_diff_indices_parallel2(germs, inputs, X, 
-parallel = FALSE, return_count = TRUE)
-print(result_counts)  # c(1, 2)
-
-```
-
-
-```
-[1] 1 2
-
-```
-
-
+`[allele_diff_paired](allele_diff_paired.md)`
 
 
 

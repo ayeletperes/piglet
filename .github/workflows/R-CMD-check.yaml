@@ -1,10 +1,15 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Runs R CMD check across operating systems and R versions on every push/PR.
+#
+# dev is included alongside master so a branch is checked when it merges into dev,
+# not only at the release merge into master. Without it a feature branch got its
+# first cross-platform check at the last step before release, which is the worst
+# moment to discover a Windows-only failure.
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, dev]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, dev]
 
 name: R-CMD-check.yaml
 

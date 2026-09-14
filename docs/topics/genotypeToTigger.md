@@ -88,16 +88,32 @@ germline_db = HVGERM, find_unmutated = TRUE)
 
 # convert to the TIgGER/VDJbase table layout
 geno_table <- genotypeToTigger(genotype)
-
-```
-
-**Error in genotypeToTigger(genotype)**: could not find function "genotypeToTigger"
-```R
 head(geno_table)
 
 ```
 
-**Error**: object 'geno_table' not found
+
+```
+       gene alleles  counts total    depth   threshold         z_score
+     <char>  <char>  <char> <num>    <num>      <char>          <char>
+1: IGHV1-18      01    1005  1005 4738.933       0.001         459.717
+2:  IGHV1-2   02,04 664,302   966 4738.933 0.001,1e-04 302.994,438.033
+3: IGHV1-24      01     105   105 4738.933       1e-04         151.847
+4:  IGHV1-3      01     226   226 4738.933       1e-05        1037.957
+5: IGHV1-46      01     624   624 4738.933       0.001          284.61
+6: IGHV1-58   01,02   23,18    41 4738.933 1e-04,1e-04    32.724,25.46
+   genotyped_alleles
+              <char>
+1:                01
+2:             02,04
+3:                01
+4:                01
+5:                01
+6:             01,02
+
+```
+
+
 
 See also
 -------------------

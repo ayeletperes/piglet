@@ -1,3 +1,53 @@
+Version 1.5.0.999 (development)
+-------------------------------------------------------------------------------
+
+NEW FEATURES:
+
++ The paired sequence-comparison helpers are renamed for what they do:
+  `allele_diff_indices_parallel2()` becomes `allele_diff_paired()` and
+  `insert_gaps2_vec()` becomes `insert_gaps()`. The old names said `parallel`, which
+  was an argument rather than a behaviour and never had any effect since the package
+  is not built with OpenMP, and carried a `2` marking a second attempt. The `parallel`
+  argument is gone from the new functions and ignored by the old names, which remain
+  exported and working indefinitely. Results are unchanged.
+
++ Gene-usage QTL analysis, moved in from the analysis scripts it was developed in
+  so it can be reused and checked. `runGeneUsageQTL()` scans every variant against
+  every gene group's usage; `ascUsagePhenotype()` builds the phenotype it explains.
+  The scan primitives are exported separately: `qtlScanUnivariate()` (vectorised
+  OLS), `qtlScanMultivariate()` (closed-form Pillai), `qtlLDGroups()` (exact-LD
+  collapse), `qtlClump()` (independent leads) and `qtlSmallestGenotypeClass()`.
+
++ Conditional gene-pairing analysis, generalised to any anchor and partner segment
+  rather than only D and J: `pairingTable()`, `pairingPhenotype()`,
+  `pairingScan()`, `pairingCellTests()`, `pairingLeadCharacter()` and the
+  `runPairingQTL()` driver. `pairingScan()` requires `conditional` to be stated,
+  since the two anchorings are separate scans over the same variants and pooling
+  them double-reports. IGH D/J is the established use; light-chain V-J and heavy
+  V-D / V-J run through the same code and are documented as exploratory.
+
++ `ascIUISVocabulary()` builds the ASC subgroup to IUIS gene-group labels, and
+  `annotateRepertoireIUIS()` applies them to a repertoire. The vocabulary also
+  returns an identity table giving the member alleles behind each label and a hash
+  of their sequences, so a label that moves when its reference set moves can be
+  detected rather than silently re-joined.
+
+BUG FIXES:
+
++ `allele_diff_indices_parallel()` read past the end of the input sequence whenever
+  the input was shorter than the germline, returning counts drawn partly from
+  adjacent memory: 160 characters against 8 returned 144. It also ignored gaps and
+  ambiguous bases only on the germline side. It is now a deprecated alias for
+  `allele_diff_paired()`, which pads the shorter sequence and ignores such positions
+  on either side. **Its counts change** -- 194 of 400 real germline pairs differ, by
+  a mean of 8 -- so results that depended on the old numbers need re-checking.
+
++ Lead clumping broke ties on the p-value alone. Variants in perfect linkage
+  disequilibrium fit identically, so their p-values differ only by floating-point
+  noise from the order of operations, which then decided which variant was named
+  as the lead. Ties now break on the variant name: still arbitrary between
+  variants no data distinguishes, but the same choice every run.
+
 Version 1.4.0:  July 2026
 -------------------------------------------------------------------------------
 

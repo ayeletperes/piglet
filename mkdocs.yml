@@ -76,6 +76,7 @@ nav:
       - Build allele similarity clusters: guides/build-allele-clusters.md
       - Infer an allele-based genotype: guides/infer-genotype.md
       - 'PIgLET: Program for Ig clusters': vignettes/PIgLET-vignette.md
+      - 'Gene-usage QTL: repertoire to association': vignettes/gene-usage-qtl.md
       - Generating ASC for a BIOMED IGHV reference: vignettes/PIgLET_biomed_asc.md
   - API Reference:
       - Overview: reference/index.md
@@ -88,8 +89,14 @@ nav:
           - generateReferenceSet: topics/generateReferenceSet.md
           - artificialFRW1Germline: topics/artificialFRW1Germline.md
           - alleleClusterNames: topics/alleleClusterNames.md
+          - regroupASCByLabel: topics/regroupASCByLabel.md
+          - ascIUISVocabulary: topics/ascIUISVocabulary.md
+          - annotateRepertoireIUIS: topics/annotateRepertoireIUIS.md
           - The GermlineCluster object: topics/GermlineCluster-class.md
           - new_germline_cluster: topics/new_germline_cluster.md
+          - 'Methods: print': topics/print.GermlineCluster.md
+          - 'Methods: summary': topics/summary.GermlineCluster.md
+          - 'Methods: plot': topics/plot.GermlineCluster.md
       - Community detection:
           - detect_communities_leiden: topics/detect_communities_leiden.md
           - optimize_resolution: topics/optimize_resolution.md
@@ -111,12 +118,30 @@ nav:
           - recentAlleleClusters: topics/recentAlleleClusters.md
           - extractASCTable: topics/extractASCTable.md
           - zenodoArchive: topics/zenodoArchive.md
+      - Gene-usage QTL:
+          - runGeneUsageQTL: topics/runGeneUsageQTL.md
+          - ascUsagePhenotype: topics/ascUsagePhenotype.md
+          - qtlScanUnivariate: topics/qtlScanUnivariate.md
+          - qtlScanMultivariate: topics/qtlScanMultivariate.md
+          - qtlLDGroups: topics/qtlLDGroups.md
+          - qtlClump: topics/qtlClump.md
+          - qtlSmallestGenotypeClass: topics/qtlSmallestGenotypeClass.md
+      - Conditional gene pairing:
+          - runPairingQTL: topics/runPairingQTL.md
+          - pairingTable: topics/pairingTable.md
+          - pairingPhenotype: topics/pairingPhenotype.md
+          - pairingScan: topics/pairingScan.md
+          - pairingCellTests: topics/pairingCellTests.md
+          - pairingLeadCharacter: topics/pairingLeadCharacter.md
       - SNP & sequence utilities:
           - allele_diff: topics/allele_diff.md
           - allele_diff_strings: topics/allele_diff_strings.md
           - allele_diff_indices: topics/allele_diff_indices.md
-          - allele_diff_indices_parallel: topics/allele_diff_indices_parallel.md
+          - allele_diff_paired: topics/allele_diff_paired.md
+          - insert_gaps: topics/insert_gaps.md
+      - Deprecated:
           - allele_diff_indices_parallel2: topics/allele_diff_indices_parallel2.md
+          - allele_diff_indices_parallel: topics/allele_diff_indices_parallel.md
           - insert_gaps2_vec: topics/insert_gaps2_vec.md
       - Data:
           - HVGERM: topics/HVGERM.md

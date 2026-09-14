@@ -6,59 +6,48 @@ using namespace Rcpp;
 #include <algorithm>
 #include <unordered_set>
 
-// Check for OpenMP support
-#ifdef _OPENMP
-#include <omp.h>
-#define PARALLEL_FOR _Pragma("omp parallel for")
-#else
-#define PARALLEL_FOR
-#pragma message("OpenMP not supported. Compilation will proceed without parallel execution.")
-#endif
-
 // ------------------------------------------------------------------------------
-// 4. allele_diff_indices_parallel2
-//' Calculate SNPs or their count for each germline-input sequence pair with optional parallel execution.
+// 1. allele_diff_paired
+//' Count or locate SNPs between paired germline and input sequences
 //'
-//' This function compares germline sequences (`germs`) and input sequences (`inputs`)
-//' and identifies single nucleotide polymorphisms (SNPs) or their counts, with optional parallel execution.
-//' The comparison ignores specified non-mismatch characters (e.g., gaps or ambiguous bases).
+//' Compares each germline sequence in \code{germs} against the input sequence at the
+//' same position in \code{inputs}, and returns either the positions of the mismatches
+//' or how many there are. The two vectors are paired element by element, which is what
+//' distinguishes this from \code{\link{allele_diff_indices}}, where every sequence is
+//' compared against the first.
+//'
+//' A position is ignored when \emph{either} sequence carries a non-mismatch character,
+//' by default a gap or an ambiguous base (\code{N}, \code{.}, \code{-}). Sequences of
+//' unequal length are padded to the longer with \code{N}, so the padded positions never
+//' count as mismatches.
 //'
 //' @param germs A vector of strings representing germline sequences.
-//' @param inputs A vector of strings representing input sequences.
-//' @param X The threshold index from which to return SNP indices or counts (default: 0).
-//' @param parallel A boolean flag to enable parallel processing (default: FALSE).
-//' @param return_count A boolean flag to return the count of mutations instead of their indices (default: FALSE).
-//' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
-//' @return A list of integer vectors (if `return_count = FALSE`) or a vector of integers (if `return_count = TRUE`).
+//' @param inputs A vector of strings representing input sequences, paired with
+//'   \code{germs} element by element.
+//' @param X The position from which mismatches are counted, zero-based (default 0).
+//' @param return_count Return the number of mismatches per pair rather than their
+//'   positions (default \code{FALSE}).
+//' @param non_mismatch_chars_nullable Characters ignored on either side when comparing
+//'   (default \code{N}, \code{.}, \code{-}).
+//' @return A list of integer vectors of one-based positions when
+//'   \code{return_count = FALSE}, or an integer vector of counts when \code{TRUE}.
 //'
 //' @examples
-//' # Example usage
-//' germs <- c("ATCG", "ATCC")
-//' inputs <- c("ATTG", "ATTA")
-//' X <- 0
+//' germs  <- c("ACGTACGT", "ACGTACGT")
+//' inputs <- c("ACGTTCGT", "ACGTTCGA")
 //'
-//' # Return indices of SNPs
-//' result_indices <- allele_diff_indices_parallel2(germs, inputs, X, 
-//' parallel = TRUE, return_count = FALSE)
-//' print(result_indices)  # list(c(4), c(3, 4))
+//' allele_diff_paired(germs, inputs, return_count = TRUE)   # 1, 2
+//' allele_diff_paired(germs, inputs)                        # list(5), c(5, 8)
 //'
-//' # Return counts of SNPs
-//' result_counts <- allele_diff_indices_parallel2(germs, inputs, X, 
-//' parallel = FALSE, return_count = TRUE)
-//' print(result_counts)  # c(1, 2)
-//'
-//' @name allele_diff_indices_parallel2
+//' @name allele_diff_paired
 //' @export
 // [[Rcpp::export]]
-Rcpp::RObject allele_diff_indices_parallel2(std::vector<std::string> germs, 
-                                           std::vector<std::string> inputs, 
-                                           int X = 0, 
-                                           bool parallel = false, 
-                                           bool return_count = false, 
-                                           Rcpp::Nullable<Rcpp::CharacterVector> non_mismatch_chars_nullable = R_NilValue) {
-  // Set default non-mismatch characters
+Rcpp::RObject allele_diff_paired(std::vector<std::string> germs,
+                                 std::vector<std::string> inputs,
+                                 int X = 0,
+                                 bool return_count = false,
+                                 Rcpp::Nullable<Rcpp::CharacterVector> non_mismatch_chars_nullable = R_NilValue) {
   std::unordered_set<char> non_mismatch_chars = {'N', '.', '-'};
-  // If non_mismatch_chars is provided by the user, convert it to std::unordered_set<char>
   if (non_mismatch_chars_nullable.isNotNull()) {
     Rcpp::CharacterVector char_vec(non_mismatch_chars_nullable);
     non_mismatch_chars.clear();
@@ -66,174 +55,107 @@ Rcpp::RObject allele_diff_indices_parallel2(std::vector<std::string> germs,
       non_mismatch_chars.insert(Rcpp::as<std::string>(c)[0]);
     }
   }
-  
- if (germs.size() != inputs.size()) {
-   Rcpp::stop("The size of germs and inputs must be the same.");
- }
- 
- size_t num_sequences = germs.size();
- auto pad_with_ns = [](std::string& seq, size_t target_length) {
-   if (seq.size() < target_length) {
-     seq.append(target_length - seq.size(), 'N');
-   }
- };
- 
- if (!parallel) {
-   if (return_count) {
-     std::vector<int> mutation_counts(num_sequences);
-     for (size_t i = 0; i < num_sequences; ++i) {
-       std::string germ = germs[i];
-       std::string input = inputs[i];
-       size_t max_length = std::max(germ.size(), input.size());
-       pad_with_ns(germ, max_length);
-       pad_with_ns(input, max_length);
-       int count = 0;
-       for (size_t j = 0; j < max_length; ++j) {
-         if (j >= static_cast<size_t>(X) && germ[j] != input[j] &&
-             non_mismatch_chars.find(input[j]) == non_mismatch_chars.end() &&
-             non_mismatch_chars.find(germ[j]) == non_mismatch_chars.end()) {
-           count++;
-         }
-       }
-       mutation_counts[i] = count;
-     }
-     return Rcpp::wrap(mutation_counts);
-   } else {
-     Rcpp::List snp_list(num_sequences);
-     for (size_t i = 0; i < num_sequences; ++i) {
-       std::string germ = germs[i];
-       std::string input = inputs[i];
-       size_t max_length = std::max(germ.size(), input.size());
-       pad_with_ns(germ, max_length);
-       pad_with_ns(input, max_length);
-       std::vector<int> snp_indices;
-       for (size_t j = 0; j < max_length; ++j) {
-         if (j >= static_cast<size_t>(X) && germ[j] != input[j] &&
-             non_mismatch_chars.find(input[j]) == non_mismatch_chars.end() &&
-             non_mismatch_chars.find(germ[j]) == non_mismatch_chars.end()) {
-           snp_indices.push_back(j + 1);
-         }
-       }
-       snp_list[i] = Rcpp::wrap(snp_indices);
-     }
-     return snp_list;
-   }
- }
- 
- if (parallel) {
-   if (return_count) {
-     std::vector<int> mutation_counts(num_sequences);
-     PARALLEL_FOR
-     for (size_t i = 0; i < num_sequences; ++i) {
-       std::string germ = germs[i];
-       std::string input = inputs[i];
-       size_t max_length = std::max(germ.size(), input.size());
-       pad_with_ns(germ, max_length);
-       pad_with_ns(input, max_length);
-       int count = 0;
-       for (size_t j = 0; j < max_length; ++j) {
-         if (j >= static_cast<size_t>(X) && germ[j] != input[j] &&
-             non_mismatch_chars.find(input[j]) == non_mismatch_chars.end() &&
-             non_mismatch_chars.find(germ[j]) == non_mismatch_chars.end()) {
-           count++;
-         }
-       }
-       mutation_counts[i] = count;
-     }
-     return Rcpp::wrap(mutation_counts);
-   } else {
-     Rcpp::List snp_list(num_sequences);
-     PARALLEL_FOR
-     for (size_t i = 0; i < num_sequences; ++i) {
-       std::string germ = germs[i];
-       std::string input = inputs[i];
-       size_t max_length = std::max(germ.size(), input.size());
-       pad_with_ns(germ, max_length);
-       pad_with_ns(input, max_length);
-       std::vector<int> snp_indices;
-       for (size_t j = 0; j < max_length; ++j) {
-         if (j >= static_cast<size_t>(X) && germ[j] != input[j] &&
-             non_mismatch_chars.find(input[j]) == non_mismatch_chars.end() &&
-             non_mismatch_chars.find(germ[j]) == non_mismatch_chars.end()) {
-           snp_indices.push_back(j + 1);
-         }
-       }
-       snp_list[i] = Rcpp::wrap(snp_indices);
-     }
-     return snp_list;
-   }
- }
- 
- return Rcpp::wrap(R_NilValue);
+
+  if (germs.size() != inputs.size()) {
+    Rcpp::stop("The size of germs and inputs must be the same.");
+  }
+
+  size_t num_sequences = germs.size();
+  auto pad_with_ns = [](std::string& seq, size_t target_length) {
+    if (seq.size() < target_length) {
+      seq.append(target_length - seq.size(), 'N');
+    }
+  };
+
+  // One loop, shared by both return shapes. Padding to the longer of the pair is what
+  // keeps this in bounds when the two sequences differ in length; because the pad
+  // character is itself a non-mismatch character, padded positions are never counted.
+  Rcpp::List snp_list(return_count ? 0 : num_sequences);
+  std::vector<int> mutation_counts(return_count ? num_sequences : 0);
+
+  for (size_t i = 0; i < num_sequences; ++i) {
+    std::string germ = germs[i];
+    std::string input = inputs[i];
+    size_t max_length = std::max(germ.size(), input.size());
+    pad_with_ns(germ, max_length);
+    pad_with_ns(input, max_length);
+
+    std::vector<int> snp_indices;
+    int count = 0;
+    for (size_t j = 0; j < max_length; ++j) {
+      if (j >= static_cast<size_t>(X) && germ[j] != input[j] &&
+          non_mismatch_chars.find(input[j]) == non_mismatch_chars.end() &&
+          non_mismatch_chars.find(germ[j]) == non_mismatch_chars.end()) {
+        if (return_count) {
+          count++;
+        } else {
+          snp_indices.push_back(j + 1);
+        }
+      }
+    }
+    if (return_count) {
+      mutation_counts[i] = count;
+    } else {
+      snp_list[i] = Rcpp::wrap(snp_indices);
+    }
+  }
+
+  if (return_count) return Rcpp::wrap(mutation_counts);
+  return snp_list;
 }
 
 // ------------------------------------------------------------------------------
-// 5. insert_gaps2_vec
+// 2. insert_gaps
 //' Insert gaps into an ungapped sequence based on a gapped reference sequence.
 //'
-//' This function inserts gaps (e.g., `.` or `-`) into an ungapped sequence (`ungapped`)
-//' to match the positions of gaps in a reference sequence (`gapped`). It ensures that
-//' the aligned sequence has the same gap structure as the reference.
+//' This function inserts gaps (e.g., \code{.} or \code{-}) into an ungapped sequence
+//' (\code{ungapped}) to match the positions of gaps in a reference sequence
+//' (\code{gapped}). It ensures that the aligned sequence has the same gap structure as
+//' the reference. Vectorised over both arguments, which are paired element by element.
 //'
 //' @param gapped A vector of strings representing the reference sequences with gaps.
 //' @param ungapped A vector of strings representing the sequences without gaps.
-//' @param parallel A boolean flag to enable parallel processing (default: FALSE).
 //' @return A vector of strings with gaps inserted to match the gapped reference.
 //'
 //' @examples
-//' # Example usage
 //' gapped <- c("caggtc..aact", "caggtc---aact")
 //' ungapped <- c("caggtcaact", "caggtcaact")
 //'
-//' # Sequential execution
-//' result <- insert_gaps2_vec(gapped, ungapped, parallel = FALSE)
-//' print(result)  # "caggtc..aact", "caggtc---aact"
+//' insert_gaps(gapped, ungapped)   # "caggtc..aact", "caggtc---aact"
 //'
-//' # Parallel execution
-//' result_parallel <- insert_gaps2_vec(gapped, ungapped, parallel = TRUE)
-//' print(result_parallel)
-//'
-//' @name insert_gaps2_vec
+//' @name insert_gaps
 //' @export
 // [[Rcpp::export]]
-std::vector<std::string> insert_gaps2_vec(const std::vector<std::string>& gapped,
-                                         const std::vector<std::string>& ungapped,
-                                         bool parallel = false) {
- if (gapped.size() != ungapped.size()) {
-   Rcpp::stop("The size of gapped and ungapped vectors must be the same.");
- }
- const std::unordered_set<char>& gap_chars = {'.', '-'};
- size_t num_sequences = gapped.size();
- std::vector<std::string> results(num_sequences);
- 
- auto process_sequence = [&gap_chars](const std::string& gapped, const std::string& ungapped) -> std::string {
-   std::string result;
-   size_t ungapped_index = 0;
-   for (char gap_char : gapped) {
-     if (gap_chars.find(gap_char) != gap_chars.end()) {
-       result.push_back(gap_char);
-     } else {
-       if (ungapped_index < ungapped.size()) {
-         result.push_back(ungapped[ungapped_index]);
-         ++ungapped_index;
-       } else {
-         break;
-       }
-     }
-   }
-   return result;
- };
- 
- if (parallel) {
-   PARALLEL_FOR
-   for (size_t i = 0; i < num_sequences; ++i) {
-     results[i] = process_sequence(gapped[i], ungapped[i]);
-   }
- } else {
-   for (size_t i = 0; i < num_sequences; ++i) {
-     results[i] = process_sequence(gapped[i], ungapped[i]);
-   }
- }
- 
- return results;
+std::vector<std::string> insert_gaps(const std::vector<std::string>& gapped,
+                                     const std::vector<std::string>& ungapped) {
+  if (gapped.size() != ungapped.size()) {
+    Rcpp::stop("The size of gapped and ungapped vectors must be the same.");
+  }
+  const std::unordered_set<char> gap_chars = {'.', '-'};
+  size_t num_sequences = gapped.size();
+  std::vector<std::string> results(num_sequences);
+
+  auto process_sequence = [&gap_chars](const std::string& gapped, const std::string& ungapped) -> std::string {
+    std::string result;
+    size_t ungapped_index = 0;
+    for (char gap_char : gapped) {
+      if (gap_chars.find(gap_char) != gap_chars.end()) {
+        result.push_back(gap_char);
+      } else {
+        if (ungapped_index < ungapped.size()) {
+          result.push_back(ungapped[ungapped_index]);
+          ++ungapped_index;
+        } else {
+          break;
+        }
+      }
+    }
+    return result;
+  };
+
+  for (size_t i = 0; i < num_sequences; ++i) {
+    results[i] = process_sequence(gapped[i], ungapped[i]);
+  }
+
+  return results;
 }

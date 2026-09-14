@@ -11,6 +11,7 @@ PIgLET is a suite of computational tools that improves genotype inference and do
 
 **Allele Similarity Cluster** provides the functions that support the main tool of creating the allele similarity cluster form an IGHV germline set.
 **Allele based genotype** provides the functions to infer the IGHV genotype using the allele based method and the allele clusters thresholds.
+**Gene-usage QTL** provides the functions to test whether a germline variant changes how much a gene group is used, or which partner it pairs with. This tool covers the light chains as well as the heavy chain.
 
 ## Required Input ##
 
