@@ -1,11 +1,10 @@
-**insert_gaps2_vec** - *Insert gaps into an ungapped sequence based on a gapped reference sequence.*
+**insert_gaps2_vec** - *Deprecated: use `[insert_gaps](insert_gaps.md)`*
 
 Description
 --------------------
 
-This function inserts gaps (e.g., `.` or `-`) into an ungapped sequence (`ungapped`)
-to match the positions of gaps in a reference sequence (`gapped`). It ensures that
-the aligned sequence has the same gap structure as the reference.
+Renamed. The `2` marked a second attempt rather than anything about behaviour,
+and `_vec` restated that it is vectorised. Results are unchanged.
 
 
 Usage
@@ -24,7 +23,7 @@ ungapped
 :   A vector of strings representing the sequences without gaps.
 
 parallel
-:   A boolean flag to enable parallel processing (default: FALSE).
+:   Ignored. Accepted so existing calls keep working.
 
 
 
@@ -32,46 +31,15 @@ parallel
 Value
 -------------------
 
-A vector of strings with gaps inserted to match the gapped reference.
+As `[insert_gaps](insert_gaps.md)`.
 
 
 
-Examples
+
+See also
 -------------------
 
-```R
-# Example usage
-gapped <- c("caggtc..aact", "caggtc---aact")
-ungapped <- c("caggtcaact", "caggtcaact")
-
-# Sequential execution
-result <- insert_gaps2_vec(gapped, ungapped, parallel = FALSE)
-print(result)  # "caggtc..aact", "caggtc---aact"
-
-```
-
-
-```
-[1] "caggtc..aact"  "caggtc---aact"
-
-```
-
-
-```R
-
-# Parallel execution
-result_parallel <- insert_gaps2_vec(gapped, ungapped, parallel = TRUE)
-print(result_parallel)
-
-```
-
-
-```
-[1] "caggtc..aact"  "caggtc---aact"
-
-```
-
-
+`[insert_gaps](insert_gaps.md)`
 
 
 

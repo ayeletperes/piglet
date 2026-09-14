@@ -52,14 +52,27 @@ allelePalette(c("01", "02", "06"))
 
 ```
 
-**Error in allelePalette(c("01", "02", "06"))**: could not find function "allelePalette"
+
+```
+       01        02        06 
+"#f5bc6e" "#9d69f4" "#ff6ed5" 
+
+```
+
+
 ```R
 # also covers many alleles without running out of colors
 length(allelePalette(sprintf("%02d", 1:40)))
 
 ```
 
-**Error in allelePalette(sprintf("%02d", 1:40))**: could not find function "allelePalette"
+
+```
+[1] 40
+
+```
+
+
 
 
 

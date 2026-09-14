@@ -5,12 +5,15 @@ and G**e**no**t**ypes.
 
 PIgLET is an R/Rcpp package that improves genotype inference and downstream
 AIRR-seq (Adaptive Immune Receptor Repertoire) analysis of the immunoglobulin
-heavy chain V (IGHV) locus. It provides two main tools:
+heavy chain V (IGHV) locus. It provides three main tools:
 
 - **Allele Similarity Clusters** — reduce ambiguity among IGHV alleles caused by
   duplicated or highly similar alleles shared across genes.
 - **Allele-based genotype** — determine the presence of an allele using a
   threshold derived from a naive population.
+- **Gene-usage QTL** — test whether a germline variant changes how much a gene
+  group is used, or which partner it pairs with. Unlike the two above, this side
+  covers the light chains as well.
 
 ## Start here
 
@@ -18,6 +21,7 @@ heavy chain V (IGHV) locus. It provides two main tools:
 | --- | --- |
 | Get up and running fast | **[Getting Started](getting-started/installation.md)** |
 | Understand the ideas | **[Lessons](lessons/allele-similarity-clusters.md)** |
+| Scan variants against gene usage | **[Gene-usage QTL](vignettes/gene-usage-qtl.md)** |
 | Look up precise definitions | **[Core Concepts](concepts/package-overview.md)** |
 | Accomplish a specific task | **[Task Guides](guides/build-allele-clusters.md)** |
 | Find a function signature | **[API Reference](reference/index.md)** |
