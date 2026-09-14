@@ -62,6 +62,7 @@ Collate:
     'asc_iuis_labels.R'
     'asc_regroup.R'
     'community_detection.R'
+    'deprecated.R'
     'piglet-package.R'
     'qtl_pairing.R'
     'qtl_pairing_leads.R'

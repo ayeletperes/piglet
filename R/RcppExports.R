@@ -37,84 +37,63 @@ allele_diff_indices <- function(germs, X = 0L, non_mismatch_chars_nullable = NUL
     .Call(`_piglet_allele_diff_indices`, germs, X, non_mismatch_chars_nullable)
 }
 
-#' Calculate SNPs or their count for each germline-input sequence pair with optional parallel execution.
+#' Count or locate SNPs between paired germline and input sequences
+#'
+#' Compares each germline sequence in \code{germs} against the input sequence at the
+#' same position in \code{inputs}, and returns either the positions of the mismatches
+#' or how many there are. The two vectors are paired element by element, which is what
+#' distinguishes this from \code{\link{allele_diff_indices}}, where every sequence is
+#' compared against the first.
+#'
+#' A position is ignored when \emph{either} sequence carries a non-mismatch character,
+#' by default a gap or an ambiguous base (\code{N}, \code{.}, \code{-}). Sequences of
+#' unequal length are padded to the longer with \code{N}, so the padded positions never
+#' count as mismatches.
 #'
 #' @param germs A vector of strings representing germline sequences.
-#' @param inputs A vector of strings representing input sequences.
-#' @param X The threshold index from which to return SNP indices or counts (default: 0).
-#' @param parallel A boolean flag to enable parallel processing (default: FALSE).
-#' @param return_count A boolean flag to return the count of mutations instead of their indices (default: FALSE).
-#' @return A list of integer vectors (if return_count = FALSE) or a vector of integers (if return_count = TRUE).
-#' 
-#' @name allele_diff_indices_parallel
-#' @export
-allele_diff_indices_parallel <- function(germs, inputs, X = 0L, parallel = FALSE, return_count = FALSE) {
-    .Call(`_piglet_allele_diff_indices_parallel`, germs, inputs, X, parallel, return_count)
-}
-
-#' Calculate SNPs or their count for each germline-input sequence pair with optional parallel execution.
-#'
-#' This function compares germline sequences (`germs`) and input sequences (`inputs`)
-#' and identifies single nucleotide polymorphisms (SNPs) or their counts, with optional parallel execution.
-#' The comparison ignores specified non-mismatch characters (e.g., gaps or ambiguous bases).
-#'
-#' @param germs A vector of strings representing germline sequences.
-#' @param inputs A vector of strings representing input sequences.
-#' @param X The threshold index from which to return SNP indices or counts (default: 0).
-#' @param parallel A boolean flag to enable parallel processing (default: FALSE).
-#' @param return_count A boolean flag to return the count of mutations instead of their indices (default: FALSE).
-#' @param non_mismatch_chars_nullable A set of characters that are ignored when comparing sequences (default: 'N', '.', '-').
-#' @return A list of integer vectors (if `return_count = FALSE`) or a vector of integers (if `return_count = TRUE`).
+#' @param inputs A vector of strings representing input sequences, paired with
+#'   \code{germs} element by element.
+#' @param X The position from which mismatches are counted, zero-based (default 0).
+#' @param return_count Return the number of mismatches per pair rather than their
+#'   positions (default \code{FALSE}).
+#' @param non_mismatch_chars_nullable Characters ignored on either side when comparing
+#'   (default \code{N}, \code{.}, \code{-}).
+#' @return A list of integer vectors of one-based positions when
+#'   \code{return_count = FALSE}, or an integer vector of counts when \code{TRUE}.
 #'
 #' @examples
-#' # Example usage
-#' germs <- c("ATCG", "ATCC")
-#' inputs <- c("ATTG", "ATTA")
-#' X <- 0
+#' germs  <- c("ACGTACGT", "ACGTACGT")
+#' inputs <- c("ACGTTCGT", "ACGTTCGA")
 #'
-#' # Return indices of SNPs
-#' result_indices <- allele_diff_indices_parallel2(germs, inputs, X, 
-#' parallel = TRUE, return_count = FALSE)
-#' print(result_indices)  # list(c(4), c(3, 4))
+#' allele_diff_paired(germs, inputs, return_count = TRUE)   # 1, 2
+#' allele_diff_paired(germs, inputs)                        # list(5), c(5, 8)
 #'
-#' # Return counts of SNPs
-#' result_counts <- allele_diff_indices_parallel2(germs, inputs, X, 
-#' parallel = FALSE, return_count = TRUE)
-#' print(result_counts)  # c(1, 2)
-#'
-#' @name allele_diff_indices_parallel2
+#' @name allele_diff_paired
 #' @export
-allele_diff_indices_parallel2 <- function(germs, inputs, X = 0L, parallel = FALSE, return_count = FALSE, non_mismatch_chars_nullable = NULL) {
-    .Call(`_piglet_allele_diff_indices_parallel2`, germs, inputs, X, parallel, return_count, non_mismatch_chars_nullable)
+allele_diff_paired <- function(germs, inputs, X = 0L, return_count = FALSE, non_mismatch_chars_nullable = NULL) {
+    .Call(`_piglet_allele_diff_paired`, germs, inputs, X, return_count, non_mismatch_chars_nullable)
 }
 
 #' Insert gaps into an ungapped sequence based on a gapped reference sequence.
 #'
-#' This function inserts gaps (e.g., `.` or `-`) into an ungapped sequence (`ungapped`)
-#' to match the positions of gaps in a reference sequence (`gapped`). It ensures that
-#' the aligned sequence has the same gap structure as the reference.
+#' This function inserts gaps (e.g., \code{.} or \code{-}) into an ungapped sequence
+#' (\code{ungapped}) to match the positions of gaps in a reference sequence
+#' (\code{gapped}). It ensures that the aligned sequence has the same gap structure as
+#' the reference. Vectorised over both arguments, which are paired element by element.
 #'
 #' @param gapped A vector of strings representing the reference sequences with gaps.
 #' @param ungapped A vector of strings representing the sequences without gaps.
-#' @param parallel A boolean flag to enable parallel processing (default: FALSE).
 #' @return A vector of strings with gaps inserted to match the gapped reference.
 #'
 #' @examples
-#' # Example usage
 #' gapped <- c("caggtc..aact", "caggtc---aact")
 #' ungapped <- c("caggtcaact", "caggtcaact")
 #'
-#' # Sequential execution
-#' result <- insert_gaps2_vec(gapped, ungapped, parallel = FALSE)
-#' print(result)  # "caggtc..aact", "caggtc---aact"
+#' insert_gaps(gapped, ungapped)   # "caggtc..aact", "caggtc---aact"
 #'
-#' # Parallel execution
-#' result_parallel <- insert_gaps2_vec(gapped, ungapped, parallel = TRUE)
-#' print(result_parallel)
-#'
-#' @name insert_gaps2_vec
+#' @name insert_gaps
 #' @export
-insert_gaps2_vec <- function(gapped, ungapped, parallel = FALSE) {
-    .Call(`_piglet_insert_gaps2_vec`, gapped, ungapped, parallel)
+insert_gaps <- function(gapped, ungapped) {
+    .Call(`_piglet_insert_gaps`, gapped, ungapped)
 }
 
