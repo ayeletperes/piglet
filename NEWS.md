@@ -1,3 +1,15 @@
+Version 1.5.1:  September 2026
+-------------------------------------------------------------------------------
+
+BUG FIXES:
+
++ `inferGenotypeAllele()` failed when `allele_threshold_table` was a plain
+  `data.frame`, which is the documented type and the class of the bundled
+  `allele_threshold_table`. The function adds a `tag` column with data.table
+  `:=` syntax, so a data.frame raised "Check that is.data.table(DT) == TRUE".
+  The table is now converted once on entry. The conversion copies, so a
+  data.table passed by a caller no longer gains a `tag` column by reference.
+
 Version 1.5.0:  September 2026
 -------------------------------------------------------------------------------
 
