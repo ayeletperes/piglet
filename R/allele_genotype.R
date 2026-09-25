@@ -560,6 +560,8 @@ inferGenotypeAllele <-
       data(allele_threshold_table, envir = environment())
     }
     
+    allele_threshold_table <- data.table::as.data.table(allele_threshold_table)
+    
     if(!"tag" %in% names(allele_threshold_table)){
       allele_threshold_table[,"tag":=substr(get("allele"),4,4)]
     }
