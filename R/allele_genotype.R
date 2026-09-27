@@ -583,17 +583,43 @@ inferGenotypeAllele <-
           thr <- allele_threshold_table[get(asc_col) == base][["threshold"]][1]
         }
         if(!quiet) warning(paste0("The allele call ", allele, " is not in the allele threshold table. Using the threshold: ", thr))
-        allele_threshold_table <- rbind(allele_threshold_table,
-                                    data.frame(
-                                      "tag" = substr(allele,4,4),
-                                      "allele" = allele,
-                                      "asc_allele" = allele,
-                                      "threshold" = thr
-                                      ))
+        ## Built from whatever columns the caller's table actually has. Naming the
+        ## columns literally meant appending `asc_allele` to a table without it, and
+        ## rbind then failed on a column-count mismatch reported from inside
+        ## rbindlist, which says nothing about the argument that caused it.
+        new_row <- allele_threshold_table[0]
+        new_row <- rbind(new_row, as.list(stats::setNames(
+          lapply(names(new_row), function(col) switch(col,
+            "tag" = substr(allele, 4, 4),
+            "allele" = allele,
+            "asc_allele" = allele,
+            "threshold" = thr,
+            NA)),
+          names(new_row))), fill = TRUE)
+        allele_threshold_table <- rbind(allele_threshold_table, new_row, fill = TRUE)
       }
     }
     
     allele_threshold_table[,"genotyped_allele":=get(asc_col)]
+
+    ## One row per genotyped allele before anything joins on it. When asc_col is
+    ## `asc_allele` the column is non-unique by design, since collapsing several
+    ## alleles into one similarity cluster is the point, and a caller's table can
+    ## repeat an `allele` too. The merge below uses all.x = TRUE, so a repeated key
+    ## produced one output row per threshold row, each carrying the cluster's whole
+    ## count. That inflated the per-locus depth, which is a shared denominator, so
+    ## every row was affected and z_score moved with it, not only the duplicates.
+    if (anyDuplicated(allele_threshold_table[["genotyped_allele"]])) {
+      n_before <- nrow(allele_threshold_table)
+      allele_threshold_table <- allele_threshold_table[
+        !duplicated(allele_threshold_table[["genotyped_allele"]])]
+      if (!quiet) {
+        message(sprintf(paste0("Threshold table: %d of %d rows share a genotyped allele; ",
+                               "keeping one row each (%d remain)."),
+                        n_before - nrow(allele_threshold_table), n_before,
+                        nrow(allele_threshold_table)))
+      }
+    }
     
     base_count <- 1/length(unique(allele_threshold_table[["genotyped_allele"]]))
     

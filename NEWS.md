@@ -1,3 +1,35 @@
+Version 1.5.2:  September 2026
+-------------------------------------------------------------------------------
+
+BUG FIXES:
+
++ `inferGenotypeAllele()` duplicated rows and inflated the per-locus depth when
+  the threshold table held more than one row per genotyped allele. The table is
+  joined into the genotype counts with `all.x = TRUE`, so a repeated key produced
+  one output row per threshold row, each carrying that allele's whole count.
+
+  Because depth is a shared denominator, this was not confined to the duplicated
+  rows: every row reported the inflated depth, and `z_score` moved with it, so the
+  genotype call itself could change. With four alleles collapsing into one cluster,
+  a true read count of 42 was reported as 108 and the cluster's z-score fell from
+  339 to 212.
+
+  The join key is now reduced to one row per genotyped allele. Two situations
+  triggered it. With `asc_annotation = TRUE` the key is `asc_allele`, which is
+  non-unique by design since collapsing several alleles into one similarity cluster
+  is the point, and the bundled `allele_threshold_table` has seven such rows. With
+  `asc_annotation = FALSE` the key is `allele`, which a caller-supplied table can
+  repeat. Output is unchanged wherever the key was already unique, verified against
+  1.5.1 on the bundled table.
+
++ `inferGenotypeAllele()` failed when the threshold table had no `asc_allele`
+  column and the data contained an allele the table did not list. The appended row
+  named `asc_allele` literally, so a three-column table received a four-column row
+  and `rbind` failed with a column-count message from inside `rbindlist`, naming
+  neither the caller nor the column. The appended row is now built from whatever
+  columns the table actually has. Alleles missing from the table were never dropped
+  from the output; only this path errored.
+
 Version 1.5.1:  September 2026
 -------------------------------------------------------------------------------
 
