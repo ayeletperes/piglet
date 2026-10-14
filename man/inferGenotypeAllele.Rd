@@ -24,7 +24,21 @@ inferGenotypeAllele(
 \arguments{
 \item{data}{data.frame in AIRR format, containing allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.}
 
-\item{allele_threshold_table}{A data.frame of the alleles and their thresholds.}
+\item{allele_threshold_table}{How the presence threshold is set, in one of three ways:
+\describe{
+\item{a \code{data.frame}}{per-allele thresholds. Needs an \code{allele} column and
+a \code{threshold} column, plus \code{asc_allele} when \code{asc_annotation = TRUE}.
+Alleles present in the data but missing from the table inherit
+\code{default_allele_threshold}, or their base allele's threshold for a novel allele.}
+\item{\code{"default"}}{the bundled \code{allele_threshold_table}, which covers human IGHV.}
+\item{\code{NULL} (the default)}{no table: every allele gets the single constant
+\code{default_allele_threshold}. Pair it with \code{depth_adjusted_threshold = TRUE},
+which floors the threshold at \code{1/N} so the null expects one read at depth
+\code{N} and the z-score stays defined. Without that floor a constant well below
+\code{1/N} makes a single read look overwhelming, and a constant of 0 gives an
+infinite or undefined z-score.}
+}
+\code{NULL} previously loaded the bundled table; pass \code{"default"} for that.}
 
 \item{call}{name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is \code{v_call}}
 

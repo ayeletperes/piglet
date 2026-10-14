@@ -1,3 +1,28 @@
+Version 1.5.2.999 (development)
+-------------------------------------------------------------------------------
+
+BREAKING CHANGE:
+
++ `inferGenotypeAllele(allele_threshold_table = NULL)` no longer loads the bundled
+  table. `NULL` now means *no table*: every allele gets the single constant
+  `default_allele_threshold`. Pass `allele_threshold_table = "default"` for the old
+  behaviour.
+
+  The threshold is now set in one of three stated ways rather than emerging from a
+  silent default: a `data.frame` of per-allele thresholds, `"default"` for the
+  bundled human IGHV table, or `NULL` for one constant. Each announces itself when
+  `quiet = FALSE`.
+
+  `NULL` pairs with `depth_adjusted_threshold = TRUE`, which floors the threshold at
+  `max(default_allele_threshold, 1/N)`. That floor is what makes a small constant
+  safe: at depth `N` the null then expects one read. Without it a constant well below
+  `1/N` makes a single read look overwhelming, and a constant of 0 gives an infinite
+  or undefined z-score, since the threshold is the null hypothesis the z-score is
+  measured against rather than a free parameter.
+
+  With no table the output also carries only the alleles seen in the data, instead of
+  one row per reference allele with a smoothing pseudo-count.
+
 Version 1.5.2:  September 2026
 -------------------------------------------------------------------------------
 

@@ -462,7 +462,21 @@ assignAlleleClusters <- function(
 #' for the presence of the allele in the genotype. The user can select the confidence level for the genotype inference.
 #'
 #' @param data                     data.frame in AIRR format, containing allele calls from a single subject and the sample IMGT-gapped V(D)J sequences under seq.
-#' @param allele_threshold_table   A data.frame of the alleles and their thresholds. 
+#' @param allele_threshold_table   How the presence threshold is set, in one of three ways:
+#'   \describe{
+#'     \item{a \code{data.frame}}{per-allele thresholds. Needs an \code{allele} column and
+#'       a \code{threshold} column, plus \code{asc_allele} when \code{asc_annotation = TRUE}.
+#'       Alleles present in the data but missing from the table inherit
+#'       \code{default_allele_threshold}, or their base allele's threshold for a novel allele.}
+#'     \item{\code{"default"}}{the bundled \code{allele_threshold_table}, which covers human IGHV.}
+#'     \item{\code{NULL} (the default)}{no table: every allele gets the single constant
+#'       \code{default_allele_threshold}. Pair it with \code{depth_adjusted_threshold = TRUE},
+#'       which floors the threshold at \code{1/N} so the null expects one read at depth
+#'       \code{N} and the z-score stays defined. Without that floor a constant well below
+#'       \code{1/N} makes a single read look overwhelming, and a constant of 0 gives an
+#'       infinite or undefined z-score.}
+#'   }
+#'   \code{NULL} previously loaded the bundled table; pass \code{"default"} for that.
 #' @param call                     name of the V,D, or J allele call column, i.e v_call, d_call, j_call. Default is `v_call`
 #' @param asc_annotation           Logical (FALSE by default). Are the allele calls annotated with the allele similarity clusters.
 #' @param translate_to_asc         For V allele calls, collapse identical allele for the genotype inference. Default is FALSE.
@@ -554,10 +568,28 @@ inferGenotypeAllele <-
     germline_db <- nv$germline_db
     unique_calls <- unique(unlist(strsplit(allele_calls, ",")))
     segment <- unique(substr(unique_calls,4,4))
-    ## check that the allele calls are in the supplied allele_threshold_table
-    if(is.null(allele_threshold_table)){
-      ## load the default allele threshold table
+    ## Three ways to set the presence threshold, kept explicit because a silently
+    ## chosen threshold is the sort of thing that reaches a methods section unnoticed.
+    ## NULL used to load the bundled table; it now means no table.
+    if (is.character(allele_threshold_table) && length(allele_threshold_table) == 1L &&
+        allele_threshold_table == "default") {
       data(allele_threshold_table, envir = environment())
+      if (!quiet) message("Threshold: per-allele, from the bundled allele_threshold_table.")
+    } else if (is.null(allele_threshold_table)) {
+      ## One constant threshold for every allele. With depth_adjusted_threshold the floor
+      ## max(default_allele_threshold, 1/N) applies on top, which is what makes a very
+      ## small constant safe: at depth N the null then expects one read, so z is defined.
+      ## Without that floor a constant well below 1/N makes a single read look
+      ## overwhelming, and at exactly 0 the z-score is Inf or NaN.
+      allele_threshold_table <- data.table::data.table(
+        allele = unique_calls, asc_allele = unique_calls,
+        threshold = default_allele_threshold, tag = substr(unique_calls, 4L, 4L))
+      if (!quiet) {
+        message(sprintf(paste0("Threshold: constant %.3g for all %d alleles (no table); ",
+                               "depth_adjusted_threshold is %s."),
+                        default_allele_threshold, length(unique_calls),
+                        if (depth_adjusted_threshold) "TRUE" else "FALSE"))
+      }
     }
     
     allele_threshold_table <- data.table::as.data.table(allele_threshold_table)
